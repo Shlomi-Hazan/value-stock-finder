@@ -175,7 +175,7 @@
       width: 100%;
       border-collapse: collapse;
       background: white;
-      min-width: 1500px;
+      min-width: 1700px;
     }
 
     th, td {
@@ -283,9 +283,9 @@
 
       <label>
         מצב סריקה
-        <select id="scanMode">
+        <select id="scanMode" onchange="updateRequestPreview()">
           <option value="deep">Value Scan מלא ככל האפשר</option>
-          <option value="quick">Quick Scan בלבד</option>
+          <option value="quick">Momentum / Market בלבד</option>
         </select>
       </label>
 
@@ -300,7 +300,7 @@
       </label>
 
       <label>
-        שווי שוק מינימלי כללי
+        שווי שוק מינימלי מחוץ לארה״ב
         <input type="number" id="marketCapDefault" value="1000000000" />
       </label>
 
@@ -318,21 +318,24 @@
     <br />
     <label>
       רשימת מניות לבדיקה
-      <textarea id="symbolsInput"></textarea>
+      <textarea id="symbolsInput" oninput="updateRequestPreview()"></textarea>
     </label>
 
     <div class="actions">
       <button id="scanButton" onclick="scanStocks()">סרוק מניות</button>
+      <button id="stopButton" class="secondary" onclick="requestStopScan()" disabled>עצור סריקה</button>
       <button class="secondary" onclick="testEndpoints()">בדוק endpoints על AAPL</button>
       <button class="secondary" onclick="exportCSV()">ייצא CSV</button>
+      <button class="secondary" onclick="clearCache()">נקה Cache</button>
       <button class="danger" onclick="clearApiKey()">נקה API Key שמור</button>
     </div>
 
+    <div id="requestPreview" class="small"></div>
     <div id="status" class="status"></div>
     <div id="endpointStatus" class="small"></div>
 
     <p class="small">
-      טיפ: אם הסריקה עמוקה איטית או חסומה, עבור ל־Quick Scan. אם תרצה דיוק מלא לפי הקורס, צריך endpointים של ratios, key metrics, financial growth, income, cash flow ו־balance sheet.
+      טיפ: אם הסריקה עמוקה איטית או חסומה, עבור ל־Momentum / Market. אם תרצה דיוק מלא לפי הקורס, צריך endpointים של ratios, key metrics, financial growth, income, cash flow ו־balance sheet.
     </p>
   </section>
 
@@ -376,21 +379,23 @@
             <th>Current Ratio</th>
             <th>FCF</th>
             <th>דיבידנד</th>
-            <th>Quick</th>
+            <th>Momentum / Market</th>
             <th>Graham</th>
             <th>Fisher</th>
             <th>Cash</th>
-            <th>Buffett</th>
-            <th>Piotroski</th>
-            <th>Dreman</th>
-            <th>Neff</th>
+            <th>Buffett Inspired</th>
+            <th>Piotroski Approx.</th>
+            <th>Dreman Inspired / Relative</th>
+            <th>Neff Inspired / Relative</th>
+            <th>Data Confidence</th>
+            <th>מקור נתונים</th>
             <th>ציון כולל</th>
             <th>החלטה</th>
             <th>פירוט</th>
           </tr>
         </thead>
         <tbody id="stocksTable">
-          <tr><td colspan="27">עדיין לא בוצעה סריקה</td></tr>
+          <tr><td colspan="29">עדיין לא בוצעה סריקה</td></tr>
         </tbody>
       </table>
     </div>
@@ -422,18 +427,49 @@
   };
 
   let lastResults = [];
+  let allResults = [];
   let currentFilter = "all";
+  let stopRequested = false;
+  let lastScanStats = { checked: 0, apiCalls: 0, cacheHits: 0, stopped: false };
+
+  const FMP_CACHE_PREFIX = "valueStockFinderFmpCache:";
+  const QUOTE_CACHE_TTL_MS = 10 * 60 * 1000;
+  const FUNDAMENTAL_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+  const DATA_CONFIDENCE_STRONG_MIN = 70;
+
+  const DEEP_ENDPOINTS = [
+    { key: "profile", label: "Profile", path: "/stable/profile", extra: {} },
+    { key: "ratiosTtm", label: "Ratios TTM", path: "/stable/ratios-ttm", extra: {} },
+    { key: "keyMetricsTtm", label: "Key Metrics TTM", path: "/stable/key-metrics-ttm", extra: {} },
+    { key: "ratiosAnnual", label: "Ratios Annual", path: "/stable/ratios", extra: { period: "annual", limit: "5" } },
+    { key: "keyMetricsAnnual", label: "Key Metrics Annual", path: "/stable/key-metrics", extra: { period: "annual", limit: "5" } },
+    { key: "income", label: "Income Statement", path: "/stable/income-statement", extra: { period: "annual", limit: "5" } },
+    { key: "cash", label: "Cash Flow", path: "/stable/cash-flow-statement", extra: { period: "annual", limit: "5" } },
+    { key: "balance", label: "Balance Sheet", path: "/stable/balance-sheet-statement", extra: { period: "annual", limit: "5" } },
+    { key: "growth", label: "Financial Growth", path: "/stable/financial-growth", extra: { period: "annual", limit: "5" } }
+  ];
+
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
 
   function initializePage() {
     const savedKey = localStorage.getItem("valueStockFinderApiKey");
     if (savedKey) document.getElementById("apiKey").value = savedKey;
     loadPresetList();
+    updateRequestPreview();
   }
 
   function loadPresetList() {
     const value = document.getElementById("presetList").value;
     if (value === "manual") return;
     document.getElementById("symbolsInput").value = (PRESET_LISTS[value] || PRESET_LISTS.usaLarge).join(", ");
+    updateRequestPreview();
   }
 
   function clearApiKey() {
@@ -458,6 +494,89 @@
 
   function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
 
+  function stableStringify(obj) {
+    const sorted = {};
+    Object.keys(obj || {}).sort().forEach(key => { sorted[key] = obj[key]; });
+    return JSON.stringify(sorted);
+  }
+
+  function cacheTtlForPath(path) {
+    return path === "/stable/quote" ? QUOTE_CACHE_TTL_MS : FUNDAMENTAL_CACHE_TTL_MS;
+  }
+
+  function cacheKey(path, symbol, extra = {}) {
+    return FMP_CACHE_PREFIX + [path, symbol, stableStringify(extra)].join("|");
+  }
+
+  function readCachedFmp(path, symbol, extra = {}) {
+    try {
+      const raw = localStorage.getItem(cacheKey(path, symbol, extra));
+      if (!raw) return null;
+      const cached = JSON.parse(raw);
+      if (!cached || typeof cached.timestamp !== "number") return null;
+      if (Date.now() - cached.timestamp > cacheTtlForPath(path)) return null;
+      return cached.data;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function writeCachedFmp(path, symbol, extra = {}, data) {
+    try {
+      localStorage.setItem(cacheKey(path, symbol, extra), JSON.stringify({ timestamp: Date.now(), data }));
+    } catch (_) {}
+  }
+
+  function clearCache() {
+    let count = 0;
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith(FMP_CACHE_PREFIX)) {
+        localStorage.removeItem(key);
+        count++;
+      }
+    }
+    updateRequestPreview();
+    setStatus(`נמחקו ${count} פריטי Cache`, "good");
+  }
+
+  function endpointsForMode(mode) {
+    const endpoints = [{ key: "quote", label: "Quote", path: "/stable/quote", extra: {} }];
+    return mode === "deep" ? endpoints.concat(DEEP_ENDPOINTS) : endpoints;
+  }
+
+  function estimateRequestPlan(symbols, mode) {
+    const endpoints = endpointsForMode(mode);
+    let cached = 0;
+    symbols.forEach(symbol => {
+      endpoints.forEach(endpoint => {
+        if (readCachedFmp(endpoint.path, symbol, endpoint.extra)) cached++;
+      });
+    });
+    const total = symbols.length * endpoints.length;
+    return { total, cached, api: total - cached, endpoints: endpoints.length };
+  }
+
+  function updateRequestPreview() {
+    const el = document.getElementById("requestPreview");
+    if (!el) return;
+    const symbols = parseSymbols(document.getElementById("symbolsInput")?.value || "");
+    const mode = document.getElementById("scanMode")?.value || "deep";
+    const plan = estimateRequestPlan(symbols, mode);
+    if (!symbols.length) {
+      el.textContent = "הערכת בקשות תופיע אחרי הזנת סימולים.";
+      return;
+    }
+    const modeLabel = mode === "quick" ? "Momentum / Market" : "Deep Scan";
+    const warning = mode === "deep" && symbols.length > 10 ? " מומלץ לצמצם רשימה או להסתמך על Cache." : "";
+    el.textContent = `${modeLabel}: עד ${plan.total} קריאות (${plan.endpoints} לכל סימול). לפי ה־Cache הנוכחי: כ־${plan.api} API וכ־${plan.cached} מה־Cache.${warning}`;
+  }
+
+  function requestStopScan() {
+    stopRequested = true;
+    setStatus("בקשת עצירה התקבלה. הסריקה תיעצר לפני הסימול הבא.", "warn");
+  }
+
   function numberOrNull(v) {
     if (v === null || v === undefined || v === "" || v === "None") return null;
     const n = Number(v);
@@ -480,6 +599,25 @@
     return null;
   }
 
+  function isRateLimitMessage(message) {
+    const text = String(message || "").toLowerCase();
+    return text.includes("limit reach") ||
+      text.includes("limit reached") ||
+      text.includes("rate limit") ||
+      text.includes("too many requests") ||
+      text.includes("request limit") ||
+      text.includes("daily limit") ||
+      text.includes("api limit") ||
+      text.includes("429");
+  }
+
+  function rateLimitError(message) {
+    const err = new Error("הגעת למגבלת הבקשות של FMP. הסריקה נעצרה כדי לא לבזבז קריאות נוספות.");
+    err.rateLimited = true;
+    err.detail = message;
+    return err;
+  }
+
   async function fetchJson(url) {
     const response = await fetch(url.toString());
     let data = null;
@@ -487,11 +625,13 @@
 
     if (!response.ok) {
       const msg = data && (data["Error Message"] || data.error || data.message) ? (data["Error Message"] || data.error || data.message) : ("HTTP " + response.status);
+      if (response.status === 429 || isRateLimitMessage(msg)) throw rateLimitError(msg);
       throw new Error(msg);
     }
 
     if (data && typeof data === "object") {
       const text = JSON.stringify(data).toLowerCase();
+      if (isRateLimitMessage(text)) throw rateLimitError(text);
       if (text.includes("restricted endpoint") || text.includes("not available under your current subscription")) {
         throw new Error("Restricted Endpoint");
       }
@@ -501,19 +641,24 @@
   }
 
   async function callFmp(path, symbol, apiKey, extra = {}) {
+    const cached = readCachedFmp(path, symbol, extra);
+    if (cached !== null) return { data: cached, source: "cache" };
+
     const url = new URL("https://financialmodelingprep.com" + path);
     url.searchParams.set("symbol", symbol);
     url.searchParams.set("apikey", apiKey);
     for (const [k, v] of Object.entries(extra)) url.searchParams.set(k, v);
-    return fetchJson(url);
+    const data = await fetchJson(url);
+    writeCachedFmp(path, symbol, extra, data);
+    return { data, source: "api" };
   }
 
   async function safeCall(path, symbol, apiKey, extra = {}) {
     try {
-      const data = await callFmp(path, symbol, apiKey, extra);
-      return { ok: true, data, error: null };
+      const result = await callFmp(path, symbol, apiKey, extra);
+      return { ok: true, data: result.data, source: result.source, error: null, rateLimited: false };
     } catch (e) {
-      return { ok: false, data: null, error: e.message || "שגיאה" };
+      return { ok: false, data: null, source: null, error: e.message || "שגיאה", rateLimited: !!e.rateLimited, detail: e.detail || null };
     }
   }
 
@@ -530,34 +675,36 @@
       cash: [],
       balance: [],
       growth: [],
-      endpointErrors: []
+      endpointErrors: [],
+      endpointSources: [],
+      apiCalls: 0,
+      cacheHits: 0
     };
 
     const quote = await safeCall("/stable/quote", symbol, apiKey);
-    if (quote.ok) out.quote = firstArrayItem(quote.data);
-    else out.endpointErrors.push("quote: " + quote.error);
+    if (quote.ok) {
+      out.quote = firstArrayItem(quote.data);
+      out.endpointSources.push("Quote: " + quote.source);
+      if (quote.source === "cache") out.cacheHits++;
+      if (quote.source === "api") out.apiCalls++;
+    } else {
+      out.endpointErrors.push("Quote: " + quote.error);
+      if (quote.rateLimited) throw rateLimitError(quote.detail || quote.error);
+    }
 
     if (mode === "quick") return out;
 
-    const calls = [
-      ["profile", "/stable/profile", {}],
-      ["ratiosTtm", "/stable/ratios-ttm", {}],
-      ["keyMetricsTtm", "/stable/key-metrics-ttm", {}],
-      ["ratiosAnnual", "/stable/ratios", { period: "annual", limit: "5" }],
-      ["keyMetricsAnnual", "/stable/key-metrics", { period: "annual", limit: "5" }],
-      ["income", "/stable/income-statement", { period: "annual", limit: "5" }],
-      ["cash", "/stable/cash-flow-statement", { period: "annual", limit: "5" }],
-      ["balance", "/stable/balance-sheet-statement", { period: "annual", limit: "5" }],
-      ["growth", "/stable/financial-growth", { period: "annual", limit: "5" }]
-    ];
-
-    for (const [key, path, extra] of calls) {
+    for (const { key, label, path, extra } of DEEP_ENDPOINTS) {
       const res = await safeCall(path, symbol, apiKey, extra);
       if (res.ok) {
         if (key === "profile" || key === "ratiosTtm" || key === "keyMetricsTtm") out[key] = firstArrayItem(res.data);
         else out[key] = Array.isArray(res.data) ? res.data : (res.data ? [res.data] : []);
+        out.endpointSources.push(label + ": " + res.source);
+        if (res.source === "cache") out.cacheHits++;
+        if (res.source === "api") out.apiCalls++;
       } else {
-        out.endpointErrors.push(key + ": " + res.error);
+        out.endpointErrors.push(label + ": " + res.error);
+        if (res.rateLimited) throw rateLimitError(res.detail || res.error);
       }
       await sleep(70);
     }
@@ -624,6 +771,11 @@
       pick(quote, ["exchange", "name"])
     ].filter(Boolean).join(" ").toLowerCase();
     return text.includes("technology") || text.includes("software") || text.includes("semiconductor") || text.includes("pharma") || text.includes("biotech") || text.includes("healthcare");
+  }
+
+  function isUsListed(exchange) {
+    const text = String(exchange || "").toLowerCase();
+    return ["nasdaq", "nyse", "amex", "arca", "cboe", "us"].some(x => text.includes(x));
   }
 
   function buildMetrics(raw) {
@@ -712,7 +864,8 @@
       totalAssets, longTermDebt, totalDebt, totalEquity, currentAssets, currentLiabilities, shares, workingCapital,
       revenueGrowth, netIncomeGrowth, epsGrowth, fcfGrowth, ocfGrowth,
       raw,
-      isTechPharma: isTechOrPharma(raw.profile, raw.quote)
+      isTechPharma: isTechOrPharma(raw.profile, raw.quote),
+      isUsListed: isUsListed(pick(q, ["exchange", "exchangeShortName"]))
     };
   }
 
@@ -762,14 +915,15 @@
     return nums.length ? nums.reduce((a,b)=>a+b,0) / nums.length : null;
   }
 
-  function epsFiveYearGrowth(m) {
+  function epsAnnualCagr(m) {
     const income = m.raw.income || [];
     const epsVals = income.map(row => pickNum(row, ["eps", "epsdiluted"])).filter(v => v !== null).reverse();
-    if (epsVals.length < 4) return m.epsGrowth;
-    const firstAvg = average(epsVals.slice(0, 2));
-    const lastAvg = average(epsVals.slice(-2));
-    if (!firstAvg || firstAvg <= 0 || lastAvg === null) return m.epsGrowth;
-    return (lastAvg / firstAvg) - 1;
+    if (epsVals.length < 4) return null;
+    const first = epsVals[0];
+    const last = epsVals[epsVals.length - 1];
+    const years = epsVals.length - 1;
+    if (first === null || last === null || first <= 0 || last <= 0 || years <= 0) return null;
+    return Math.pow(last / first, 1 / years) - 1;
   }
 
   function sumNetIncome5Y(m) {
@@ -783,6 +937,42 @@
     return (m.netIncome - m.ocf - m.icf) / m.totalAssets;
   }
 
+  function computeDataConfidence(m) {
+    const fields = [
+      ["price", "Price", true],
+      ["marketCap", "Market Cap", true],
+      ["volume", "Volume", true],
+      ["pe", "P/E", false],
+      ["ps", "P/S", false],
+      ["pb", "P/B", false],
+      ["roe", "ROE", false],
+      ["roa", "ROA", false],
+      ["debtEquity", "Debt/Equity", false],
+      ["currentRatio", "Current Ratio", false],
+      ["revenue", "Revenue", false],
+      ["netIncome", "Net Income", false],
+      ["ocf", "Operating Cash Flow", false],
+      ["fcf", "Free Cash Flow", false],
+      ["totalAssets", "Total Assets", false],
+      ["longTermDebt", "Long-Term Debt", false],
+      ["currentAssets", "Current Assets", false],
+      ["currentLiabilities", "Current Liabilities", false],
+      ["shares", "Shares Outstanding", false]
+    ];
+    const missing = fields.filter(([key]) => m[key] === null || m[key] === undefined).map(([, label]) => label);
+    const coreMissing = fields.filter(([key, _label, core]) => core && (m[key] === null || m[key] === undefined)).map(([, label]) => label);
+    const available = fields.length - missing.length;
+    const pct = Math.round((available / fields.length) * 100);
+    return {
+      available,
+      total: fields.length,
+      pct,
+      missing,
+      coreMissing,
+      strongEnough: pct >= DATA_CONFIDENCE_STRONG_MIN && coreMissing.length === 0
+    };
+  }
+
   function scoreCategory(tests) {
     const available = tests.filter(t => t.passed !== null);
     const max = available.reduce((s,t)=>s+t.max,0);
@@ -792,7 +982,7 @@
   }
 
   function computeValueScores(m, settings) {
-    const epsGrowth5Y = epsFiveYearGrowth(m);
+    const epsCagr = epsAnnualCagr(m);
     const marginMin = m.isTechPharma ? 0.15 : 0.08;
     const peMax = m.isTechPharma ? 25 : 15;
     const sloan = calcSloanRatio(m);
@@ -804,14 +994,14 @@
       pass(m.workingCapital !== null && m.longTermDebt !== null ? m.workingCapital > m.longTermDebt : null, "Working Capital > LTD", "הון חוזר גדול מחוב ארוך", "הון חוזר לא מכסה LTD / חסר", 1),
       pass(m.pe !== null ? m.pe > 5 && m.pe < peMax : null, "P/E", `P/E בטווח 5-${peMax}`, "P/E חסר/לא בטווח", 1),
       pass(m.pe !== null && m.pb !== null ? m.pe * m.pb < 22 : null, "Graham Ratio", "P/E*P/B קטן מ־22", "יחס גרהאם חסר/גבוה", 1),
-      pass(epsGrowth5Y !== null ? epsGrowth5Y > 0.30 : null, "EPS Growth", "צמיחת EPS מעל 30%", "צמיחת EPS חסרה/נמוכה", 1)
+      pass(epsCagr !== null ? epsCagr > 0.03 : null, "EPS CAGR", "צמיחת EPS שנתית מעל 3%", "צמיחת EPS שנתית חסרה/נמוכה", 1)
     ];
 
     const fisherCheapCount = [m.pe !== null && m.pe < peMax, m.pe !== null && m.pb !== null && m.pe * m.pb < 22, m.ps !== null && m.ps < 1.5].filter(Boolean).length;
     const fisherTests = [
       pass(fisherCheapCount >= 2, "2 מתוך 3 מכפילי זול", "זולה לפי לפחות 2 מכפילים", "לא זולה לפי 2 מכפילים", 2),
       pass(m.profitMargin !== null ? m.profitMargin > marginMin : null, "Profit Margin", `שולי רווח מעל ${(marginMin*100).toFixed(0)}%`, "שולי רווח חסרים/נמוכים", 1),
-      pass(epsGrowth5Y !== null ? epsGrowth5Y > 0.15 : null, "EPS Growth 5Y", "צמיחת EPS מעל 15%", "צמיחת EPS חסרה/נמוכה", 1),
+      pass(epsCagr !== null ? epsCagr > 0.15 : null, "EPS CAGR", "צמיחת EPS שנתית מעל 15%", "צמיחת EPS שנתית חסרה/נמוכה", 1),
       pass(m.debtEquity !== null ? m.debtEquity < 0.4 : null, "Debt/Equity < 40%", "חוב נמוך לפי פישר", "חוב חסר/גבוה", 1),
       pass(m.fcfPerShare !== null ? m.fcfPerShare > 0 : null, "FCF per share", "FCF למניה חיובי", "FCF למניה חסר/שלילי", 1)
     ];
@@ -826,7 +1016,7 @@
     ];
 
     const buffettTests = [
-      pass(epsGrowth5Y !== null ? epsGrowth5Y > 0 : null, "EPS Growth 5Y", "צמיחת EPS חיובית", "EPS Growth חסר/שלילי", 1),
+      pass(epsCagr !== null ? epsCagr > 0 : null, "EPS CAGR", "צמיחת EPS שנתית חיובית", "EPS CAGR חסר/שלילי", 1),
       pass(m.roe !== null ? m.roe > 0.15 : null, "ROE > 15%", "ROE גבוה", "ROE חסר/נמוך", 2),
       pass(m.roa !== null ? m.roa > 0.12 : null, "ROA > 12%", "ROA גבוה", "ROA חסר/נמוך", 1),
       pass(m.fcf !== null ? m.fcf > 0 : null, "FCF > 0", "FCF חיובי", "FCF חסר/שלילי", 1),
@@ -843,7 +1033,7 @@
       piotroski: pi,
       dreman: { score: null, max: null, pct: null, tests: [] },
       neff: { score: null, max: null, pct: null, tests: [] },
-      epsGrowth5Y,
+      epsCagr,
       sloan,
       netIncome5Y
     };
@@ -952,7 +1142,7 @@
       pass(m.dividendYield !== null && divAvg !== null ? m.dividendYield >= divAvg : null, "Dividend Yield", "דיבידנד מעל ממוצע המדגם", "דיבידנד נמוך/חסר", 1),
       pass(m.roe !== null ? m.roe > 0.10 : null, "ROE > 10%", "ROE מעל 10%", "ROE חסר/נמוך", 1),
       pass(m.debtEquity !== null ? m.debtEquity < 0.50 : null, "Debt/Equity", "חוב סביר עד 0.5", "חוב גבוה/חסר", 1),
-      pass(row.value.epsGrowth5Y !== null ? row.value.epsGrowth5Y > 0 : null, "EPS Growth", "צמיחת EPS חיובית", "צמיחת EPS חסרה/שלילית", 1)
+      pass(row.value.epsCagr !== null ? row.value.epsCagr > 0 : null, "EPS CAGR", "צמיחת EPS שנתית חיובית", "צמיחת EPS שנתית חסרה/שלילית", 1)
     ];
 
     const result = scoreCategory(tests);
@@ -963,15 +1153,15 @@
   function computeNeff(row, rows) {
     const m = row.m;
     const peAvg = positiveMean(rows.filter(r => r !== row).map(r => r.m.pe)) ?? positiveMean(rows.map(r => r.m.pe));
-    const epsGrowth = row.value.epsGrowth5Y ?? m.epsGrowth;
+    const epsCagr = row.value.epsCagr;
     const revGrowth = m.revenueGrowth;
     const divYield = m.dividendYield ?? 0;
-    const totalReturnToPe = (epsGrowth !== null && m.pe !== null && m.pe > 0) ? (((epsGrowth + Math.max(divYield, 0)) * 100) / m.pe) : null;
-    const revToEps = (revGrowth !== null && epsGrowth !== null && Math.abs(epsGrowth) > 0.0001) ? revGrowth / epsGrowth : null;
+    const totalReturnToPe = (epsCagr !== null && m.pe !== null && m.pe > 0) ? (((epsCagr + Math.max(divYield, 0)) * 100) / m.pe) : null;
+    const revToEps = (revGrowth !== null && epsCagr !== null && Math.abs(epsCagr) > 0.0001) ? revGrowth / epsCagr : null;
 
     const tests = [
       pass(m.pe !== null && peAvg !== null ? m.pe <= peAvg * 0.60 : null, "P/E נמוך מאוד", "P/E נמוך בכ־40% לפחות מול המדגם", "P/E לא נמוך מספיק/חסר", 2),
-      pass(epsGrowth !== null ? epsGrowth >= 0.07 && epsGrowth <= 0.22 : null, "EPS Growth 7%-22%", "צמיחה מתונה ובריאה", "צמיחה חסרה/מחוץ לטווח", 2),
+      pass(epsCagr !== null ? epsCagr >= 0.07 && epsCagr <= 0.22 : null, "EPS CAGR 7%-22%", "צמיחה שנתית מתונה ובריאה", "צמיחה שנתית חסרה/מחוץ לטווח", 2),
       pass(revToEps !== null ? revToEps > 0.70 : null, "Revenue/EPS Growth", "הכנסות מגבות את צמיחת הרווח", "הצמיחה לא מגובה בהכנסות/חסר", 1),
       pass(m.fcf !== null ? m.fcf > 0 : null, "FCF > 0", "תזרים חופשי חיובי", "FCF חסר/שלילי", 1),
       pass(totalReturnToPe !== null ? totalReturnToPe >= 2 : null, "Total Return / P/E", "יחס נף מעל 2", "יחס נף חסר/נמוך", 1),
@@ -979,7 +1169,7 @@
     ];
 
     const result = scoreCategory(tests);
-    result.reference = { peAvg, epsGrowth, revGrowth, revToEps, totalReturnToPe };
+    result.reference = { peAvg, epsCagr, revGrowth, revToEps, totalReturnToPe };
     return result;
   }
 
@@ -999,7 +1189,7 @@
 
     row.decision = "reject";
     row.decisionText = "נפסלה";
-    if (row.passBasic && row.totalScore >= 75 && (row.value.cash.pct === null || row.value.cash.pct >= 60)) {
+    if (row.passBasic && row.dataConfidence.strongEnough && row.totalScore >= 75 && (row.value.cash.pct === null || row.value.cash.pct >= 60)) {
       row.decision = "strong";
       row.decisionText = "מועמדת חזקה";
     } else if (row.passBasic && row.totalScore >= 55) {
@@ -1023,12 +1213,13 @@
     const m = buildMetrics(raw);
     const quick = computeQuickScore(m);
     const value = computeValueScores(m, settings);
+    const dataConfidence = computeDataConfidence(m);
 
-    const minCap = settings.marketCapUS;
+    const minCap = m.isUsListed ? settings.marketCapUS : settings.marketCapDefault;
     const passBasic =
-      (m.price === null || m.price >= settings.priceMin) &&
-      (m.volume === null || m.volume >= settings.volumeMin) &&
-      (m.marketCap === null || m.marketCap >= minCap);
+      m.price !== null && m.price >= settings.priceMin &&
+      m.volume !== null && m.volume >= settings.volumeMin &&
+      m.marketCap !== null && m.marketCap >= minCap;
 
     const categoryScores = [
       value.graham.pct,
@@ -1043,7 +1234,7 @@
 
     let decision = "reject";
     let decisionText = "נפסלה";
-    if (passBasic && totalScore >= 75 && (value.cash.pct === null || value.cash.pct >= 60)) {
+    if (passBasic && dataConfidence.strongEnough && totalScore >= 75 && (value.cash.pct === null || value.cash.pct >= 60)) {
       decision = "strong";
       decisionText = "מועמדת חזקה";
     } else if (passBasic && totalScore >= 55) {
@@ -1054,7 +1245,7 @@
       decisionText = "בדיקה ידנית";
     }
 
-    return { raw, m, quick, value, totalScore, passBasic, decision, decisionText };
+    return { raw, m, quick, value, dataConfidence, totalScore, passBasic, decision, decisionText };
   }
 
   function categoryPill(cat) {
@@ -1064,31 +1255,53 @@
   }
 
   function decisionPill(row) {
-    if (row.decision === "strong") return `<span class="pill good">${row.decisionText}</span>`;
-    if (row.decision === "watch") return `<span class="pill warn">${row.decisionText}</span>`;
-    return `<span class="pill bad">${row.decisionText}</span>`;
+    if (row.decision === "strong") return `<span class="pill good">${escapeHtml(row.decisionText)}</span>`;
+    if (row.decision === "watch") return `<span class="pill warn">${escapeHtml(row.decisionText)}</span>`;
+    return `<span class="pill bad">${escapeHtml(row.decisionText)}</span>`;
   }
 
   function testListHtml(cat) {
     if (!cat || !cat.tests || !cat.tests.length) return "<li>חסר מידע</li>";
-    return cat.tests.map(t => `<li>${t.passed ? "✅" : t.passed === null ? "⚪" : "❌"} ${t.label}: ${t.text}</li>`).join("");
+    return cat.tests.map(t => `<li>${t.passed ? "✅" : t.passed === null ? "⚪" : "❌"} ${escapeHtml(t.label)}: ${escapeHtml(t.text)}</li>`).join("");
+  }
+
+  function confidencePill(confidence) {
+    if (!confidence) return `<span class="pill gray">חסר</span>`;
+    const cls = confidence.pct >= 80 ? "good" : confidence.pct >= DATA_CONFIDENCE_STRONG_MIN ? "warn" : "bad";
+    return `<span class="pill ${cls}">${confidence.pct}%</span><br><span class="small">${confidence.available}/${confidence.total}</span>`;
+  }
+
+  function dataSourcePill(row) {
+    const api = row.raw.apiCalls || 0;
+    const cache = row.raw.cacheHits || 0;
+    if (api > 0 && cache > 0) return `<span class="pill info">מעורב</span><br><span class="small">API ${api} / Cache ${cache}</span>`;
+    if (cache > 0) return `<span class="pill good">Cache</span><br><span class="small">${cache} קריאות</span>`;
+    if (api > 0) return `<span class="pill warn">API</span><br><span class="small">${api} קריאות</span>`;
+    return `<span class="pill gray">אין</span>`;
   }
 
   function renderDetails(row) {
     const e = row.raw.endpointErrors || [];
+    const sources = row.raw.endpointSources || [];
+    const missing = row.dataConfidence?.missing || [];
+    const coreMissing = row.dataConfidence?.coreMissing || [];
     return `
       <details>
         <summary>פתח פירוט</summary>
         <div class="details-box">
-          <b>Quick:</b> ${row.quick.notes.join(", ") || "אין"}<br/>
+          <b>Momentum / Market:</b> ${row.quick.notes.map(escapeHtml).join(", ") || "אין"}<br/>
           <b>Graham:</b><ul>${testListHtml(row.value.graham)}</ul>
           <b>Fisher:</b><ul>${testListHtml(row.value.fisher)}</ul>
           <b>Cash Flow:</b><ul>${testListHtml(row.value.cash)}</ul>
-          <b>Buffett:</b><ul>${testListHtml(row.value.buffett)}</ul>
-          <b>Piotroski:</b><ul>${testListHtml(row.value.piotroski)}</ul>
-          <b>Dreman:</b><ul>${testListHtml(row.value.dreman)}</ul>
-          <b>Neff:</b><ul>${testListHtml(row.value.neff)}</ul>
-          ${e.length ? `<b>נתונים חסרים/חסומים:</b><ul>${e.slice(0,8).map(x => `<li>${x}</li>`).join("")}</ul>` : ""}
+          <b>Buffett Inspired:</b><ul>${testListHtml(row.value.buffett)}</ul>
+          <b>Piotroski Approx.:</b><ul>${testListHtml(row.value.piotroski)}</ul>
+          <b>Dreman Inspired / Relative:</b><ul>${testListHtml(row.value.dreman)}</ul>
+          <b>Neff Inspired / Relative:</b><ul>${testListHtml(row.value.neff)}</ul>
+          <b>Data Confidence:</b> ${row.dataConfidence?.pct ?? 0}% (${row.dataConfidence?.available ?? 0}/${row.dataConfidence?.total ?? 0})<br/>
+          ${coreMissing.length ? `<b>שדות ליבה חסרים:</b><ul>${coreMissing.map(x => `<li>${escapeHtml(x)}</li>`).join("")}</ul>` : ""}
+          ${missing.length ? `<b>שדות חסרים:</b><ul>${missing.slice(0,10).map(x => `<li>${escapeHtml(x)}</li>`).join("")}</ul>` : ""}
+          ${sources.length ? `<b>מקור נתונים:</b><ul>${sources.map(x => `<li>${escapeHtml(x)}</li>`).join("")}</ul>` : ""}
+          ${e.length ? `<b>נתונים חסרים/חסומים:</b><ul>${e.slice(0,8).map(x => `<li>${escapeHtml(x)}</li>`).join("")}</ul>` : ""}
         </div>
       </details>
     `;
@@ -1105,7 +1318,7 @@
     });
 
     if (!rows.length) {
-      tbody.innerHTML = `<tr><td colspan="27">אין תוצאות למסנן הזה</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="29">אין תוצאות למסנן הזה</td></tr>`;
       return;
     }
 
@@ -1114,9 +1327,9 @@
       return `
         <tr>
           <td>${index + 1}</td>
-          <td class="ltr">${m.symbol || "-"}</td>
-          <td>${m.name || "-"}</td>
-          <td>${m.sector || m.industry || "-"}</td>
+          <td class="ltr">${escapeHtml(m.symbol || "-")}</td>
+          <td>${escapeHtml(m.name || "-")}</td>
+          <td>${escapeHtml(m.sector || m.industry || "-")}</td>
           <td class="num">${formatMoney(m.price)}</td>
           <td class="num">${formatPercentValue(m.changePercentage, false)}</td>
           <td class="num">${formatNumber(m.marketCap)}</td>
@@ -1137,6 +1350,8 @@
           <td>${row.value.piotroski.score === null ? `<span class="pill gray">חסר</span>` : `<span class="pill ${row.value.piotroski.score >= 7 ? "good" : row.value.piotroski.score >= 5 ? "warn" : "bad"}">${row.value.piotroski.score}/9</span>`}</td>
           <td>${categoryPill(row.value.dreman?.pct)}</td>
           <td>${categoryPill(row.value.neff?.pct)}</td>
+          <td>${confidencePill(row.dataConfidence)}</td>
+          <td>${dataSourcePill(row)}</td>
           <td class="score">${row.totalScore}</td>
           <td>${decisionPill(row)}</td>
           <td>${renderDetails(row)}</td>
@@ -1154,20 +1369,23 @@
   }
 
   function updateSummary() {
-    const checked = lastResults.length;
-    const passed = lastResults.filter(r => r.passBasic).length;
-    const strong = lastResults.filter(r => r.decision === "strong").length;
-    const avg = checked ? lastResults.reduce((s,r)=>s+r.totalScore,0)/checked : 0;
+    const summaryRows = allResults.length ? allResults : lastResults;
+    const checked = lastScanStats.checked || summaryRows.length;
+    const passed = summaryRows.filter(r => r.passBasic).length;
+    const strong = summaryRows.filter(r => r.decision === "strong").length;
+    const avg = summaryRows.length ? summaryRows.reduce((s,r)=>s+r.totalScore,0)/summaryRows.length : 0;
     document.getElementById("checkedCount").textContent = checked;
     document.getElementById("passedCount").textContent = passed;
     document.getElementById("strongCount").textContent = strong;
     document.getElementById("averageScore").textContent = avg.toFixed(1);
-    document.getElementById("bestStock").textContent = lastResults[0] ? lastResults[0].m.symbol : "-";
+    document.getElementById("bestStock").textContent = summaryRows[0] ? summaryRows[0].m.symbol : "-";
   }
 
   function resetResults() {
     lastResults = [];
-    document.getElementById("stocksTable").innerHTML = `<tr><td colspan="27">טוען נתונים...</td></tr>`;
+    allResults = [];
+    lastScanStats = { checked: 0, apiCalls: 0, cacheHits: 0, stopped: false };
+    document.getElementById("stocksTable").innerHTML = `<tr><td colspan="29">טוען נתונים...</td></tr>`;
     updateSummary();
   }
 
@@ -1176,6 +1394,7 @@
     const symbols = parseSymbols(document.getElementById("symbolsInput").value);
     const mode = document.getElementById("scanMode").value;
     const button = document.getElementById("scanButton");
+    const stopButton = document.getElementById("stopButton");
     const settings = {
       topLimit: Number(document.getElementById("topLimit").value || 15),
       marketCapUS: Number(document.getElementById("marketCapUS").value || 2_000_000_000),
@@ -1187,36 +1406,62 @@
     if (!apiKey) { setStatus("חסר API Key", "bad"); return; }
     if (!symbols.length) { setStatus("חסרה רשימת מניות", "bad"); return; }
 
+    const plan = estimateRequestPlan(symbols, mode);
+    updateRequestPreview();
+    if (mode === "deep" && symbols.length > 10) {
+      const ok = confirm(`Deep Scan על ${symbols.length} סימולים עשוי לבצע עד ${plan.total} קריאות (${plan.api} אחרי Cache נוכחי). להמשיך?`);
+      if (!ok) {
+        setStatus("הסריקה בוטלה לפני ביצוע קריאות API", "warn");
+        return;
+      }
+    }
+
     localStorage.setItem("valueStockFinderApiKey", apiKey);
     resetResults();
+    stopRequested = false;
     button.disabled = true;
+    stopButton.disabled = false;
     document.getElementById("endpointStatus").innerHTML = "";
 
     try {
       const evaluated = [];
       for (let i = 0; i < symbols.length; i++) {
+        if (stopRequested) {
+          lastScanStats.stopped = true;
+          break;
+        }
         const symbol = symbols[i];
         setStatus(`בודק ${i + 1}/${symbols.length}: ${symbol}`, "");
         const raw = await fetchStockData(symbol, apiKey, mode);
+        lastScanStats.checked++;
+        lastScanStats.apiCalls += raw.apiCalls || 0;
+        lastScanStats.cacheHits += raw.cacheHits || 0;
         if (raw.quote) evaluated.push(evaluateStock(raw, settings));
         await sleep(mode === "deep" ? 120 : 60);
       }
 
       applyRelativeStrategies(evaluated, settings);
 
-      lastResults = evaluated
-        .sort((a,b)=>b.totalScore-a.totalScore)
-        .slice(0, settings.topLimit);
+      allResults = evaluated.sort((a,b)=>b.totalScore-a.totalScore);
+      lastResults = allResults.slice(0, settings.topLimit);
 
       renderTable();
       updateSummary();
-      setStatus(`הסריקה הסתיימה. נמצאו נתונים עבור ${evaluated.length} מניות.`, "good");
+      const stopText = lastScanStats.stopped ? " הסריקה נעצרה לפי בקשתך." : "";
+      setStatus(`הסריקה הסתיימה. נבדקו ${lastScanStats.checked} סימולים ונמצאו נתונים עבור ${evaluated.length} מניות. API: ${lastScanStats.apiCalls}, Cache: ${lastScanStats.cacheHits}.${stopText}`, lastScanStats.stopped ? "warn" : "good");
     } catch (e) {
       console.error(e);
-      setStatus(e.message || "אירעה שגיאה", "bad");
-      document.getElementById("stocksTable").innerHTML = `<tr><td colspan="27">אירעה שגיאה</td></tr>`;
+      if (e.rateLimited) {
+        setStatus((e.message || "הגעת למגבלת הבקשות של FMP.") + " נסה שוב מאוחר יותר או השתמש ב־Cache קיים.", "bad");
+      } else {
+        setStatus(e.message || "אירעה שגיאה", "bad");
+      }
+      document.getElementById("stocksTable").innerHTML = `<tr><td colspan="29">אירעה שגיאה</td></tr>`;
     } finally {
       button.disabled = false;
+      stopButton.disabled = true;
+      stopRequested = false;
+      updateRequestPreview();
     }
   }
 
@@ -1225,28 +1470,23 @@
     if (!apiKey) { setStatus("חסר API Key", "bad"); return; }
     localStorage.setItem("valueStockFinderApiKey", apiKey);
 
-    const endpoints = [
-      ["Quote", "/stable/quote"],
-      ["Profile", "/stable/profile"],
-      ["Ratios TTM", "/stable/ratios-ttm"],
-      ["Key Metrics TTM", "/stable/key-metrics-ttm"],
-      ["Ratios Annual", "/stable/ratios"],
-      ["Key Metrics Annual", "/stable/key-metrics"],
-      ["Income Statement", "/stable/income-statement"],
-      ["Cash Flow", "/stable/cash-flow-statement"],
-      ["Balance Sheet", "/stable/balance-sheet-statement"],
-      ["Financial Growth", "/stable/financial-growth"]
-    ];
+    const endpoints = endpointsForMode("deep");
 
     setStatus("בודק endpoints על AAPL...", "");
     const results = [];
-    for (const [name, path] of endpoints) {
-      const res = await safeCall(path, "AAPL", apiKey, { limit: "1" });
-      results.push(`<span class="pill ${res.ok ? "good" : "bad"}">${name}: ${res.ok ? "עובד" : "חסום/שגיאה"}</span>`);
-      document.getElementById("endpointStatus").innerHTML = results.join(" ");
-      await sleep(80);
+    try {
+      for (const endpoint of endpoints) {
+        const extra = endpoint.path === "/stable/quote" ? {} : { ...endpoint.extra, limit: "1" };
+        const res = await safeCall(endpoint.path, "AAPL", apiKey, extra);
+        if (res.rateLimited) throw rateLimitError(res.detail || res.error);
+        results.push(`<span class="pill ${res.ok ? "good" : "bad"}">${escapeHtml(endpoint.label)}: ${res.ok ? "עובד" : "חסום/שגיאה"}${res.ok ? " / " + escapeHtml(res.source) : ""}</span>`);
+        document.getElementById("endpointStatus").innerHTML = results.join(" ");
+        await sleep(80);
+      }
+      setStatus("בדיקת endpoints הסתיימה", "good");
+    } catch (e) {
+      setStatus(e.rateLimited ? e.message : (e.message || "בדיקת endpoints נכשלה"), "bad");
     }
-    setStatus("בדיקת endpoints הסתיימה", "good");
   }
 
   function exportCSV() {
