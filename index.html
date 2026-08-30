@@ -926,6 +926,16 @@
     return Math.pow(last / first, 1 / years) - 1;
   }
 
+  function epsMultiYearTotalGrowth(m) {
+    const income = m.raw.income || [];
+    const epsVals = income.map(row => pickNum(row, ["eps", "epsdiluted"])).filter(v => v !== null).reverse();
+    if (epsVals.length < 4) return null;
+    const firstPeriodAvg = average(epsVals.slice(0, 2));
+    const lastPeriodAvg = average(epsVals.slice(-2));
+    if (!firstPeriodAvg || firstPeriodAvg <= 0 || lastPeriodAvg === null || lastPeriodAvg <= 0) return null;
+    return (lastPeriodAvg / firstPeriodAvg) - 1;
+  }
+
   function sumNetIncome5Y(m) {
     const income = m.raw.income || [];
     const nums = income.slice(0,5).map(row => pickNum(row, ["netIncome"])).filter(v => v !== null);
@@ -983,6 +993,7 @@
 
   function computeValueScores(m, settings) {
     const epsCagr = epsAnnualCagr(m);
+    const epsTotalGrowth = epsMultiYearTotalGrowth(m);
     const marginMin = m.isTechPharma ? 0.15 : 0.08;
     const peMax = m.isTechPharma ? 25 : 15;
     const sloan = calcSloanRatio(m);
@@ -994,7 +1005,7 @@
       pass(m.workingCapital !== null && m.longTermDebt !== null ? m.workingCapital > m.longTermDebt : null, "Working Capital > LTD", "הון חוזר גדול מחוב ארוך", "הון חוזר לא מכסה LTD / חסר", 1),
       pass(m.pe !== null ? m.pe > 5 && m.pe < peMax : null, "P/E", `P/E בטווח 5-${peMax}`, "P/E חסר/לא בטווח", 1),
       pass(m.pe !== null && m.pb !== null ? m.pe * m.pb < 22 : null, "Graham Ratio", "P/E*P/B קטן מ־22", "יחס גרהאם חסר/גבוה", 1),
-      pass(epsCagr !== null ? epsCagr > 0.03 : null, "EPS CAGR", "צמיחת EPS שנתית מעל 3%", "צמיחת EPS שנתית חסרה/נמוכה", 1)
+      pass(epsTotalGrowth !== null ? epsTotalGrowth > 0.30 : null, "EPS Total Growth", "צמיחת EPS כוללת מעל 30%", "צמיחת EPS כוללת חסרה/נמוכה", 1)
     ];
 
     const fisherCheapCount = [m.pe !== null && m.pe < peMax, m.pe !== null && m.pb !== null && m.pe * m.pb < 22, m.ps !== null && m.ps < 1.5].filter(Boolean).length;
@@ -1034,6 +1045,7 @@
       dreman: { score: null, max: null, pct: null, tests: [] },
       neff: { score: null, max: null, pct: null, tests: [] },
       epsCagr,
+      epsTotalGrowth,
       sloan,
       netIncome5Y
     };
@@ -1422,9 +1434,9 @@
     button.disabled = true;
     stopButton.disabled = false;
     document.getElementById("endpointStatus").innerHTML = "";
+    const evaluated = [];
 
     try {
-      const evaluated = [];
       for (let i = 0; i < symbols.length; i++) {
         if (stopRequested) {
           lastScanStats.stopped = true;
@@ -1452,11 +1464,20 @@
     } catch (e) {
       console.error(e);
       if (e.rateLimited) {
-        setStatus((e.message || "הגעת למגבלת הבקשות של FMP.") + " נסה שוב מאוחר יותר או השתמש ב־Cache קיים.", "bad");
+        if (evaluated.length) {
+          applyRelativeStrategies(evaluated, settings);
+          allResults = evaluated.sort((a,b)=>b.totalScore-a.totalScore);
+          lastResults = allResults.slice(0, settings.topLimit);
+          renderTable();
+          updateSummary();
+        } else {
+          document.getElementById("stocksTable").innerHTML = `<tr><td colspan="29">לא נאספו תוצאות לפני מגבלת ה־API</td></tr>`;
+        }
+        setStatus((e.message || "הגעת למגבלת הבקשות של FMP.") + ` מוצגות ${evaluated.length} תוצאות שנאספו לפני העצירה. נסה שוב מאוחר יותר או השתמש ב־Cache קיים.`, "warn");
       } else {
         setStatus(e.message || "אירעה שגיאה", "bad");
+        document.getElementById("stocksTable").innerHTML = `<tr><td colspan="29">אירעה שגיאה</td></tr>`;
       }
-      document.getElementById("stocksTable").innerHTML = `<tr><td colspan="29">אירעה שגיאה</td></tr>`;
     } finally {
       button.disabled = false;
       stopButton.disabled = true;
