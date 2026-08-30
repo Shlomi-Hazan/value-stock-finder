@@ -175,7 +175,7 @@
       width: 100%;
       border-collapse: collapse;
       background: white;
-      min-width: 1700px;
+      min-width: 2300px;
     }
 
     th, td {
@@ -316,6 +316,33 @@
     </div>
 
     <br />
+    <h3>הנחות Estimated Fair Value / DCF Estimate</h3>
+    <p class="small">
+      הערכת DCF היא אומדן לימודי לפי ההנחות כאן והנתונים הזמינים, ולא המלצה פיננסית.
+    </p>
+    <div class="grid">
+      <label>
+        Discount Rate %
+        <input type="number" id="dcfDiscountRate" value="10" min="1" max="30" step="0.1" />
+      </label>
+
+      <label>
+        Terminal Growth %
+        <input type="number" id="dcfTerminalGrowth" value="2.5" min="0" max="8" step="0.1" />
+      </label>
+
+      <label>
+        Projection Years
+        <input type="number" id="dcfProjectionYears" value="5" min="1" max="10" step="1" />
+      </label>
+
+      <label>
+        Margin of Safety %
+        <input type="number" id="dcfMarginSafety" value="25" min="0" max="80" step="1" />
+      </label>
+    </div>
+
+    <br />
     <label>
       רשימת מניות לבדיקה
       <textarea id="symbolsInput" oninput="updateRequestPreview()"></textarea>
@@ -387,6 +414,13 @@
             <th>Piotroski Approx.</th>
             <th>Dreman Inspired / Relative</th>
             <th>Neff Inspired / Relative</th>
+            <th>Relative Basis</th>
+            <th>Fair Value</th>
+            <th>Current Price</th>
+            <th>Upside to Fair Value %</th>
+            <th>Discount from Fair Value %</th>
+            <th>Margin of Safety</th>
+            <th>DCF Confidence</th>
             <th>Data Confidence</th>
             <th>מקור נתונים</th>
             <th>ציון כולל</th>
@@ -395,7 +429,7 @@
           </tr>
         </thead>
         <tbody id="stocksTable">
-          <tr><td colspan="29">עדיין לא בוצעה סריקה</td></tr>
+          <tr><td colspan="36">עדיין לא בוצעה סריקה</td></tr>
         </tbody>
       </table>
     </div>
@@ -436,6 +470,8 @@
   const QUOTE_CACHE_TTL_MS = 10 * 60 * 1000;
   const FUNDAMENTAL_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
   const DATA_CONFIDENCE_STRONG_MIN = 70;
+  const RELATIVE_MIN_PEERS = 3;
+  const DCF_MAX_GROWTH_RATE = 0.08;
 
   const DEEP_ENDPOINTS = [
     { key: "profile", label: "Profile", path: "/stable/profile", extra: {} },
@@ -835,7 +871,9 @@
     const totalEquity = pickNum(bal0, ["totalStockholdersEquity", "totalEquity"]);
     const currentAssets = pickNum(bal0, ["totalCurrentAssets"]);
     const currentLiabilities = pickNum(bal0, ["totalCurrentLiabilities"]);
-    const shares = pickNum(bal0, ["commonStockSharesOutstanding"]);
+    const shares = pickNum(bal0, ["commonStockSharesOutstanding"])
+      ?? pickNum(q, ["sharesOutstanding"])
+      ?? pickNum(p, ["sharesOutstanding", "weightedAverageShsOut", "weightedAverageShsOutDil"]);
     const workingCapital = currentAssets !== null && currentLiabilities !== null ? currentAssets - currentLiabilities : null;
 
     const revenueGrowth = pickNum(growth0, ["growthRevenue", "revenueGrowth"]);
@@ -983,6 +1021,152 @@
     };
   }
 
+  function annualCagrFromValues(values) {
+    const nums = values.map(numberOrNull).filter(v => v !== null).reverse();
+    if (nums.length < 2) return null;
+    const first = nums[0];
+    const last = nums[nums.length - 1];
+    const years = nums.length - 1;
+    if (first <= 0 || last <= 0 || years <= 0) return null;
+    return Math.pow(last / first, 1 / years) - 1;
+  }
+
+  function fcfValues(m) {
+    return (m.raw.cash || []).map(row => pickNum(row, ["freeCashFlow"])).filter(v => v !== null);
+  }
+
+  function dcfGrowthEstimate(m) {
+    const fcfCagr = annualCagrFromValues(fcfValues(m));
+    const candidates = [
+      { value: fcfCagr, label: "historical FCF CAGR" },
+      { value: m.fcfGrowth, label: "FMP FCF growth" },
+      { value: m.revenueGrowth, label: "revenue growth" }
+    ].filter(item => item.value !== null && Number.isFinite(item.value));
+
+    if (!candidates.length) {
+      return { rawGrowth: null, growthRate: 0, source: "fallback 0% growth" };
+    }
+
+    const selected = candidates[0];
+    return {
+      rawGrowth: selected.value,
+      growthRate: clamp(selected.value, 0, DCF_MAX_GROWTH_RATE),
+      source: selected.label
+    };
+  }
+
+  function dcfBaseFcf(m) {
+    const values = fcfValues(m);
+    if (!values.length) return { value: null, source: "missing FCF", years: 0, latest: null };
+    const latest = values[0];
+    const avg = average(values);
+    if (values.length >= 2 && avg !== null) {
+      return { value: avg, source: `average FCF over ${values.length} years`, years: values.length, latest };
+    }
+    return { value: latest, source: "latest FCF", years: values.length, latest };
+  }
+
+  function computeDcfEstimate(m, dcfSettings) {
+    const base = dcfBaseFcf(m);
+    const growth = dcfGrowthEstimate(m);
+    const discountRate = dcfSettings.discountRate;
+    const terminalGrowth = dcfSettings.terminalGrowth;
+    const projectionYears = dcfSettings.projectionYears;
+    const marginSafetyRequirement = dcfSettings.marginSafetyRequirement;
+    const reasons = [];
+
+    if (discountRate <= terminalGrowth) reasons.push("Discount rate must be greater than terminal growth.");
+    if (base.value === null || base.value <= 0) reasons.push("Not enough data: FCF must be positive.");
+    if (m.shares === null || m.shares <= 0) reasons.push("Not enough data: shares outstanding are missing.");
+
+    const confidenceTests = [
+      discountRate > terminalGrowth,
+      base.value !== null && base.value > 0,
+      m.shares !== null && m.shares > 0,
+      m.price !== null && m.price > 0,
+      base.years >= 3,
+      growth.rawGrowth !== null
+    ];
+    const confidenceScore = confidenceTests.filter(Boolean).length;
+    const confidencePct = Math.round((confidenceScore / confidenceTests.length) * 100);
+
+    if (reasons.length) {
+      return {
+        calculable: false,
+        fairValuePerShare: null,
+        estimatedValue: null,
+        upsidePct: null,
+        discountFromFairValuePct: null,
+        marginOfSafetyPct: null,
+        marginPassed: null,
+        confidencePct,
+        confidenceScore,
+        confidenceMax: confidenceTests.length,
+        baseFcf: base.value,
+        baseFcfSource: base.source,
+        latestFcf: base.latest,
+        fcfYears: base.years,
+        growthRate: growth.growthRate,
+        rawGrowth: growth.rawGrowth,
+        growthSource: growth.source,
+        discountRate,
+        terminalGrowth,
+        projectionYears,
+        marginSafetyRequirement,
+        shares: m.shares,
+        reasons
+      };
+    }
+
+    let pvProjectedFcf = 0;
+    let projectedFcf = base.value;
+    for (let year = 1; year <= projectionYears; year++) {
+      projectedFcf *= (1 + growth.growthRate);
+      pvProjectedFcf += projectedFcf / Math.pow(1 + discountRate, year);
+    }
+
+    const terminalValue = projectedFcf * (1 + terminalGrowth) / (discountRate - terminalGrowth);
+    const pvTerminalValue = terminalValue / Math.pow(1 + discountRate, projectionYears);
+    const estimatedValue = pvProjectedFcf + pvTerminalValue;
+    const fairValuePerShare = estimatedValue / m.shares;
+    const upsidePct = m.price !== null && m.price > 0 ? (fairValuePerShare / m.price) - 1 : null;
+    const discountFromFairValuePct = m.price !== null && fairValuePerShare > 0 ? (fairValuePerShare - m.price) / fairValuePerShare : null;
+    const marginPassed = discountFromFairValuePct !== null ? discountFromFairValuePct >= marginSafetyRequirement : null;
+
+    if (m.price === null || m.price <= 0) reasons.push("Fair value calculated, but current price is missing.");
+    if (growth.rawGrowth !== null && growth.rawGrowth > DCF_MAX_GROWTH_RATE) reasons.push("Growth rate was capped conservatively at 8%.");
+    if (growth.rawGrowth !== null && growth.rawGrowth < 0) reasons.push("Negative historical growth was floored at 0%.");
+    if (growth.rawGrowth === null) reasons.push("No growth data; used 0% growth.");
+    if (marginPassed === false) reasons.push("Margin of safety requirement was not met.");
+    if (marginPassed === true) reasons.push("Margin of safety requirement was met.");
+
+    return {
+      calculable: true,
+      fairValuePerShare,
+      estimatedValue,
+      upsidePct,
+      discountFromFairValuePct,
+      marginOfSafetyPct: discountFromFairValuePct,
+      marginPassed,
+      confidencePct,
+      confidenceScore,
+      confidenceMax: confidenceTests.length,
+      baseFcf: base.value,
+      baseFcfSource: base.source,
+      latestFcf: base.latest,
+      fcfYears: base.years,
+      growthRate: growth.growthRate,
+      rawGrowth: growth.rawGrowth,
+      growthSource: growth.source,
+      discountRate,
+      terminalGrowth,
+      projectionYears,
+      marginSafetyRequirement,
+      shares: m.shares,
+      reasons
+    };
+  }
+
   function scoreCategory(tests) {
     const available = tests.filter(t => t.passed !== null);
     const max = available.reduce((s,t)=>s+t.max,0);
@@ -1114,6 +1298,15 @@
     return a / b;
   }
 
+  function clamp(value, min, max) {
+    return Math.min(max, Math.max(min, value));
+  }
+
+  function parsePercentInput(id, fallback) {
+    const value = numberOrNull(document.getElementById(id)?.value);
+    return (value === null ? fallback : value) / 100;
+  }
+
   function priceToOperatingCashFlow(m) {
     if (m.operatingCashFlowPerShare !== null && m.operatingCashFlowPerShare > 0 && m.price !== null) {
       return m.price / m.operatingCashFlowPerShare;
@@ -1124,20 +1317,40 @@
     return null;
   }
 
-  function sectorReference(rows, row, getter) {
-    const sameSector = rows.filter(r => r !== row && r.m.sector && row.m.sector && r.m.sector === row.m.sector).map(getter);
-    const sectorAvg = positiveMean(sameSector);
-    if (sectorAvg !== null && sameSector.filter(v => numberOrNull(v) !== null && v > 0).length >= 3) return sectorAvg;
-    return positiveMean(rows.filter(r => r !== row).map(getter)) ?? positiveMean(rows.map(getter));
+  function resolveRelativeBasis(row, rows) {
+    const industryPeers = rows.filter(r => r !== row && r.m.industry && row.m.industry && r.m.industry === row.m.industry);
+    if (industryPeers.length >= RELATIVE_MIN_PEERS) {
+      return { type: "industry", label: "Industry peers in scanned list", peerCount: industryPeers.length, peerRows: industryPeers };
+    }
+
+    const sectorPeers = rows.filter(r => r !== row && r.m.sector && row.m.sector && r.m.sector === row.m.sector);
+    if (sectorPeers.length >= RELATIVE_MIN_PEERS) {
+      return { type: "sector", label: "Sector peers in scanned list", peerCount: sectorPeers.length, peerRows: sectorPeers };
+    }
+
+    const fallbackPeers = rows.filter(r => r !== row);
+    return {
+      type: "scanned",
+      label: "Scanned list fallback",
+      peerCount: fallbackPeers.length,
+      peerRows: fallbackPeers
+    };
+  }
+
+  function relativeReference(row, getter) {
+    const basis = row.relativeBasis || resolveRelativeBasis(row, [row]);
+    return positiveMean(basis.peerRows.map(getter));
   }
 
   function computeDreman(row, rows, settings) {
     const m = row.m;
-    const peAvg = sectorReference(rows, row, r => r.m.pe);
-    const pbAvg = sectorReference(rows, row, r => r.m.pb);
+    if (!row.relativeBasis) row.relativeBasis = resolveRelativeBasis(row, rows);
+    const basisLabel = row.relativeBasis.label;
+    const peAvg = relativeReference(row, r => r.m.pe);
+    const pbAvg = relativeReference(row, r => r.m.pb);
     const pocf = priceToOperatingCashFlow(m);
-    const pocfAvg = sectorReference(rows, row, r => priceToOperatingCashFlow(r.m));
-    const divAvg = positiveMean(rows.filter(r => r !== row).map(r => r.m.dividendYield)) ?? positiveMean(rows.map(r => r.m.dividendYield));
+    const pocfAvg = relativeReference(row, r => priceToOperatingCashFlow(r.m));
+    const divAvg = relativeReference(row, r => r.m.dividendYield);
 
     const cheapTestsRaw = [
       m.pe !== null && peAvg !== null ? m.pe <= peAvg * 0.80 : null,
@@ -1145,26 +1358,28 @@
       pocf !== null && pocfAvg !== null ? pocf <= pocfAvg * 0.80 : null,
       m.dividendYield !== null && divAvg !== null ? m.dividendYield >= divAvg : null
     ];
+    const availableCheapTests = cheapTestsRaw.filter(v => v !== null).length;
     const cheapCount = cheapTestsRaw.filter(Boolean).length;
 
     const tests = [
-      pass(cheapCount >= 2, "2 מכפילים זולים יחסית", "לפחות 2 מכפילים זולים בכ־20% מול המדגם/סקטור", "לא מספיק זולה יחסית", 2),
-      pass(m.marketCap !== null ? m.marketCap >= settings.marketCapUS : null, "Market Cap", "עוברת סף גודל", "שווי שוק נמוך/חסר", 1),
+      pass(availableCheapTests ? cheapCount >= 2 : null, "2 מכפילים זולים יחסית", `לפחות 2 מכפילים זולים בכ־20% מול ${basisLabel}`, "לא מספיק זולה יחסית", 2),
+      pass(m.marketCap !== null ? m.marketCap >= (m.isUsListed ? settings.marketCapUS : settings.marketCapDefault) : null, "Market Cap", "עוברת סף גודל", "שווי שוק נמוך/חסר", 1),
       pass(m.currentRatio !== null ? m.currentRatio > 2 : null, "CR > 2", "יחס שוטף מעל 2", "יחס שוטף חסר/נמוך", 1),
-      pass(m.dividendYield !== null && divAvg !== null ? m.dividendYield >= divAvg : null, "Dividend Yield", "דיבידנד מעל ממוצע המדגם", "דיבידנד נמוך/חסר", 1),
+      pass(m.dividendYield !== null && divAvg !== null ? m.dividendYield >= divAvg : null, "Dividend Yield", `דיבידנד מעל ממוצע ${basisLabel}`, "דיבידנד נמוך/חסר", 1),
       pass(m.roe !== null ? m.roe > 0.10 : null, "ROE > 10%", "ROE מעל 10%", "ROE חסר/נמוך", 1),
       pass(m.debtEquity !== null ? m.debtEquity < 0.50 : null, "Debt/Equity", "חוב סביר עד 0.5", "חוב גבוה/חסר", 1),
       pass(row.value.epsCagr !== null ? row.value.epsCagr > 0 : null, "EPS CAGR", "צמיחת EPS שנתית חיובית", "צמיחת EPS שנתית חסרה/שלילית", 1)
     ];
 
     const result = scoreCategory(tests);
-    result.reference = { peAvg, pbAvg, pocfAvg, divAvg, pocf, cheapCount };
+    result.reference = { peAvg, pbAvg, pocfAvg, divAvg, pocf, cheapCount, basis: basisLabel, peerCount: row.relativeBasis.peerCount };
     return result;
   }
 
   function computeNeff(row, rows) {
     const m = row.m;
-    const peAvg = positiveMean(rows.filter(r => r !== row).map(r => r.m.pe)) ?? positiveMean(rows.map(r => r.m.pe));
+    if (!row.relativeBasis) row.relativeBasis = resolveRelativeBasis(row, rows);
+    const peAvg = relativeReference(row, r => r.m.pe);
     const epsCagr = row.value.epsCagr;
     const revGrowth = m.revenueGrowth;
     const divYield = m.dividendYield ?? 0;
@@ -1172,7 +1387,7 @@
     const revToEps = (revGrowth !== null && epsCagr !== null && Math.abs(epsCagr) > 0.0001) ? revGrowth / epsCagr : null;
 
     const tests = [
-      pass(m.pe !== null && peAvg !== null ? m.pe <= peAvg * 0.60 : null, "P/E נמוך מאוד", "P/E נמוך בכ־40% לפחות מול המדגם", "P/E לא נמוך מספיק/חסר", 2),
+      pass(m.pe !== null && peAvg !== null ? m.pe <= peAvg * 0.60 : null, "P/E נמוך מאוד", `P/E נמוך בכ־40% לפחות מול ${row.relativeBasis.label}`, "P/E לא נמוך מספיק/חסר", 2),
       pass(epsCagr !== null ? epsCagr >= 0.07 && epsCagr <= 0.22 : null, "EPS CAGR 7%-22%", "צמיחה שנתית מתונה ובריאה", "צמיחה שנתית חסרה/מחוץ לטווח", 2),
       pass(revToEps !== null ? revToEps > 0.70 : null, "Revenue/EPS Growth", "הכנסות מגבות את צמיחת הרווח", "הצמיחה לא מגובה בהכנסות/חסר", 1),
       pass(m.fcf !== null ? m.fcf > 0 : null, "FCF > 0", "תזרים חופשי חיובי", "FCF חסר/שלילי", 1),
@@ -1181,7 +1396,7 @@
     ];
 
     const result = scoreCategory(tests);
-    result.reference = { peAvg, epsCagr, revGrowth, revToEps, totalReturnToPe };
+    result.reference = { peAvg, epsCagr, revGrowth, revToEps, totalReturnToPe, basis: row.relativeBasis.label, peerCount: row.relativeBasis.peerCount };
     return result;
   }
 
@@ -1215,6 +1430,7 @@
 
   function applyRelativeStrategies(rows, settings) {
     rows.forEach(row => {
+      row.relativeBasis = resolveRelativeBasis(row, rows);
       row.value.dreman = computeDreman(row, rows, settings);
       row.value.neff = computeNeff(row, rows);
       recomputeTotalAndDecision(row, settings);
@@ -1226,6 +1442,7 @@
     const quick = computeQuickScore(m);
     const value = computeValueScores(m, settings);
     const dataConfidence = computeDataConfidence(m);
+    const dcf = computeDcfEstimate(m, settings.dcf);
 
     const minCap = m.isUsListed ? settings.marketCapUS : settings.marketCapDefault;
     const passBasic =
@@ -1257,7 +1474,7 @@
       decisionText = "בדיקה ידנית";
     }
 
-    return { raw, m, quick, value, dataConfidence, totalScore, passBasic, decision, decisionText };
+    return { raw, m, quick, value, dataConfidence, dcf, totalScore, passBasic, decision, decisionText };
   }
 
   function categoryPill(cat) {
@@ -1292,6 +1509,46 @@
     return `<span class="pill gray">אין</span>`;
   }
 
+  function relativeBasisCell(row) {
+    const basis = row.relativeBasis;
+    if (!basis) return `<span class="pill gray">Relative basis:<br>Scanned list fallback</span>`;
+    const cls = basis.type === "industry" ? "good" : basis.type === "sector" ? "info" : "warn";
+    return `<span class="pill ${cls}">Relative basis:<br>${escapeHtml(basis.label)}</span><br><span class="small">${basis.peerCount} peers</span>`;
+  }
+
+  function dcfMissingCell() {
+    return `<span class="muted">חסר נתון</span>`;
+  }
+
+  function dcfConfidencePill(dcf) {
+    if (!dcf) return `<span class="pill gray">Not enough data</span>`;
+    const cls = dcf.calculable && dcf.confidencePct >= 80 ? "good" : dcf.confidencePct >= 50 ? "warn" : "bad";
+    const label = dcf.calculable ? `${dcf.confidencePct}%` : "Not enough data";
+    return `<span class="pill ${cls}">${label}</span><br><span class="small">${dcf.confidenceScore}/${dcf.confidenceMax}</span>`;
+  }
+
+  function dcfMarginCell(dcf) {
+    if (!dcf || dcf.marginPassed === null) return dcfMissingCell();
+    const cls = dcf.marginPassed ? "good" : "warn";
+    const label = dcf.marginPassed ? "עובר" : "לא עובר";
+    return `<span class="pill ${cls}">${label}</span><br>${formatPercentValue(dcf.marginOfSafetyPct, true)}<br><span class="small">${formatPercentValue(dcf.marginSafetyRequirement, true)} נדרש</span>`;
+  }
+
+  function dcfDetailsHtml(dcf) {
+    if (!dcf) return "<li>Not enough data</li>";
+    const reasonList = dcf.reasons.length ? dcf.reasons.map(reason => `<li>${escapeHtml(reason)}</li>`).join("") : "<li>DCF calculated with available assumptions.</li>";
+    return `
+      <li>Base FCF used: ${dcf.baseFcf === null ? "חסר נתון" : formatNumber(dcf.baseFcf)} (${escapeHtml(dcf.baseFcfSource)})</li>
+      <li>Latest FCF: ${dcf.latestFcf === null ? "חסר נתון" : formatNumber(dcf.latestFcf)}</li>
+      <li>Growth rate used: ${formatPercentValue(dcf.growthRate, true)} (${escapeHtml(dcf.growthSource)})</li>
+      <li>Discount rate: ${formatPercentValue(dcf.discountRate, true)}</li>
+      <li>Terminal growth: ${formatPercentValue(dcf.terminalGrowth, true)}</li>
+      <li>Projection years: ${dcf.projectionYears}</li>
+      <li>Shares used: ${dcf.shares === null ? "חסר נתון" : formatNumber(dcf.shares)}</li>
+      <li>Why DCF passed/failed:<ul>${reasonList}</ul></li>
+    `;
+  }
+
   function renderDetails(row) {
     const e = row.raw.endpointErrors || [];
     const sources = row.raw.endpointSources || [];
@@ -1309,6 +1566,8 @@
           <b>Piotroski Approx.:</b><ul>${testListHtml(row.value.piotroski)}</ul>
           <b>Dreman Inspired / Relative:</b><ul>${testListHtml(row.value.dreman)}</ul>
           <b>Neff Inspired / Relative:</b><ul>${testListHtml(row.value.neff)}</ul>
+          <b>Relative basis:</b> ${escapeHtml(row.relativeBasis?.label || "Scanned list fallback")} (${row.relativeBasis?.peerCount ?? 0} peers)<br/>
+          <b>Estimated Fair Value / DCF Estimate:</b><ul>${dcfDetailsHtml(row.dcf)}</ul>
           <b>Data Confidence:</b> ${row.dataConfidence?.pct ?? 0}% (${row.dataConfidence?.available ?? 0}/${row.dataConfidence?.total ?? 0})<br/>
           ${coreMissing.length ? `<b>שדות ליבה חסרים:</b><ul>${coreMissing.map(x => `<li>${escapeHtml(x)}</li>`).join("")}</ul>` : ""}
           ${missing.length ? `<b>שדות חסרים:</b><ul>${missing.slice(0,10).map(x => `<li>${escapeHtml(x)}</li>`).join("")}</ul>` : ""}
@@ -1330,7 +1589,7 @@
     });
 
     if (!rows.length) {
-      tbody.innerHTML = `<tr><td colspan="29">אין תוצאות למסנן הזה</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="36">אין תוצאות למסנן הזה</td></tr>`;
       return;
     }
 
@@ -1362,6 +1621,13 @@
           <td>${row.value.piotroski.score === null ? `<span class="pill gray">חסר</span>` : `<span class="pill ${row.value.piotroski.score >= 7 ? "good" : row.value.piotroski.score >= 5 ? "warn" : "bad"}">${row.value.piotroski.score}/9</span>`}</td>
           <td>${categoryPill(row.value.dreman?.pct)}</td>
           <td>${categoryPill(row.value.neff?.pct)}</td>
+          <td>${relativeBasisCell(row)}</td>
+          <td class="num">${row.dcf?.fairValuePerShare === null ? dcfMissingCell() : formatMoney(row.dcf.fairValuePerShare)}</td>
+          <td class="num">${m.price !== null ? formatMoney(m.price) : dcfMissingCell()}</td>
+          <td class="num">${row.dcf?.upsidePct === null ? dcfMissingCell() : formatPercentValue(row.dcf.upsidePct, true)}</td>
+          <td class="num">${row.dcf?.discountFromFairValuePct === null ? dcfMissingCell() : formatPercentValue(row.dcf.discountFromFairValuePct, true)}</td>
+          <td>${dcfMarginCell(row.dcf)}</td>
+          <td>${dcfConfidencePill(row.dcf)}</td>
           <td>${confidencePill(row.dataConfidence)}</td>
           <td>${dataSourcePill(row)}</td>
           <td class="score">${row.totalScore}</td>
@@ -1397,7 +1663,7 @@
     lastResults = [];
     allResults = [];
     lastScanStats = { checked: 0, apiCalls: 0, cacheHits: 0, stopped: false };
-    document.getElementById("stocksTable").innerHTML = `<tr><td colspan="29">טוען נתונים...</td></tr>`;
+    document.getElementById("stocksTable").innerHTML = `<tr><td colspan="36">טוען נתונים...</td></tr>`;
     updateSummary();
   }
 
@@ -1412,7 +1678,13 @@
       marketCapUS: Number(document.getElementById("marketCapUS").value || 2_000_000_000),
       marketCapDefault: Number(document.getElementById("marketCapDefault").value || 1_000_000_000),
       volumeMin: Number(document.getElementById("volumeMin").value || 0),
-      priceMin: Number(document.getElementById("priceMin").value || 0)
+      priceMin: Number(document.getElementById("priceMin").value || 0),
+      dcf: {
+        discountRate: parsePercentInput("dcfDiscountRate", 10),
+        terminalGrowth: parsePercentInput("dcfTerminalGrowth", 2.5),
+        projectionYears: Math.round(clamp(numberOrNull(document.getElementById("dcfProjectionYears").value) ?? 5, 1, 10)),
+        marginSafetyRequirement: parsePercentInput("dcfMarginSafety", 25)
+      }
     };
 
     if (!apiKey) { setStatus("חסר API Key", "bad"); return; }
@@ -1471,12 +1743,12 @@
           renderTable();
           updateSummary();
         } else {
-          document.getElementById("stocksTable").innerHTML = `<tr><td colspan="29">לא נאספו תוצאות לפני מגבלת ה־API</td></tr>`;
+          document.getElementById("stocksTable").innerHTML = `<tr><td colspan="36">לא נאספו תוצאות לפני מגבלת ה־API</td></tr>`;
         }
         setStatus((e.message || "הגעת למגבלת הבקשות של FMP.") + ` מוצגות ${evaluated.length} תוצאות שנאספו לפני העצירה. נסה שוב מאוחר יותר או השתמש ב־Cache קיים.`, "warn");
       } else {
         setStatus(e.message || "אירעה שגיאה", "bad");
-        document.getElementById("stocksTable").innerHTML = `<tr><td colspan="29">אירעה שגיאה</td></tr>`;
+        document.getElementById("stocksTable").innerHTML = `<tr><td colspan="36">אירעה שגיאה</td></tr>`;
       }
     } finally {
       button.disabled = false;
@@ -1512,7 +1784,7 @@
 
   function exportCSV() {
     if (!lastResults.length) { setStatus("אין תוצאות לייצוא", "warn"); return; }
-    const headers = ["rank", "symbol", "name", "sector", "price", "marketCap", "pe", "ps", "pb", "roe", "roa", "debtEquity", "currentRatio", "fcf", "paysDividend", "dividendAmount", "dividendYield", "quickScore", "graham", "fisher", "cash", "buffett", "piotroski", "dreman", "neff", "totalScore", "decision"];
+    const headers = ["rank", "symbol", "name", "sector", "price", "marketCap", "pe", "ps", "pb", "roe", "roa", "debtEquity", "currentRatio", "fcf", "paysDividend", "dividendAmount", "dividendYield", "quickScore", "graham", "fisher", "cash", "buffett", "piotroski", "dreman", "neff", "relativeBasis", "relativePeerCount", "fairValue", "currentPrice", "upsideToFairValue", "discountFromFairValue", "marginOfSafetyPassed", "dcfConfidence", "dcfBaseFcf", "dcfGrowthRate", "dcfDiscountRate", "dcfTerminalGrowth", "dcfProjectionYears", "totalScore", "decision"];
     const lines = [headers.join(",")];
     lastResults.forEach((row, i) => {
       const m = row.m;
@@ -1542,6 +1814,19 @@
         row.value.piotroski.score,
         row.value.dreman?.pct,
         row.value.neff?.pct,
+        row.relativeBasis?.label,
+        row.relativeBasis?.peerCount,
+        row.dcf?.fairValuePerShare,
+        m.price,
+        row.dcf?.upsidePct,
+        row.dcf?.discountFromFairValuePct,
+        row.dcf?.marginPassed === null ? "" : (row.dcf?.marginPassed ? "yes" : "no"),
+        row.dcf?.confidencePct,
+        row.dcf?.baseFcf,
+        row.dcf?.growthRate,
+        row.dcf?.discountRate,
+        row.dcf?.terminalGrowth,
+        row.dcf?.projectionYears,
         row.totalScore,
         row.decisionText
       ].map(v => `"${String(v ?? "").replaceAll('"', '""')}"`);
