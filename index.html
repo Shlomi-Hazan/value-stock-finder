@@ -1320,12 +1320,12 @@
   function resolveRelativeBasis(row, rows) {
     const industryPeers = rows.filter(r => r !== row && r.m.industry && row.m.industry && r.m.industry === row.m.industry);
     if (industryPeers.length >= RELATIVE_MIN_PEERS) {
-      return { type: "industry", label: "Industry", peerCount: industryPeers.length, peerRows: industryPeers };
+      return { type: "industry", label: "Industry peers in scanned list", peerCount: industryPeers.length, peerRows: industryPeers };
     }
 
     const sectorPeers = rows.filter(r => r !== row && r.m.sector && row.m.sector && r.m.sector === row.m.sector);
     if (sectorPeers.length >= RELATIVE_MIN_PEERS) {
-      return { type: "sector", label: "Sector", peerCount: sectorPeers.length, peerRows: sectorPeers };
+      return { type: "sector", label: "Sector peers in scanned list", peerCount: sectorPeers.length, peerRows: sectorPeers };
     }
 
     const fallbackPeers = rows.filter(r => r !== row);
@@ -1363,7 +1363,7 @@
 
     const tests = [
       pass(availableCheapTests ? cheapCount >= 2 : null, "2 מכפילים זולים יחסית", `לפחות 2 מכפילים זולים בכ־20% מול ${basisLabel}`, "לא מספיק זולה יחסית", 2),
-      pass(m.marketCap !== null ? m.marketCap >= settings.marketCapUS : null, "Market Cap", "עוברת סף גודל", "שווי שוק נמוך/חסר", 1),
+      pass(m.marketCap !== null ? m.marketCap >= (m.isUsListed ? settings.marketCapUS : settings.marketCapDefault) : null, "Market Cap", "עוברת סף גודל", "שווי שוק נמוך/חסר", 1),
       pass(m.currentRatio !== null ? m.currentRatio > 2 : null, "CR > 2", "יחס שוטף מעל 2", "יחס שוטף חסר/נמוך", 1),
       pass(m.dividendYield !== null && divAvg !== null ? m.dividendYield >= divAvg : null, "Dividend Yield", `דיבידנד מעל ממוצע ${basisLabel}`, "דיבידנד נמוך/חסר", 1),
       pass(m.roe !== null ? m.roe > 0.10 : null, "ROE > 10%", "ROE מעל 10%", "ROE חסר/נמוך", 1),
