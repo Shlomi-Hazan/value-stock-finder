@@ -15,23 +15,30 @@ Last updated: 2026-10-08
 | 6 | **PR #6: Two-stage scan and larger universe controls** (merged 2026-10-08) | `e553b59` | Two-stage scan mode (quote-only Stage 1 up to 200 symbols, FMP Deep Scan of the top N ≤ 30), Stage 1 max / Top N settings, per-stage request preview and confirmation, stage status and summary, stop and rate-limit handling per stage, CSV `scanMode`/`scanStage`/`stage1Rank`, expanded US presets (90 / 95 / 60). Yahoo is blocked for Two-stage. **Scoring rules unchanged.** Follow-up: clarified that Stage 1-only fallback rows are preliminary quote-level output (the preliminary `evaluateStock()` score, not final value scores) in the status, details, pill and summary; shortened the UI label to "Two-stage — Quick then Deep". |
 | 7 | **PR #7: Harden two-stage scan after merge** (merged 2026-10-08) | `dceef78` | Doc consistency fixes (UI label, display-limit note, history SHAs) and a clearer status when a rate limit hits the very first Stage 1 call. No scoring changes. |
 | 8 | **PR #8: Split app into static files** (merged 2026-10-08) | `389f48b` | `index.html` reduced to markup; CSS moved to `styles.css`; JavaScript moved verbatim into 12 classic scripts in `js/`, loaded with `defer` in a fixed order ([ADR-0004](decisions/ADR-0004-split-static-assets.md) supersedes ADR-0001). **No behavior, UI, scoring, DCF, provider or CSV changes.** No build step, dependencies or backend. |
-| 9 | **PR #9: Polish settings layout and visual hierarchy** | — | UI-only polish in `index.html` and `styles.css`: settings grouped into sections (data source, stocks, scan mode, collapsible basic filters and DCF, actions); helper microcopy; a green primary Scan button with quieter grouped secondary actions and a red destructive action; system-font, Apple-inspired calm styling; segmented-control result tabs; cleaner summary tiles; empty-state table message now visible. Follow-up visual-identity pass:
-  - indigo/violet palette on a lavender canvas
-  - hero with badge, feature chips and a labeled margin-of-safety concept illustration
-  - numbered workflow strip (in-page anchors) and matching section numbers
-  - accent rails on the main panels
-  - action dock with an inset preview/status card
-  - green-only "strong candidates" tile
-  - table scroll-edge shadows and a styled empty state
-  - all text meets WCAG AA contrast
+| 9 | **PR #9: Polish settings layout and visual hierarchy** (merged 2026-10-08) | `ccb5e3d` | UI-only polish in `index.html` and `styles.css`: settings grouped into sections (data source, stocks, scan mode, collapsible basic filters and DCF, actions); helper microcopy; a green primary Scan button with quieter grouped secondary actions and a red destructive action; system-font, Apple-inspired calm styling; segmented-control result tabs; cleaner summary tiles; empty-state table message now visible. Two follow-up visual passes are listed under [PR #9 visual passes](#pr-9-visual-passes). **No JS, scoring, DCF, provider, scan, cache, table or CSV changes.** |
+| 10 | **PR #10: App shell / multi-screen navigation planning** | — | **Docs-only planning PR.** Adds [ADR-0005](decisions/ADR-0005-app-shell-navigation-plan.md) (Proposed): a static app shell with hash-routed Setup, Results, Methodology and Settings & tools screens, a global scan bar, and a staged rollout over PRs #11–#14. Updates the architecture, roadmap and README. **No code changes, no behavior changes:** `index.html`, `styles.css` and `js/` are untouched. |
 
-  Third pass: green finance identity.
-  - the deep money-green accent `#0b6b4c` replaces indigo, with a banker's-gold fair-value line
-  - an original inline-SVG product mark (fair value vs price wedge) and a matching data-URI favicon
-  - an inline icon sprite for the feature chips and section titles
-  - a refined margin-of-safety illustration (grid, bracket, value dot, caption)
-  - a results empty-state illustration
-  - a faint graph-paper hero texture **No JS, scoring, DCF, provider, scan, cache, table or CSV changes.** |
+### PR #9 visual passes
+
+Second pass (visual identity):
+
+- indigo/violet palette on a lavender canvas
+- hero with badge, feature chips and a labeled margin-of-safety concept illustration
+- numbered workflow strip (in-page anchors) and matching section numbers
+- accent rails on the main panels
+- action dock with an inset preview/status card
+- green-only "strong candidates" tile
+- table scroll-edge shadows and a styled empty state
+- all text meets WCAG AA contrast
+
+Third pass (green finance identity):
+
+- the deep money-green accent `#0b6b4c` replaces indigo, with a banker's-gold fair-value line
+- an original inline-SVG product mark (fair value vs price wedge) and a matching data-URI favicon
+- an inline icon sprite for the feature chips and section titles
+- a refined margin-of-safety illustration (grid, bracket, value dot, caption)
+- a results empty-state illustration
+- a faint graph-paper hero texture
 
 ## Key lessons learned
 
