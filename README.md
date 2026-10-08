@@ -37,6 +37,7 @@ The whole app is a single `index.html` file. It has no backend, no build step an
 - [Security & Privacy](#-security--privacy)
 - [Roadmap](#-roadmap)
 - [Documentation](#-documentation)
+- [License](#-license)
 - [Disclaimer](#-disclaimer)
 
 ---
@@ -232,6 +233,10 @@ Full roadmap: [docs/roadmap.md](docs/roadmap.md)
 | [docs/roadmap.md](docs/roadmap.md) | Milestones and planned work |
 | [docs/HISTORY.md](docs/HISTORY.md) | Project history and lessons learned |
 | [docs/decisions/](docs/decisions/) | Architecture decision records |
+
+## 📄 License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
 
 ## ⚖️ Disclaimer
 
