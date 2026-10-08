@@ -22,7 +22,7 @@ Keep the entire application in **one file, `index.html`**, with inline CSS and v
 
 ### Tradeoffs
 
-- The file is large (about 2,100 lines), so navigation and diffs get harder as it grows.
+- The file is large (about 2,100 lines when this ADR was written; about 2,400 after PR #6), so navigation and diffs get harder as it grows.
 - Global functions with no modules mean naming collisions are possible, and isolation is weak.
 - No automated unit tests without extracting code or adding tooling.
 - No way to hide secrets (see [ADR-0003](ADR-0003-no-backend-yet.md)).
