@@ -1,18 +1,29 @@
 # Architecture
 
-Last updated: 2026-10-08 (after PR #6: Two-stage scan)
+Last updated: 2026-10-08 (after PR #8: split into static files)
 
-## 1. Current architecture: a single-file static app
+## 1. Current architecture: static files, no build
 
-Everything ships in **one file, `index.html`**:
+The app is a static frontend ([ADR-0004](decisions/ADR-0004-split-static-assets.md), which superseded the single-file [ADR-0001](decisions/ADR-0001-single-file-static-app.md) in PR #8):
 
-| Part | Approx. location | Contents |
-| --- | --- | --- |
-| `<style>` | top of file | CSS variables, card/grid layout, table, pills, responsive breakpoints |
-| Markup | `<header>`, `<main>` | Settings card, DCF inputs, symbol textarea, action buttons, summary, results table (36 columns) |
-| `<script>` | bottom of file | All application logic as plain global functions. No modules, no framework. |
+| File | Contents |
+| --- | --- |
+| `index.html` | Markup only: header, settings card, DCF inputs, symbol textarea, action buttons, summary, results table (36 columns). Inline `onclick` / `onchange` / `oninput` handlers call global functions. |
+| `styles.css` | CSS variables, card/grid layout, table, pills, responsive breakpoints |
+| `js/constants.js` | Presets, FMP endpoints, providers, cache TTLs, scoring/DCF limits, Two-stage settings |
+| `js/state.js` | Shared state: `lastResults`, `allResults`, `currentFilter`, `stopRequested`, `lastScanStats` |
+| `js/utils.js` | Escaping, parsing, number helpers, formatting, math, input clamping |
+| `js/cache.js` | localStorage cache (FMP + Yahoo), Clear Cache |
+| `js/providers.js` | Provider selection, FMP client, Yahoo Experimental client, `fetchStockDataByProvider` |
+| `js/metrics.js` | `buildMetrics`, derived metrics, Data Confidence |
+| `js/dcf.js` | DCF estimate |
+| `js/scoring.js` | Strategy scores, Piotroski, Dreman/Neff relative, total score and decision, `evaluateStock` |
+| `js/render.js` | Status, request preview, pills, table, details, tabs, summary |
+| `js/scan.js` | Request planning, `scanStocks`, Two-stage scan, stop, endpoint tests |
+| `js/export.js` | `exportCSV` |
+| `js/app.js` | `initializePage` and settings handlers. Loaded last; the only file that runs code at load time. |
 
-There is no `package.json`, build step, bundler, transpiler, backend or external script. The decision is recorded in [ADR-0001](decisions/ADR-0001-single-file-static-app.md).
+The scripts are **classic scripts loaded with `defer` in the order above**. They share one global scope, so functions in one file can call functions in another at runtime. There is no `package.json`, build step, bundler, transpiler, module system, backend or external (CDN) script.
 
 ## 2. Browser-only runtime
 
@@ -25,7 +36,7 @@ The app runs entirely in the user's browser. Network calls go **directly** from 
 
 ```mermaid
 flowchart TB
-  subgraph Browser["Browser - index.html"]
+  subgraph Browser["Browser - index.html + styles.css + js/*.js"]
     UI["UI layer<br/>inputs · buttons · status · preview"]
     State["State layer<br/>lastResults · allResults · currentFilter<br/>stopRequested · lastScanStats"]
     Prov["Provider layer<br/>getSelectedProvider · fetchStockDataByProvider<br/>fetchQuoteData"]
@@ -180,7 +191,7 @@ flowchart TD
 
 ## 5. Why there is no backend currently
 
-- The app is a personal tool. One HTML file is the simplest thing that works.
+- The app is a personal tool. A few static files are the simplest thing that works.
 - FMP allows browser calls (CORS `*`).
 - A backend adds hosting, cost, deployment and maintenance.
 - The cost of this choice is that **API keys cannot be hidden**. That is accepted for local personal use and documented in [ADR-0003](decisions/ADR-0003-no-backend-yet.md) and [security.md](security.md).
@@ -189,7 +200,7 @@ flowchart TD
 
 | Option | What it would enable | Cost |
 | --- | --- | --- |
-| Split into `index.html` + `app.js` + `styles.css` (still static) | Easier reviews and diffs | Needs a new ADR. Breaks "single file". |
+| ES modules (`type="module"`) instead of classic scripts | Explicit imports and exports, no shared globals | Inline handlers must be replaced; `file://` stops working. Needs a new ADR. (The static-file split itself is done: [ADR-0004](decisions/ADR-0004-split-static-assets.md).) |
 | Small serverless proxy (e.g. Cloudflare Worker, Netlify Function) | Hide the FMP key, add CORS for other providers, server-side caching | Hosting, secrets management, abuse protection |
 | Background / batch scanner | Market-wide universes, scheduled screens (the browser-side Two-stage scan already exists) | Needs storage and a backend |
 | Provider plugin interface | Cleaner multi-provider support (TASE, global) | Refactor of the provider layer |

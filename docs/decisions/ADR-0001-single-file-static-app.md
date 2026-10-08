@@ -1,6 +1,6 @@
 # ADR-0001: Keep the app as a single-file static HTML app
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR-0004](ADR-0004-split-static-assets.md) (PR #8). Kept as historical context.
 - **Date:** 2026-10-08 (records the approach used since the initial commit `238d062`)
 
 ## Context

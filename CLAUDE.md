@@ -22,46 +22,53 @@ Then:
 
 - If you're on `main` and it's clean: `git pull --ff-only origin main`, then create the feature branch.
 - If there is uncommitted work you didn't create, **stop and ask**.
-- Confirm `index.html` exists and that the files you plan to change exist.
+- Confirm `index.html`, `styles.css` and `js/` exist, and that the files you plan to change exist.
 
 ## 2. Files to read
 
 | When | Read |
 | --- | --- |
 | Always | [AGENTS.md](AGENTS.md), [SPEC.md](SPEC.md) |
-| Code changes | [docs/architecture.md](docs/architecture.md), the relevant functions in `index.html` |
+| Code changes | [docs/architecture.md](docs/architecture.md), the owning file in `js/` (see §3) |
 | Scoring / DCF / relative changes | [docs/investment-methodology.md](docs/investment-methodology.md) |
 | Provider / network changes | [docs/api-integrations.md](docs/api-integrations.md), [ADR-0002](docs/decisions/ADR-0002-fmp-primary-provider.md) |
 | Anything touching keys or storage | [docs/security.md](docs/security.md), [ADR-0003](docs/decisions/ADR-0003-no-backend-yet.md) |
 | Before opening a PR | [docs/verification.md](docs/verification.md) |
 
-## 3. Inspecting `index.html`
+## 3. Navigating the code
 
-The file is large (around 2,400 lines). Read it in sections. Useful anchors:
+The app is `index.html` (markup and IDs only), `styles.css`, and 12 classic scripts in `js/`, loaded with `defer` in the order below ([ADR-0004](docs/decisions/ADR-0004-split-static-assets.md)). All top-level functions and constants are global, so any file can call any other at runtime.
 
 ```bash
-grep -nE "^  (async )?function [A-Za-z]+" index.html   # function map
-grep -nE "const (PRESET_LISTS|DEEP_ENDPOINTS|PROVIDERS|FMP_CACHE_PREFIX|YAHOO_)" index.html
-grep -n "<th>" index.html                               # table columns (36)
+grep -nE "^(async )?function [A-Za-z]+" js/*.js        # function map, by file
+grep -nE "^const (PRESET_LISTS|DEEP_ENDPOINTS|PROVIDERS|FMP_CACHE_PREFIX|YAHOO_)" js/constants.js js/cache.js
+grep -n "<th>" index.html                                # table columns (36)
+grep -n 'src="js/' index.html                            # script load order
 ```
 
-Key functions:
-
-| Area | Functions |
+| File (load order) | Owns |
 | --- | --- |
-| Init / UI | `initializePage`, `onProviderChange`, `updateRequestPreview` |
-| Providers | `getSelectedProvider`, `fetchStockDataByProvider`, `fetchQuoteData` |
-| FMP | `fetchStockData`, `safeCall`, `callFmp`, `fetchJson` |
-| Yahoo | `fetchYahooQuote`, `yahooChartToQuote` |
-| Evaluation | `buildMetrics`, `evaluateStock`, `computeValueScores`, `computePiotroski`, `computeDcfEstimate`, `applyRelativeStrategies`, `recomputeTotalAndDecision` |
-| Two-stage | `runTwoStageScan`, `rankStageOneCandidates`, `showTwoStageResults`, `estimateTwoStagePlan`, `readTwoStageSettings` |
-| Output | `renderTable`, `renderDetails`, `exportCSV` |
+| `js/constants.js` | `PRESET_LISTS`, `DEEP_ENDPOINTS`, `PROVIDERS`, cache TTLs, `DATA_CONFIDENCE_STRONG_MIN`, `RELATIVE_MIN_PEERS`, `DCF_MAX_GROWTH_RATE`, Yahoo messages, `TWO_STAGE_*` |
+| `js/state.js` | `lastResults`, `allResults`, `currentFilter`, `stopRequested`, `lastScanStats` |
+| `js/utils.js` | `escapeHtml`, `parseSymbols`, `sleep`, `numberOrNull`, `pick`/`pickNum`, `format*`, `mean`/`average`, `clamp`, `clampIntInput`, `parsePercentInput` |
+| `js/cache.js` | `cacheKey`, `readCachedFmp`/`writeCachedFmp`, `readCachedYahoo`/`writeCachedYahoo`, `clearCache` |
+| `js/providers.js` | `getSelectedProvider`, `providerLabel`, `endpointsForMode`, `fetchJson`, `callFmp`, `safeCall`, `fetchStockData`, `fetchYahooQuote`, `yahooChartToQuote`, `fetchQuoteData`, `fetchStockDataByProvider` |
+| `js/metrics.js` | `buildMetrics`, `isUsListed`, `isTechOrPharma`, EPS growth helpers, `calcSloanRatio`, `computeDataConfidence`, `priceToOperatingCashFlow` |
+| `js/dcf.js` | `computeDcfEstimate` and its FCF / growth helpers |
+| `js/scoring.js` | `computeQuickScore`, `computeValueScores`, `computePiotroski`, `computeDreman`, `computeNeff`, `applyRelativeStrategies`, `recomputeTotalAndDecision`, `evaluateStock` |
+| `js/render.js` | `setStatus`, `updateRequestPreview`, pills, `renderTable`, `renderDetails`, `setTableFilter`, `updateSummary`, `resetResults` |
+| `js/scan.js` | `estimateRequestPlan`, `estimateTwoStagePlan`, `readTwoStageSettings`, `scanStocks`, `requestStopScan`, `runTwoStageScan`, `rankStageOneCandidates`, `showTwoStageResults`, `testEndpoints`, `testSelectedProvider` |
+| `js/export.js` | `exportCSV` |
+| `js/app.js` | `initializePage`, `onProviderChange`, `loadPresetList`, `clearApiKey`, and the single load-time call `initializePage()` |
+
+Functions called from inline HTML handlers: `onProviderChange`, `loadPresetList`, `updateRequestPreview`, `scanStocks`, `requestStopScan`, `testEndpoints`, `testSelectedProvider`, `exportCSV`, `clearCache`, `clearApiKey`, `setTableFilter`. Keep these names global.
 
 ## 4. Preserving existing behavior
 
 - Make the smallest change that satisfies the request. Do not reformat or reorganize unrelated code.
-- Match the existing style: global functions, 2-space indentation inside `<script>`, template-literal HTML, `escapeHtml` on dynamic values.
-- When adding table columns, update `colspan="36"` everywhere, the `<th>` list, `renderTable` and `exportCSV`. Add CSV columns **at the end**.
+- Match the existing style: classic scripts (no `import`/`export`), global functions, 2-space indentation, template-literal HTML, `escapeHtml` on dynamic values.
+- Put new code in the file that owns the concern. Only `js/app.js` may run code at load time. A new file needs a `<script src="js/….js" defer></script>` tag in the right order in `index.html`.
+- When adding table columns, update `colspan="36"` everywhere (`js/render.js`, `js/scan.js`, `index.html`), the `<th>` list, `renderTable` and `exportCSV`. Add CSV columns **at the end**.
 - Keep the FMP path intact when touching providers.
 - Wrap new `localStorage` access in `try/catch`.
 
@@ -76,7 +83,7 @@ Key functions:
 
 ## 6. Verification checklist
 
-- [ ] Embedded JS syntax check passes (script in [AGENTS.md §8](AGENTS.md#8-verification-required-before-every-pr))
+- [ ] `node --check` passes for every `js/*.js` file, and the script-order check passes (both in [AGENTS.md §8](AGENTS.md#8-verification-required-before-every-pr))
 - [ ] `git diff --check` is clean
 - [ ] Secret scan shows only labels
 - [ ] No `package.json`, `node_modules` or backend files
@@ -109,5 +116,7 @@ Follow [AGENTS.md §9](AGENTS.md#9-expected-final-response-format). Keep it fact
 | PR #4 `31dac23` | Documentation foundation (this set of docs) |
 | PR #5 `da5f529` | MIT License |
 | PR #6 `e553b59` | Two-stage scan (quote-only Stage 1, Deep Scan of the top N), expanded US presets, CSV stage columns, and Stage 1-only fallback rows labeled preliminary. Scoring unchanged. |
+| PR #7 `dceef78` | Post-merge hardening: doc consistency and a zero-rows status message |
+| PR #8 | Split into `index.html` + `styles.css` + `js/*.js` (ADR-0004). Code moved verbatim; no behavior, scoring, DCF or provider changes. |
 
 Details are in [docs/HISTORY.md](docs/HISTORY.md).

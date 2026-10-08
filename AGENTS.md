@@ -10,7 +10,7 @@ If anything here conflicts with a direct instruction from the repository owner i
 
 - **What it is:** a personal, educational value-investing stock screener.
 - **What it is not:** an advice engine, a trading tool or a product that guarantees results.
-- **Form:** one static file, `index.html` (HTML + CSS + vanilla JS). There is no backend, no build step and no dependencies.
+- **Form:** a static frontend made of `index.html` (markup), `styles.css` and classic scripts in `js/` (vanilla JS, loaded with `defer` in a fixed order). There is no backend, no build step and no dependencies. See [ADR-0004](docs/decisions/ADR-0004-split-static-assets.md).
 - **Primary data provider:** Financial Modeling Prep (FMP).
 - **Experimental provider:** Yahoo Finance Experimental / Browser test only. It is quote-level, usually CORS-blocked, and not a replacement for FMP.
 - **UI language:** Hebrew, RTL. Metric names stay in English.
@@ -48,8 +48,8 @@ For **"audit only"** tasks: read and report. Do not modify files, commit or push
 
 | Task type | Allowed changes |
 | --- | --- |
-| Documentation task | Markdown files, `docs/`, `.gitignore`. **`index.html` must not change.** If a code bug is found, report it instead of fixing it. |
-| Code task | `index.html`, plus the docs that describe the changed behavior, updated in the same PR |
+| Documentation task | Markdown files, `docs/`, `.gitignore`. **App files (`index.html`, `styles.css`, `js/`) must not change.** If a code bug is found, report it instead of fixing it. |
+| Code task | `index.html`, `styles.css`, `js/*.js`, plus the docs that describe the changed behavior, updated in the same PR |
 | Audit only | No changes |
 
 When behavior changes, update the affected docs (SPEC, methodology, user guide, history) in the same PR, so the documentation never describes a different app than the code.
@@ -58,7 +58,7 @@ When behavior changes, update the affected docs (SPEC, methodology, user guide, 
 
 | Constraint | Rule |
 | --- | --- |
-| Single-file HTML | Keep the app in `index.html`. Do not split it into files or introduce a framework (React, Vite, Next.js…) unless the owner explicitly requests it and an ADR is added. |
+| Simple static assets | Keep the app as `index.html` + `styles.css` + classic scripts in `js/`. Do not introduce ES modules, a framework (React, Vite, Next.js…), a bundler or a build step unless the owner explicitly requests it and an ADR is added. Preserve element IDs and the global functions used by inline handlers. A new script file needs a `<script defer>` tag in the right load order, and only `app.js` may run code at load time. |
 | No backend | Do not add servers, serverless functions or proxies unless explicitly requested. See [ADR-0003](docs/decisions/ADR-0003-no-backend-yet.md). |
 | No dependencies | No `package.json`, npm packages, CDN scripts, build tools or bundlers unless explicitly requested. |
 | Preserve features | Do not remove or weaken existing functionality: FMP deep scan, Two-stage scan, cache, request preview, stop scan, rate-limit handling, endpoint tests, DCF, relative basis, data confidence, CSV export, presets, manual symbols. |
@@ -69,7 +69,7 @@ When behavior changes, update the affected docs (SPEC, methodology, user guide, 
 ## 6. API key and secret safety
 
 - **Never** commit, print, log or echo an API key or token, including in PR descriptions, test output and screenshots.
-- Never hard-code a key into `index.html`, docs or examples. Use placeholders like `YOUR_FMP_API_KEY` only when needed.
+- Never hard-code a key into `index.html`, `js/`, docs or examples. Use placeholders like `YOUR_FMP_API_KEY` only when needed.
 - Do not add code that sends the key anywhere except the provider's own API.
 - Remember that a static frontend cannot hide keys. Don't write docs or UI text implying otherwise.
 - Run the secret scan in §8 before every commit.
@@ -88,25 +88,23 @@ When behavior changes, update the affected docs (SPEC, methodology, user guide, 
 
 Run these from the repository root and report the results.
 
-**1. Embedded JavaScript syntax check**
+**1. JavaScript syntax and script-order check**
 
 ```bash
+find js -name '*.js' -print0 | xargs -0 -n1 node --check && echo "all js files ok"
 python3 - <<'PY'
+# Every js/*.js file is referenced exactly once by index.html, as a deferred classic script, in the expected order.
+import re
 from pathlib import Path
-import re, subprocess, tempfile, os
+EXPECTED = ["constants", "state", "utils", "cache", "providers", "metrics", "dcf", "scoring", "render", "scan", "export", "app"]
 html = Path("index.html").read_text(encoding="utf-8")
-scripts = re.findall(r"<script>(.*?)</script>", html, flags=re.S)
-if not scripts:
-    raise SystemExit("No script tag found")
-with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False, encoding="utf-8") as f:
-    f.write("\n".join(scripts)); p = f.name
-try:
-    r = subprocess.run(["node", "--check", p], text=True, capture_output=True)
-    print(r.stdout + r.stderr, end="")
-    if r.returncode == 0: print("script syntax ok")
-    raise SystemExit(r.returncode)
-finally:
-    os.remove(p)
+refs = re.findall(r'<script src="js/([a-z]+)\.js" defer></script>', html)
+on_disk = sorted(p.stem for p in Path("js").glob("*.js"))
+assert refs == EXPECTED, refs
+assert sorted(refs) == on_disk, (refs, on_disk)
+assert html.count('<link rel="stylesheet" href="styles.css" />') == 1
+assert "<script>" not in html and "<style>" not in html
+print("script order ok")
 PY
 ```
 
@@ -150,11 +148,11 @@ After a task, report:
 | --- | --- |
 | **Claude Code** | Also read [CLAUDE.md](CLAUDE.md). Use `gh` for PRs. Verify in a browser when possible. |
 | **Codex** | Treat this file as the contract. Run the §8 checks in the sandbox. If network or `gh` is unavailable, say so rather than claiming a push or PR. |
-| **Other agents / IDE assistants** | Same rules. When unsure about scope, ask before editing `index.html`. |
+| **Other agents / IDE assistants** | Same rules. When unsure about scope, ask before editing app files. |
 
 All agents:
 
-- Inspect before editing. `index.html` is about 2,400 lines; read the relevant functions, not just search hits.
+- Inspect before editing. Use the file map in [CLAUDE.md](CLAUDE.md) to find the owning `js/` file, then read the relevant functions, not just search hits.
 - Do not assume work by another agent is correct. Verify it against the code.
 - Never discard uncommitted work you did not create.
 - Ask the owner before architecture changes, new providers, dependency or backend additions, or scoring changes.

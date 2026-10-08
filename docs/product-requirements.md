@@ -101,7 +101,7 @@ Open questions: the universe source (which FMP endpoint and which plan), browser
 
 ## 11. What must stay simple
 
-- Opening one HTML file must keep working.
+- Opening `index.html` (or serving the folder with any static server) must keep working, with no install or build.
 - No account, login or server is required for the core flow.
 - No dependencies to install.
 - Scoring rules stay readable and documented in plain tables.
