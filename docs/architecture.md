@@ -1,6 +1,6 @@
 # Architecture
 
-Last updated: 2026-10-08 (after PR #8: split into static files)
+Last updated: 2026-10-09 (PR #10: app shell navigation plan; app unchanged since PR #9)
 
 ## 1. Current architecture: static files, no build
 
@@ -197,10 +197,32 @@ flowchart TD
 - A backend adds hosting, cost, deployment and maintenance.
 - The cost of this choice is that **API keys cannot be hidden**. That is accepted for local personal use and documented in [ADR-0003](decisions/ADR-0003-no-backend-yet.md) and [security.md](security.md).
 
-## 6. Future architecture options (not implemented)
+## 6. Navigation: current state and planned app shell
+
+**Current (after PR #9):** a single static page. From top to bottom:
+
+1. the hero and workflow strip (in-page anchors `#sec-source`, `#sec-universe`, `#sec-scan`, `#sec-results`)
+2. the settings groups and the action dock
+3. the summary and the results table
+
+There is no routing. Every control is always in the DOM and always visible, apart from the collapsed `<details>` sections.
+
+**Proposed (not implemented):** [ADR-0005](decisions/ADR-0005-app-shell-navigation-plan.md) plans a lightweight static app shell:
+
+- **Screens:** **Setup**, **Results**, **Methodology** and **Settings & tools**. They are plain `<section>` elements; one is visible at a time, chosen by the URL hash (`#/setup`, `#/results` …).
+- **Element-ID hashes** such as `#sec-scan` resolve to the screen that owns them.
+- **A global scan bar** mirrors `#status` and offers Stop through the existing `requestStopScan()`, so scan feedback is never hidden.
+- **One new classic script,** `js/shell.js`, loaded after `app.js`. The existing 12 scripts, all IDs, the inline handlers and the `localStorage` keys stay unchanged.
+- **The architecture stays the same:** static files, no build, no dependencies, no framework, no backend.
+- **Staged rollout:** PR #11 (shell + Setup/Results), #12 (Methodology), #13 (Results UX), #14 (Settings & tools).
+
+PR #10 changes documentation only.
+
+## 7. Future architecture options (not implemented)
 
 | Option | What it would enable | Cost |
 | --- | --- | --- |
+| Static app shell with hash-routed screens | Separate setup and results, in-app methodology, global scan feedback | Planned in [ADR-0005](decisions/ADR-0005-app-shell-navigation-plan.md); one new script, no existing JS changes |
 | ES modules (`type="module"`) instead of classic scripts | Explicit imports and exports, no shared globals | Inline handlers must be replaced; `file://` stops working. Needs a new ADR. (The static-file split itself is done: [ADR-0004](decisions/ADR-0004-split-static-assets.md).) |
 | Small serverless proxy (e.g. Cloudflare Worker, Netlify Function) | Hide the FMP key, add CORS for other providers, server-side caching | Hosting, secrets management, abuse protection |
 | Background / batch scanner | Market-wide universes, scheduled screens (the browser-side Two-stage scan already exists) | Needs storage and a backend |

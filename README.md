@@ -225,6 +225,10 @@ Full details: [docs/security.md](docs/security.md)
 | M3 Provider abstraction + Yahoo experimental | ✅ Done (Yahoo 🧪 Experimental) |
 | M4 Documentation foundation | ✅ Done |
 | M5 Two-stage scan + expanded preset lists | ✅ Done |
+| M6 Static file split (`index.html` + `styles.css` + `js/`) | ✅ Done |
+| M7 UI polish and green visual identity | ✅ Done |
+| M8 App shell navigation plan ([ADR-0005](docs/decisions/ADR-0005-app-shell-navigation-plan.md)) | 📝 Proposed |
+| M9–M12 App shell rollout: Setup/Results, Methodology, Results UX, Settings & tools | 🗓 Planned |
 | Automatic universe discovery, TASE, global, tests/CI, optional backend | 🗓 Planned / Future |
 
 Full roadmap: [docs/roadmap.md](docs/roadmap.md)
