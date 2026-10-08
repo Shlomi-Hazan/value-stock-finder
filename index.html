@@ -5,171 +5,300 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Value Stock Finder - שלומי</title>
   <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='13' fill='%230b6b4c'/%3E%3Cpath d='M10 32 C 18 28, 26 20, 38 14 L 38 30 C 28 29.5, 19 33, 10 32 Z' fill='%23fff' opacity='.17'/%3E%3Cpath d='M10 32 C 18 28, 26 20, 38 14' fill='none' stroke='%23e2c46b' stroke-width='3' stroke-linecap='round'/%3E%3Cpath d='M10 32 C 19 33, 28 29.5, 38 30' fill='none' stroke='%23fff' stroke-width='3.4' stroke-linecap='round'/%3E%3C/svg%3E" />
 </head>
 <body>
-<header>
-  <h1>Value Stock Finder</h1>
-  <p>סקרינר אישי לפי קריטריונים של השקעות ערך: גרהאם, פישר, פיוטרוסקי, באפט ותזרים מזומנים</p>
+<!-- Inline icon sprite: thin-stroke glyphs that inherit currentColor. No external assets. -->
+<svg class="icon-sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/><path d="M7.5 11.5l2-2 2 1.5 2-3"/></symbol>
+  <symbol id="i-funnel" viewBox="0 0 24 24"><path d="M3.5 5h17l-6.5 7.5V19l-4 1.5v-8z"/></symbol>
+  <symbol id="i-scale" viewBox="0 0 24 24"><path d="M12 4v16M7 20h10M5 7h14"/><path d="M5 7l-2.5 6h5zM19 7l-2.5 6h5z"/></symbol>
+  <symbol id="i-export" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M12 11v6M9.5 14.5 12 17l2.5-2.5"/></symbol>
+  <symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7" ry="2.8"/><path d="M5 6v12c0 1.5 3.1 2.8 7 2.8s7-1.3 7-2.8V6M5 12c0 1.5 3.1 2.8 7 2.8s7-1.3 7-2.8"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.2"/><circle cx="4.5" cy="12" r="1.2"/><circle cx="4.5" cy="18" r="1.2"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20h16"/><path d="M7 16v-4M12 16V8M17 16v-6"/></symbol>
+</svg>
+
+<header class="page-header hero">
+  <div class="hero-inner">
+    <div class="hero-copy">
+      <span class="hero-badge">כלי לימודי להשקעות ערך</span>
+      <div class="brand">
+        <!-- Product mark: fair value (gold, dashed) above price (white), margin-of-safety gap shaded -->
+        <svg class="brand-mark" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+          <rect width="48" height="48" rx="13" fill="#0b6b4c" />
+          <path d="M10 32 C 18 28, 26 20, 38 14 L 38 30 C 28 29.5, 19 33, 10 32 Z" fill="#ffffff" opacity="0.17" />
+          <path d="M10 32 C 18 28, 26 20, 38 14" fill="none" stroke="#e2c46b" stroke-width="2.6" stroke-linecap="round" />
+          <path d="M10 32 C 19 33, 28 29.5, 38 30" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" />
+          <circle cx="38" cy="14" r="2.4" fill="#e2c46b" />
+          <circle cx="38" cy="30" r="2.6" fill="#0b6b4c" stroke="#ffffff" stroke-width="2" />
+        </svg>
+        <h1>Value Stock Finder</h1>
+      </div>
+      <p>סקרינר אישי לפי קריטריונים של השקעות ערך: גרהאם, פישר, פיוטרוסקי, באפט ותזרים מזומנים</p>
+      <ul class="feature-chips" aria-label="יכולות עיקריות">
+        <li><svg class="icon" aria-hidden="true"><use href="#i-search" /></svg>FMP Deep Scan</li>
+        <li><svg class="icon" aria-hidden="true"><use href="#i-funnel" /></svg>Two-stage scan</li>
+        <li><svg class="icon" aria-hidden="true"><use href="#i-scale" /></svg>DCF estimate</li>
+        <li><svg class="icon" aria-hidden="true"><use href="#i-export" /></svg>CSV export</li>
+      </ul>
+    </div>
+    <!-- Concept illustration: the margin of safety (fair value above price). Illustrative only, not data. -->
+    <figure class="hero-art-card">
+      <svg class="hero-art" viewBox="0 0 320 196" role="img" aria-label="איור להמחשה: מרווח ביטחון הוא הפער בין השווי ההוגן המוערך לבין המחיר" focusable="false">
+        <defs>
+          <linearGradient id="mosFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#0b6b4c" stop-opacity="0.20" />
+            <stop offset="1" stop-color="#0b6b4c" stop-opacity="0.03" />
+          </linearGradient>
+        </defs>
+        <g class="art-grid">
+          <line x1="14" y1="50" x2="306" y2="50" /><line x1="14" y1="90" x2="306" y2="90" />
+          <line x1="14" y1="130" x2="306" y2="130" /><line x1="14" y1="166" x2="306" y2="166" />
+        </g>
+        <path d="M14 82 C 70 64, 120 72, 170 58 S 260 42, 306 34 L 306 132 C 260 140, 220 116, 170 128 S 70 152, 14 140 Z" fill="url(#mosFill)" />
+        <path class="art-value" d="M14 82 C 70 64, 120 72, 170 58 S 260 42, 306 34" fill="none" />
+        <path class="art-price" d="M14 140 C 70 152, 120 130, 170 128 S 260 140, 306 132" fill="none" />
+        <path class="art-bracket" d="M182 62 h6 v62 h-6" fill="none" />
+        <circle class="art-dot art-dot-value" cx="170" cy="58" r="4" />
+        <circle class="art-dot" cx="170" cy="128" r="5" />
+        <text class="art-label art-label-value" x="306" y="22" text-anchor="start">שווי הוגן (אומדן)</text>
+        <text class="art-label art-label-price" x="306" y="160" text-anchor="start">מחיר</text>
+        <text class="art-label art-label-gap" x="160" y="97" text-anchor="start">מרווח ביטחון</text>
+      </svg>
+      <figcaption>להמחשה בלבד: הרעיון של מרווח ביטחון</figcaption>
+    </figure>
+  </div>
+  <nav class="flow" aria-label="שלבי העבודה">
+    <ol>
+      <li><a href="#sec-source"><span class="step">1</span>מקור נתונים</a></li>
+      <li><a href="#sec-universe"><span class="step">2</span>מניות</a></li>
+      <li><a href="#sec-scan"><span class="step">3</span>סריקה</a></li>
+      <li><a href="#sec-results"><span class="step">4</span>תוצאות</a></li>
+    </ol>
+  </nav>
 </header>
 
 <main>
-  <section class="card">
-    <div class="notice warning">
-      ⚠️ ה־API Key נשמר רק בדפדפן שלך ב־Local Storage. זה מתאים לשימוש אישי מקומי. אל תעלה את הקובץ לאינטרנט עם מפתח אמיתי.
+  <section class="settings" aria-labelledby="settingsTitle">
+    <h2 id="settingsTitle" class="settings-title">הגדרות סריקה</h2>
+
+    <!-- A. Data source -->
+    <div class="group" id="sec-source">
+      <h3 class="group-title"><span class="section-icon" aria-hidden="true"><svg class="icon"><use href="#i-database" /></svg></span>מקור נתונים</h3>
+      <div class="panel panel-accent">
+        <div class="fields fields-2">
+          <label class="field">
+            <span class="field-label">Data Provider</span>
+            <select id="dataProvider" onchange="onProviderChange()">
+              <option value="fmp">Financial Modeling Prep</option>
+              <option value="yahoo">Yahoo Finance Experimental / Browser test only</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span class="field-label">API Key (FMP)</span>
+            <input type="password" id="apiKey" placeholder="הדבק כאן את ה־API Key שלך" />
+            <span class="hint">נשמר רק בדפדפן שלך (Local Storage). אל תעלה מפתח אמיתי לריפו או לאתר ציבורי.</span>
+          </label>
+        </div>
+
+        <div id="providerWarning" class="notice warning" style="display:none; margin-top:14px;">
+          ⚠️ <b dir="ltr">Yahoo Finance Experimental / Browser test only: Yahoo requests are likely to be blocked by browser/CORS in this static HTML app. This provider is included only as an experimental connectivity test. Use FMP for real scans, Deep Scan, fundamentals, and DCF.</b><br />
+          <span dir="ltr">Quote-level data only. Not an official unlimited API.</span><br />
+          ספק ניסיוני לבדיקת חיבור בלבד — סביר שייחסם בדפדפן ואינו תחליף ל־FMP. גם אם יעבוד: מחיר, שינוי יומי, Volume, טווח שנתי וממוצעים נעים בלבד. אין Market Cap, דוחות כספיים או DCF, ולכן רוב המניות לא יעברו סינון בסיסי. לא נדרש API Key.
+        </div>
+      </div>
+      <p class="group-footer">
+        האתר מנסה להביא גם נתוני עומק פיננסיים. אם המנוי שלך ב־FMP חוסם endpoint מסוים, האתר לא יקרוס — הוא יסמן את הנתון כחסר וימשיך לפי מה שכן זמין.
+      </p>
     </div>
 
-    <div class="notice info">
-      האתר מנסה להביא גם נתוני עומק פיננסיים. אם המנוי שלך ב־FMP חוסם endpoint מסוים, האתר לא יקרוס — הוא יסמן את הנתון כחסר וימשיך לפי מה שכן זמין.
+    <!-- B. Stock universe -->
+    <div class="group" id="sec-universe">
+      <h3 class="group-title"><span class="section-icon" aria-hidden="true"><svg class="icon"><use href="#i-list" /></svg></span>מניות לבדיקה</h3>
+      <div class="panel panel-accent">
+        <div class="fields fields-2">
+          <label class="field">
+            <span class="field-label">רשימה מוכנה</span>
+            <select id="presetList" onchange="loadPresetList()">
+              <option value="usaLarge">ארה״ב - חברות גדולות</option>
+              <option value="usaValue">ארה״ב - Value Candidates</option>
+              <option value="usaTech">ארה״ב - טכנולוגיה</option>
+              <option value="usaDividend">ארה״ב - דיבידנד/יציבות</option>
+              <option value="usaLargeExpanded">ארה״ב - חברות גדולות מורחב (90)</option>
+              <option value="usaValueExpanded">ארה״ב - Value מורחב (95)</option>
+              <option value="usaDividendExpanded">ארה״ב - דיבידנד מורחב (60)</option>
+              <option value="manual">ידני - לא לשנות את הרשימה</option>
+            </select>
+            <span class="hint">בחר רשימה מוכנה או עבור לידני והדבק סימולים משלך.</span>
+          </label>
+
+          <label class="field field-wide">
+            <span class="field-label">רשימת מניות לבדיקה</span>
+            <textarea id="symbolsInput" oninput="updateRequestPreview()"></textarea>
+            <span class="hint">סימולים מופרדים בפסיקים, רווחים או שורות, למשל AAPL, MSFT, KO.</span>
+          </label>
+        </div>
+      </div>
     </div>
 
-    <h2>הגדרות סריקה</h2>
+    <!-- C. Scan mode -->
+    <div class="group" id="sec-scan">
+      <h3 class="group-title"><span class="section-icon" aria-hidden="true"><svg class="icon"><use href="#i-sliders" /></svg></span>מצב סריקה</h3>
+      <div class="panel panel-accent">
+        <div class="fields">
+          <label class="field">
+            <span class="field-label">מצב סריקה</span>
+            <select id="scanMode" onchange="updateRequestPreview()">
+              <option value="deep">Value Scan מלא ככל האפשר</option>
+              <option value="quick">Momentum / Market בלבד</option>
+              <option value="twoStage">Two-stage — Quick then Deep</option>
+            </select>
+          </label>
 
-    <div class="grid">
-      <label>
-        Data Provider
-        <select id="dataProvider" onchange="onProviderChange()">
-          <option value="fmp">Financial Modeling Prep</option>
-          <option value="yahoo">Yahoo Finance Experimental / Browser test only</option>
-        </select>
-      </label>
+          <label class="field">
+            <span class="field-label">כמות להצגה</span>
+            <input type="number" id="topLimit" value="15" min="1" max="100" />
+            <span class="hint">מגביל כמה שורות יוצגו בטבלה, גם אם נסרקו יותר מועמדות.</span>
+          </label>
 
-      <label>
-        API Key (FMP)
-        <input type="password" id="apiKey" placeholder="הדבק כאן את ה־API Key שלך" />
-      </label>
+          <label class="field">
+            <span class="field-label">Two-stage: Stage 1 max symbols</span>
+            <input type="number" id="twoStageMaxSymbols" value="50" min="1" max="200" step="1" oninput="updateRequestPreview()" />
+          </label>
 
-      <label>
-        רשימה מוכנה
-        <select id="presetList" onchange="loadPresetList()">
-          <option value="usaLarge">ארה״ב - חברות גדולות</option>
-          <option value="usaValue">ארה״ב - Value Candidates</option>
-          <option value="usaTech">ארה״ב - טכנולוגיה</option>
-          <option value="usaDividend">ארה״ב - דיבידנד/יציבות</option>
-          <option value="usaLargeExpanded">ארה״ב - חברות גדולות מורחב (90)</option>
-          <option value="usaValueExpanded">ארה״ב - Value מורחב (95)</option>
-          <option value="usaDividendExpanded">ארה״ב - דיבידנד מורחב (60)</option>
-          <option value="manual">ידני - לא לשנות את הרשימה</option>
-        </select>
-      </label>
-
-      <label>
-        מצב סריקה
-        <select id="scanMode" onchange="updateRequestPreview()">
-          <option value="deep">Value Scan מלא ככל האפשר</option>
-          <option value="quick">Momentum / Market בלבד</option>
-          <option value="twoStage">Two-stage — Quick then Deep</option>
-        </select>
-      </label>
-
-      <label>
-        כמות להצגה
-        <input type="number" id="topLimit" value="15" min="1" max="100" />
-      </label>
-
-      <label>
-        שווי שוק מינימלי בארה״ב
-        <input type="number" id="marketCapUS" value="2000000000" />
-      </label>
-
-      <label>
-        שווי שוק מינימלי מחוץ לארה״ב
-        <input type="number" id="marketCapDefault" value="1000000000" />
-      </label>
-
-      <label>
-        Volume מינימלי
-        <input type="number" id="volumeMin" value="100000" />
-      </label>
-
-      <label>
-        מחיר מינימלי
-        <input type="number" id="priceMin" value="5" />
-      </label>
-
-      <label>
-        Two-stage: Stage 1 max symbols
-        <input type="number" id="twoStageMaxSymbols" value="50" min="1" max="200" step="1" oninput="updateRequestPreview()" />
-      </label>
-
-      <label>
-        Two-stage: Deep Scan Top N
-        <input type="number" id="twoStageTopN" value="10" min="1" max="30" step="1" oninput="updateRequestPreview()" />
-      </label>
+          <label class="field">
+            <span class="field-label">Two-stage: Deep Scan Top N</span>
+            <input type="number" id="twoStageTopN" value="10" min="1" max="30" step="1" oninput="updateRequestPreview()" />
+          </label>
+        </div>
+      </div>
+      <p class="group-footer">Stage 1 מסנן בזול לפי quote. Stage 2 מריץ Deep Scan רק על המועמדות המובילות. הגדרות Two-stage חלות רק במצב Two-stage.</p>
     </div>
 
-    <div id="providerWarning" class="notice warning" style="display:none; margin-top:14px;">
-      ⚠️ <b dir="ltr">Yahoo Finance Experimental / Browser test only: Yahoo requests are likely to be blocked by browser/CORS in this static HTML app. This provider is included only as an experimental connectivity test. Use FMP for real scans, Deep Scan, fundamentals, and DCF.</b><br />
-      <span dir="ltr">Quote-level data only. Not an official unlimited API.</span><br />
-      ספק ניסיוני לבדיקת חיבור בלבד — סביר שייחסם בדפדפן ואינו תחליף ל־FMP. גם אם יעבוד: מחיר, שינוי יומי, Volume, טווח שנתי וממוצעים נעים בלבד. אין Market Cap, דוחות כספיים או DCF, ולכן רוב המניות לא יעברו סינון בסיסי. לא נדרש API Key.
+    <!-- D. Basic filters (collapsible) -->
+    <details class="group group-collapsible">
+      <summary class="group-title">סינון בסיסי</summary>
+      <div class="panel">
+        <div class="fields">
+          <label class="field">
+            <span class="field-label">שווי שוק מינימלי בארה״ב</span>
+            <input type="number" id="marketCapUS" value="2000000000" />
+          </label>
+
+          <label class="field">
+            <span class="field-label">שווי שוק מינימלי מחוץ לארה״ב</span>
+            <input type="number" id="marketCapDefault" value="1000000000" />
+          </label>
+
+          <label class="field">
+            <span class="field-label">Volume מינימלי</span>
+            <input type="number" id="volumeMin" value="100000" />
+          </label>
+
+          <label class="field">
+            <span class="field-label">מחיר מינימלי</span>
+            <input type="number" id="priceMin" value="5" />
+          </label>
+        </div>
+      </div>
+      <p class="group-footer">מניות שלא עוברות את הסינון הבסיסי מסומנות כנפסלו.</p>
+    </details>
+
+    <!-- E. DCF / Fair Value assumptions (collapsible) -->
+    <details class="group group-collapsible">
+      <summary class="group-title">הנחות Estimated Fair Value / DCF Estimate</summary>
+      <div class="panel">
+        <div class="fields">
+          <label class="field">
+            <span class="field-label">Discount Rate %</span>
+            <input type="number" id="dcfDiscountRate" value="10" min="1" max="30" step="0.1" />
+          </label>
+
+          <label class="field">
+            <span class="field-label">Terminal Growth %</span>
+            <input type="number" id="dcfTerminalGrowth" value="2.5" min="0" max="8" step="0.1" />
+          </label>
+
+          <label class="field">
+            <span class="field-label">Projection Years</span>
+            <input type="number" id="dcfProjectionYears" value="5" min="1" max="10" step="1" />
+          </label>
+
+          <label class="field">
+            <span class="field-label">Margin of Safety %</span>
+            <input type="number" id="dcfMarginSafety" value="25" min="0" max="80" step="1" />
+          </label>
+        </div>
+      </div>
+      <p class="group-footer">
+        אומדן לימודי בלבד, לא המלצה פיננסית. הערכת DCF היא אומדן לפי ההנחות כאן והנתונים הזמינים.
+      </p>
+    </details>
+
+    <!-- F. Actions -->
+    <div class="group">
+      <div class="panel action-panel">
+        <div class="actions actions-primary">
+          <button id="scanButton" class="btn btn-primary" onclick="scanStocks()">סרוק מניות</button>
+          <button id="stopButton" class="btn btn-stop" onclick="requestStopScan()" disabled>עצור סריקה</button>
+        </div>
+
+        <div class="scan-console" aria-live="polite">
+          <div id="requestPreview" class="small" style="white-space: pre-line;"></div>
+          <div id="status" class="status"></div>
+          <div id="endpointStatus" class="small"></div>
+        </div>
+
+        <div class="action-groups">
+          <div class="action-group" role="group" aria-label="בדיקות חיבור">
+            <span class="action-group-label">בדיקות חיבור</span>
+            <div class="actions">
+              <button class="btn btn-quiet" onclick="testEndpoints()">בדוק endpoints על AAPL</button>
+              <button class="btn btn-quiet" onclick="testSelectedProvider()">בדוק ספק נבחר (AAPL)</button>
+            </div>
+          </div>
+          <div class="action-group" role="group" aria-label="תוצאות ונתונים">
+            <span class="action-group-label">תוצאות ונתונים</span>
+            <div class="actions">
+              <button class="btn btn-quiet" onclick="exportCSV()">ייצא CSV</button>
+              <button class="btn btn-quiet" onclick="clearCache()">נקה Cache</button>
+            </div>
+          </div>
+          <div class="action-group" role="group" aria-label="מפתח API">
+            <span class="action-group-label">מפתח API</span>
+            <div class="actions">
+              <button class="btn btn-danger" onclick="clearApiKey()">נקה API Key שמור</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="group-footer">
+        טיפ: אם הסריקה עמוקה איטית או חסומה, עבור ל־Momentum / Market. אם תרצה דיוק מלא לפי הקורס, צריך endpointים של ratios, key metrics, financial growth, income, cash flow ו־balance sheet.
+      </p>
     </div>
-
-    <br />
-    <h3>הנחות Estimated Fair Value / DCF Estimate</h3>
-    <p class="small">
-      הערכת DCF היא אומדן לימודי לפי ההנחות כאן והנתונים הזמינים, ולא המלצה פיננסית.
-    </p>
-    <div class="grid">
-      <label>
-        Discount Rate %
-        <input type="number" id="dcfDiscountRate" value="10" min="1" max="30" step="0.1" />
-      </label>
-
-      <label>
-        Terminal Growth %
-        <input type="number" id="dcfTerminalGrowth" value="2.5" min="0" max="8" step="0.1" />
-      </label>
-
-      <label>
-        Projection Years
-        <input type="number" id="dcfProjectionYears" value="5" min="1" max="10" step="1" />
-      </label>
-
-      <label>
-        Margin of Safety %
-        <input type="number" id="dcfMarginSafety" value="25" min="0" max="80" step="1" />
-      </label>
-    </div>
-
-    <br />
-    <label>
-      רשימת מניות לבדיקה
-      <textarea id="symbolsInput" oninput="updateRequestPreview()"></textarea>
-    </label>
-
-    <div class="actions">
-      <button id="scanButton" onclick="scanStocks()">סרוק מניות</button>
-      <button id="stopButton" class="secondary" onclick="requestStopScan()" disabled>עצור סריקה</button>
-      <button class="secondary" onclick="testEndpoints()">בדוק endpoints על AAPL</button>
-      <button class="secondary" onclick="testSelectedProvider()">בדוק ספק נבחר (AAPL)</button>
-      <button class="secondary" onclick="exportCSV()">ייצא CSV</button>
-      <button class="secondary" onclick="clearCache()">נקה Cache</button>
-      <button class="danger" onclick="clearApiKey()">נקה API Key שמור</button>
-    </div>
-
-    <div id="requestPreview" class="small" style="white-space: pre-line;"></div>
-    <div id="status" class="status"></div>
-    <div id="endpointStatus" class="small"></div>
-
-    <p class="small">
-      טיפ: אם הסריקה עמוקה איטית או חסומה, עבור ל־Momentum / Market. אם תרצה דיוק מלא לפי הקורס, צריך endpointים של ratios, key metrics, financial growth, income, cash flow ו־balance sheet.
-    </p>
   </section>
 
-  <section class="card">
-    <h2>סיכום</h2>
+  <section class="card summary-card" id="sec-results">
+    <h2><span class="section-icon" aria-hidden="true"><svg class="icon"><use href="#i-chart" /></svg></span>סיכום</h2>
     <div class="summary">
       <div class="summary-box"><span>נבדקו</span><strong id="checkedCount">0</strong></div>
       <div class="summary-box"><span>עברו סינון בסיסי</span><strong id="passedCount">0</strong></div>
-      <div class="summary-box"><span>מועמדות חזקות</span><strong id="strongCount">0</strong></div>
+      <div class="summary-box summary-box-strong"><span>מועמדות חזקות</span><strong id="strongCount">0</strong></div>
       <div class="summary-box"><span>ציון ממוצע</span><strong id="averageScore">0</strong></div>
       <div class="summary-box"><span>המובילה</span><strong id="bestStock">-</strong></div>
     </div>
     <div id="twoStageSummary" class="small"></div>
   </section>
 
-  <section class="card">
-    <h2>תוצאות</h2>
-    <div class="tabs">
+  <section class="card results-card">
+    <div class="results-head">
+      <h2>תוצאות</h2>
+      <p class="results-hint">הטבלה רחבה: גלול הצידה כדי לראות את כל 36 העמודות. לחץ על "פתח פירוט" בכל שורה להסבר מלא.</p>
+    </div>
+    <div class="tabs" role="group" aria-label="סינון תוצאות">
       <button class="tab active" id="tabAll" onclick="setTableFilter('all')">הכול</button>
       <button class="tab" id="tabStrong" onclick="setTableFilter('strong')">מועמדות חזקות</button>
       <button class="tab" id="tabWatch" onclick="setTableFilter('watch')">Watchlist</button>

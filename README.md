@@ -133,12 +133,14 @@ Then open <http://localhost:8000/>. A real `http://` origin behaves more predict
 
 ## 🧭 How to Use
 
+The settings page is grouped in the order you use it: **מקור נתונים** (data source), **מניות לבדיקה** (stocks to check), **מצב סריקה** (scan mode), two collapsed advanced sections (**סינון בסיסי** basic filters, and DCF assumptions), then the actions.
+
 1. Keep **Data Provider** on **Financial Modeling Prep**.
 2. Enter your FMP API key.
 3. Choose a preset list, or pick **ידני** (manual) and type symbols such as `AAPL, MSFT, KO`.
 4. Choose a scan mode (see below) and review the **request preview** under the buttons. For larger lists, choose **Two-stage scan** and set *Stage 1 max symbols* and *Deep Scan Top N*.
-5. Optionally adjust the filters (minimum market cap, volume, price) and the DCF assumptions.
-6. Click **סרוק מניות** (scan stocks). Use **עצור סריקה** (stop scan) to stop before the next symbol.
+5. Optionally open **סינון בסיסי** (basic filters: minimum market cap, volume, price) or the DCF assumptions section, and adjust them. Both are collapsed by default.
+6. Click the green **סרוק מניות** (scan stocks) button. Use **עצור סריקה** (stop scan) to stop before the next symbol. The connection tests, export and cache tools, and **נקה API Key שמור** (clear saved API key) are grouped below it.
 7. Read the summary, filter the table tabs (All / Strong / Watchlist / Rejected) and open **פתח פירוט** (open details) on any row.
 8. Click **ייצא CSV** (export CSV) to export.
 
