@@ -108,6 +108,6 @@ Follow [AGENTS.md §9](AGENTS.md#9-expected-final-response-format). Keep it fact
 | PR #3 `09dbd5d` | Data provider selector, FMP default, Yahoo Finance Experimental / Browser test only (quote-level, Deep Scan blocked), selected-provider test, CSV `dataProvider`, safe `localStorage` init |
 | PR #4 `31dac23` | Documentation foundation (this set of docs) |
 | PR #5 `da5f529` | MIT License |
-| PR #6 | Two-stage scan (quote-only Stage 1, Deep Scan of the top N), expanded US presets, CSV stage columns. Scoring unchanged. |
+| PR #6 `e553b59` | Two-stage scan (quote-only Stage 1, Deep Scan of the top N), expanded US presets, CSV stage columns, and Stage 1-only fallback rows labeled preliminary. Scoring unchanged. |
 
 Details are in [docs/HISTORY.md](docs/HISTORY.md).

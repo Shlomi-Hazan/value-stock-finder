@@ -571,6 +571,7 @@
 
   // Stage 1-only fallback rows keep the preliminary evaluateStock() total (no relative strategies / final recompute).
   function stageOnePreliminaryText(count) {
+    if (!count) return "לא נאספו שורות Stage 1 לפני העצירה, ולכן אין תוצאות להצגה.";
     return `מוצגות ${count} שורות Preliminary (quote-level) של Stage 1 בלבד — אלה אינן תוצאות Deep Scan / ציון ערך סופי. ציון ערך מלא דורש Stage 2 (Deep Scan).`;
   }
 

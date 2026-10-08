@@ -56,7 +56,7 @@ An orange warning box appears whenever Yahoo is selected.
 | --- | --- | --- |
 | **Value Scan מלא ככל האפשר** (full value scan, default) | 10 API calls per symbol | All strategies, Piotroski, relative checks, DCF |
 | **Momentum / Market בלבד** (momentum / market only) | 1 API call per symbol | Momentum score only. The other columns show "חסר" (missing). |
-| **Two-stage scan** | Stage 1: 1 call per symbol. Stage 2: 9 calls per selected candidate. | Full results for the top candidates only |
+| **Two-stage — Quick then Deep** | Stage 1: 1 call per symbol. Stage 2: 9 calls per selected candidate. | Full results for the top candidates only |
 
 The line under the buttons previews the cost, including how many responses will come from the cache. A Deep Scan of more than 10 symbols asks you to confirm first, as does a Two-stage scan estimated at more than 100 calls.
 
@@ -65,7 +65,7 @@ The line under the buttons previews the cost, including how many responses will 
 1. Pick a larger list, such as an expanded preset, or paste your own.
 2. Choose **Two-stage — Quick then Deep** in the scan-mode list. The request preview spells it out as "Two-stage scan — Quick filter first, then Deep Scan top candidates".
 3. Set **Two-stage: Stage 1 max symbols** (default 50, 1–200). Only the first that many symbols in the list are checked.
-4. Set **Two-stage: Deep Scan Top N** (default 10, 1–30). This is how many candidates get the full Deep Scan.
+4. Set **Two-stage: Deep Scan Top N** (default 10, 1–30). This is how many candidates get the full Deep Scan. The table still shows at most **כמות להצגה** (how many to show) rows, so if Top N is larger, raise that setting too to see every deep-scanned candidate.
 5. Check the preview: Stage 1 quote calls, Stage 2 maximum (Top N × 9), and the total before cache.
 6. Scan. The status shows `Stage 1 … X/Y`, then `Stage 2 … X/Y`.
 

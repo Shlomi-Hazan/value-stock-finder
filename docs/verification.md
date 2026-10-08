@@ -127,6 +127,8 @@ Open <http://localhost:8000/> and confirm:
 | Rate limit in either stage | Halts on the failing call with no further requests. Partial rows are shown with a stage-specific status. |
 | Summary line | Stage 1 checked, candidates selected, Stage 2 deep-scanned, API, Cache |
 | Large run | Confirmation when the estimate exceeds 100 calls |
+| Top N vs display limit | With Top N greater than **כמות להצגה** (how many to show), the table shows at most the display limit. The Stage 2 count in the summary line still reflects every deep-scanned candidate. |
+| Rate limit on the first Stage 1 call | The status says no Stage 1 rows were collected; it does not say "showing 0 rows". |
 
 ### Results, DCF and export
 

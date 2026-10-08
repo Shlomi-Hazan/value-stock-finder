@@ -1,6 +1,6 @@
 # API Integrations
 
-Last updated: 2026-10-08 (after PR #3)
+Last updated: 2026-10-08 (after PR #6: Two-stage request cost)
 
 ## 1. Financial Modeling Prep (FMP): primary provider
 

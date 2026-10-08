@@ -150,7 +150,7 @@ The full walkthrough is in the [User Guide](docs/USER_GUIDE.md).
 | --- | --- | --- |
 | **Value Scan מלא ככל האפשר** (Deep Scan, default) | 10 (quote + 9 fundamentals) | Everything: strategies, Piotroski, relative checks, DCF |
 | **Momentum / Market בלבד** | 1 (quote) | Momentum / Market score. Fundamental strategies and DCF show as missing. |
-| **Two-stage scan** | Stage 1: 1 per symbol (up to *Stage 1 max symbols*, default 50). Stage 2: 9 per candidate (up to *Deep Scan Top N*, default 10), reusing the Stage 1 quote from cache. | Final table shows only the deep-scanned candidates, fully scored |
+| **Two-stage — Quick then Deep** | Stage 1: 1 per symbol (up to *Stage 1 max symbols*, default 50). Stage 2: 9 per candidate (up to *Deep Scan Top N*, default 10), reusing the Stage 1 quote from cache. | Final table shows only the deep-scanned candidates, fully scored (still capped at **כמות להצגה**, the display limit) |
 
 A Deep Scan of more than 10 symbols asks for confirmation first, as does a Two-stage scan estimated at more than 100 calls. Cached responses don't consume API calls.
 
