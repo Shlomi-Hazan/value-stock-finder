@@ -7,9 +7,47 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-<header class="page-header">
-  <h1>Value Stock Finder</h1>
-  <p>סקרינר אישי לפי קריטריונים של השקעות ערך: גרהאם, פישר, פיוטרוסקי, באפט ותזרים מזומנים</p>
+<header class="page-header hero">
+  <div class="hero-inner">
+    <div class="hero-copy">
+      <span class="hero-badge">כלי לימודי להשקעות ערך</span>
+      <h1>Value Stock Finder</h1>
+      <p>סקרינר אישי לפי קריטריונים של השקעות ערך: גרהאם, פישר, פיוטרוסקי, באפט ותזרים מזומנים</p>
+      <ul class="feature-chips" aria-label="יכולות עיקריות">
+        <li>FMP Deep Scan</li>
+        <li>Two-stage scan</li>
+        <li>DCF estimate</li>
+        <li>CSV export</li>
+      </ul>
+    </div>
+    <!-- Concept illustration: the margin of safety (fair value above price). Illustrative only, not data. -->
+    <figure class="hero-art-card">
+      <svg class="hero-art" viewBox="0 0 320 190" role="img" aria-label="איור להמחשה: מרווח ביטחון הוא הפער בין השווי ההוגן המוערך לבין המחיר" focusable="false">
+        <defs>
+          <linearGradient id="mosFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#7c3aed" stop-opacity="0.20" />
+            <stop offset="1" stop-color="#4f46e5" stop-opacity="0.04" />
+          </linearGradient>
+        </defs>
+        <path d="M14 78 C 70 60, 120 68, 170 54 S 260 38, 306 30 L 306 128 C 260 136, 220 112, 170 124 S 70 148, 14 136 Z" fill="url(#mosFill)" />
+        <path class="art-value" d="M14 78 C 70 60, 120 68, 170 54 S 260 38, 306 30" fill="none" />
+        <path class="art-price" d="M14 136 C 70 148, 120 126, 170 124 S 260 136, 306 128" fill="none" />
+        <line class="art-gap-line" x1="170" y1="58" x2="170" y2="119" />
+        <circle class="art-dot" cx="170" cy="124" r="4.5" />
+        <text class="art-label art-label-value" x="306" y="18" text-anchor="start">שווי הוגן</text>
+        <text class="art-label art-label-price" x="306" y="156" text-anchor="start">מחיר</text>
+        <text class="art-label art-label-gap" x="162" y="92" text-anchor="start">מרווח ביטחון</text>
+      </svg>
+    </figure>
+  </div>
+  <nav class="flow" aria-label="שלבי העבודה">
+    <ol>
+      <li><a href="#sec-source"><span class="step">1</span>מקור נתונים</a></li>
+      <li><a href="#sec-universe"><span class="step">2</span>מניות</a></li>
+      <li><a href="#sec-scan"><span class="step">3</span>סריקה</a></li>
+      <li><a href="#sec-results"><span class="step">4</span>תוצאות</a></li>
+    </ol>
+  </nav>
 </header>
 
 <main>
@@ -17,9 +55,9 @@
     <h2 id="settingsTitle" class="settings-title">הגדרות סריקה</h2>
 
     <!-- A. Data source -->
-    <div class="group">
-      <h3 class="group-title">מקור נתונים</h3>
-      <div class="panel">
+    <div class="group" id="sec-source">
+      <h3 class="group-title"><span class="step" aria-hidden="true">1</span>מקור נתונים</h3>
+      <div class="panel panel-accent">
         <div class="fields fields-2">
           <label class="field">
             <span class="field-label">Data Provider</span>
@@ -48,9 +86,9 @@
     </div>
 
     <!-- B. Stock universe -->
-    <div class="group">
-      <h3 class="group-title">מניות לבדיקה</h3>
-      <div class="panel">
+    <div class="group" id="sec-universe">
+      <h3 class="group-title"><span class="step" aria-hidden="true">2</span>מניות לבדיקה</h3>
+      <div class="panel panel-accent">
         <div class="fields fields-2">
           <label class="field">
             <span class="field-label">רשימה מוכנה</span>
@@ -77,9 +115,9 @@
     </div>
 
     <!-- C. Scan mode -->
-    <div class="group">
-      <h3 class="group-title">מצב סריקה</h3>
-      <div class="panel">
+    <div class="group" id="sec-scan">
+      <h3 class="group-title"><span class="step" aria-hidden="true">3</span>מצב סריקה</h3>
+      <div class="panel panel-accent">
         <div class="fields">
           <label class="field">
             <span class="field-label">מצב סריקה</span>
@@ -178,9 +216,11 @@
           <button id="stopButton" class="btn btn-stop" onclick="requestStopScan()" disabled>עצור סריקה</button>
         </div>
 
-        <div id="requestPreview" class="small" style="white-space: pre-line;"></div>
-        <div id="status" class="status"></div>
-        <div id="endpointStatus" class="small"></div>
+        <div class="scan-console" aria-live="polite">
+          <div id="requestPreview" class="small" style="white-space: pre-line;"></div>
+          <div id="status" class="status"></div>
+          <div id="endpointStatus" class="small"></div>
+        </div>
 
         <div class="action-groups">
           <div class="action-group" role="group" aria-label="בדיקות חיבור">
@@ -211,20 +251,23 @@
     </div>
   </section>
 
-  <section class="card">
-    <h2>סיכום</h2>
+  <section class="card summary-card" id="sec-results">
+    <h2><span class="step" aria-hidden="true">4</span>סיכום</h2>
     <div class="summary">
       <div class="summary-box"><span>נבדקו</span><strong id="checkedCount">0</strong></div>
       <div class="summary-box"><span>עברו סינון בסיסי</span><strong id="passedCount">0</strong></div>
-      <div class="summary-box"><span>מועמדות חזקות</span><strong id="strongCount">0</strong></div>
+      <div class="summary-box summary-box-strong"><span>מועמדות חזקות</span><strong id="strongCount">0</strong></div>
       <div class="summary-box"><span>ציון ממוצע</span><strong id="averageScore">0</strong></div>
       <div class="summary-box"><span>המובילה</span><strong id="bestStock">-</strong></div>
     </div>
     <div id="twoStageSummary" class="small"></div>
   </section>
 
-  <section class="card">
-    <h2>תוצאות</h2>
+  <section class="card results-card">
+    <div class="results-head">
+      <h2>תוצאות</h2>
+      <p class="results-hint">הטבלה רחבה: גלול הצידה כדי לראות את כל 36 העמודות. לחץ על "פתח פירוט" בכל שורה להסבר מלא.</p>
+    </div>
     <div class="tabs" role="group" aria-label="סינון תוצאות">
       <button class="tab active" id="tabAll" onclick="setTableFilter('all')">הכול</button>
       <button class="tab" id="tabStrong" onclick="setTableFilter('strong')">מועמדות חזקות</button>
