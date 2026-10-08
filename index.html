@@ -91,6 +91,9 @@
       font-size: 14px;
     }
 
+    .grid > label, .grid-3 > label { min-width: 0; }
+    select { max-width: 100%; }
+
     input, select, textarea {
       padding: 11px;
       border: 1px solid #d1d5db;
@@ -285,6 +288,9 @@
           <option value="usaValue">ארה״ב - Value Candidates</option>
           <option value="usaTech">ארה״ב - טכנולוגיה</option>
           <option value="usaDividend">ארה״ב - דיבידנד/יציבות</option>
+          <option value="usaLargeExpanded">ארה״ב - חברות גדולות מורחב (90)</option>
+          <option value="usaValueExpanded">ארה״ב - Value מורחב (95)</option>
+          <option value="usaDividendExpanded">ארה״ב - דיבידנד מורחב (60)</option>
           <option value="manual">ידני - לא לשנות את הרשימה</option>
         </select>
       </label>
@@ -294,6 +300,7 @@
         <select id="scanMode" onchange="updateRequestPreview()">
           <option value="deep">Value Scan מלא ככל האפשר</option>
           <option value="quick">Momentum / Market בלבד</option>
+          <option value="twoStage">Two-stage — Quick then Deep</option>
         </select>
       </label>
 
@@ -320,6 +327,16 @@
       <label>
         מחיר מינימלי
         <input type="number" id="priceMin" value="5" />
+      </label>
+
+      <label>
+        Two-stage: Stage 1 max symbols
+        <input type="number" id="twoStageMaxSymbols" value="50" min="1" max="200" step="1" oninput="updateRequestPreview()" />
+      </label>
+
+      <label>
+        Two-stage: Deep Scan Top N
+        <input type="number" id="twoStageTopN" value="10" min="1" max="30" step="1" oninput="updateRequestPreview()" />
       </label>
     </div>
 
@@ -372,7 +389,7 @@
       <button class="danger" onclick="clearApiKey()">נקה API Key שמור</button>
     </div>
 
-    <div id="requestPreview" class="small"></div>
+    <div id="requestPreview" class="small" style="white-space: pre-line;"></div>
     <div id="status" class="status"></div>
     <div id="endpointStatus" class="small"></div>
 
@@ -390,6 +407,7 @@
       <div class="summary-box"><span>ציון ממוצע</span><strong id="averageScore">0</strong></div>
       <div class="summary-box"><span>המובילה</span><strong id="bestStock">-</strong></div>
     </div>
+    <div id="twoStageSummary" class="small"></div>
   </section>
 
   <section class="card">
@@ -472,6 +490,37 @@
       "KO", "PEP", "PG", "JNJ", "ABBV", "MRK", "PFE", "XOM", "CVX", "MCD",
       "WMT", "COST", "HD", "LOW", "T", "VZ", "IBM", "MMM", "CAT", "DE",
       "UPS", "UNP", "LMT", "RTX", "HON", "SO", "DUK", "NEE", "O", "MO"
+    ],
+    usaLargeExpanded: [
+      "AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "META", "TSLA", "AVGO", "BRK-B", "JPM",
+      "V", "MA", "UNH", "LLY", "XOM", "COST", "WMT", "HD", "PG", "NFLX",
+      "JNJ", "ORCL", "ABBV", "BAC", "KO", "CRM", "AMD", "PEP", "ADBE", "CSCO",
+      "TMO", "ACN", "MCD", "ABT", "LIN", "DHR", "TXN", "QCOM", "INTU", "AMAT",
+      "IBM", "GE", "CAT", "NOW", "ISRG", "VZ", "T", "CMCSA", "DIS", "PFE",
+      "MRK", "AMGN", "NEE", "UNP", "RTX", "HON", "LOW", "SPGI", "GS", "MS",
+      "BLK", "SCHW", "AXP", "C", "WFC", "BKNG", "UBER", "PM", "MO", "LMT",
+      "BA", "DE", "MDT", "SYK", "GILD", "VRTX", "REGN", "ADP", "ADI", "LRCX",
+      "MU", "KLAC", "PANW", "SBUX", "TJX", "NKE", "MDLZ", "CVX", "COP", "PLD"
+    ],
+    usaValueExpanded: [
+      "BRK-B", "JPM", "BAC", "WFC", "C", "USB", "PNC", "TFC", "GS", "MS",
+      "SCHW", "COF", "BK", "STT", "MET", "PRU", "AIG", "ALL", "TRV", "CB",
+      "AFL", "XOM", "CVX", "COP", "OXY", "EOG", "PSX", "MPC", "VLO", "SLB",
+      "KMI", "WMB", "JNJ", "PFE", "MRK", "ABBV", "BMY", "AMGN", "GILD", "CVS",
+      "CI", "ELV", "MDT", "ABT", "T", "VZ", "CMCSA", "IBM", "CSCO", "INTC",
+      "QCOM", "TXN", "HPQ", "DELL", "KO", "PEP", "PG", "MO", "PM", "HSY",
+      "GIS", "CL", "KMB", "MDLZ", "WMT", "TGT", "KR", "DG", "HD", "LOW",
+      "CAT", "DE", "UPS", "FDX", "UNP", "CSX", "ADM", "LMT", "RTX", "GD",
+      "NOC", "HON", "MMM", "EMR", "ETN", "ITW", "F", "GM", "NUE", "DOW",
+      "DUK", "SO", "D", "AEP", "EXC"
+    ],
+    usaDividendExpanded: [
+      "KO", "PEP", "PG", "JNJ", "ABBV", "MRK", "PFE", "XOM", "CVX", "MCD",
+      "WMT", "COST", "HD", "LOW", "T", "VZ", "IBM", "MMM", "CAT", "DE",
+      "UPS", "UNP", "LMT", "RTX", "HON", "SO", "DUK", "NEE", "O", "MO",
+      "PM", "CL", "KMB", "GIS", "SYY", "ADP", "ITW", "EMR", "GPC", "TROW",
+      "BLK", "AFL", "CB", "ED", "XEL", "AEP", "D", "WEC", "SRE", "PLD",
+      "SPG", "VICI", "OKE", "KMI", "PSX", "TXN", "CSCO", "AVGO", "ABT", "MDT"
     ]
   };
 
@@ -510,6 +559,20 @@
   const YAHOO_CHART_URL = "https://query1.finance.yahoo.com/v8/finance/chart/";
   const YAHOO_FAILED_MESSAGE = "Yahoo quote request failed. This may be blocked by browser/CORS or Yahoo restrictions.";
   const YAHOO_DEEP_BLOCKED_MESSAGE = "Yahoo Experimental currently supports quote-level scan only. Use FMP for Deep Scan / DCF.";
+  const YAHOO_TWO_STAGE_BLOCKED_MESSAGE = "Yahoo Experimental / Browser test only does not support Two-stage scan because Stage 2 requires FMP Deep Scan.";
+
+  const TWO_STAGE_DEFAULT_MAX_SYMBOLS = 50;
+  const TWO_STAGE_MAX_SYMBOLS_LIMIT = 200;
+  const TWO_STAGE_DEFAULT_TOP_N = 10;
+  const TWO_STAGE_TOP_N_LIMIT = 30;
+  // Same order of magnitude as the existing confirmation for a Deep Scan of more than 10 symbols (10 x 10 calls).
+  const TWO_STAGE_CONFIRM_CALLS = 100;
+  const TWO_STAGE_WARNING = "Two-stage scan can still use many FMP calls. Stage 1 is quote-level only; Stage 2 deep-scans only the top N candidates.";
+
+  // Stage 1-only fallback rows keep the preliminary evaluateStock() total (no relative strategies / final recompute).
+  function stageOnePreliminaryText(count) {
+    return `מוצגות ${count} שורות Preliminary (quote-level) של Stage 1 בלבד — אלה אינן תוצאות Deep Scan / ציון ערך סופי. ציון ערך מלא דורש Stage 2 (Deep Scan).`;
+  }
 
   function escapeHtml(value) {
     return String(value ?? "")
@@ -641,6 +704,55 @@
     return { total, cached, api: total - cached, endpoints: endpoints.length };
   }
 
+  function clampIntInput(id, fallback, min, max, writeBack = false) {
+    const el = document.getElementById(id);
+    const n = numberOrNull(el?.value);
+    const value = Math.round(clamp(n === null ? fallback : n, min, max));
+    if (writeBack && el && el.value !== String(value)) el.value = value;
+    return value;
+  }
+
+  function readTwoStageSettings(writeBack = false) {
+    return {
+      maxSymbols: clampIntInput("twoStageMaxSymbols", TWO_STAGE_DEFAULT_MAX_SYMBOLS, 1, TWO_STAGE_MAX_SYMBOLS_LIMIT, writeBack),
+      topN: clampIntInput("twoStageTopN", TWO_STAGE_DEFAULT_TOP_N, 1, TWO_STAGE_TOP_N_LIMIT, writeBack)
+    };
+  }
+
+  // Stage 2 reuses the Stage 1 quote from cache, so only the deep endpoints are counted for it.
+  // Which symbols reach Stage 2 is unknown until Stage 1 ranks them, so Stage 2 is an upper bound before cache.
+  function estimateTwoStagePlan(symbols) {
+    const { maxSymbols, topN } = readTwoStageSettings();
+    const stage1Symbols = symbols.slice(0, maxSymbols);
+    const stage1Cached = stage1Symbols.filter(symbol => readCachedFmp("/stable/quote", symbol, {})).length;
+    const candidates = Math.min(topN, stage1Symbols.length);
+    const stage2Max = candidates * DEEP_ENDPOINTS.length;
+    return {
+      inputCount: symbols.length,
+      stage1Count: stage1Symbols.length,
+      stage1Cached,
+      stage1Api: stage1Symbols.length - stage1Cached,
+      candidates,
+      deepEndpoints: DEEP_ENDPOINTS.length,
+      stage2Max,
+      maxBeforeCache: stage1Symbols.length + stage2Max,
+      maxWithQuoteCache: stage1Symbols.length - stage1Cached + stage2Max
+    };
+  }
+
+  function twoStagePreviewText(symbols) {
+    const plan = estimateTwoStagePlan(symbols);
+    const skipped = plan.inputCount > plan.stage1Count
+      ? `\nרק ${plan.stage1Count} הסימולים הראשונים מתוך ${plan.inputCount} ייבדקו ב־Stage 1 (לפי Stage 1 max symbols).`
+      : "";
+    return `Two-stage scan — Quick filter first, then Deep Scan top candidates (${providerLabel("fmp")}):` +
+      `\nStage 1: up to ${plan.stage1Count} quote calls (לפי ה־Cache הנוכחי: כ־${plan.stage1Api} API וכ־${plan.stage1Cached} מה־Cache).` +
+      `\nStage 2: up to ${plan.candidates} candidates × ${plan.deepEndpoints} deep endpoints = up to ${plan.stage2Max} calls (ה־Quote נלקח מה־Cache של Stage 1).` +
+      `\nEstimated max before cache: ${plan.maxBeforeCache} calls. Cache may reduce this.` +
+      skipped +
+      `\n⚠️ ${TWO_STAGE_WARNING}`;
+  }
+
   function updateRequestPreview() {
     const el = document.getElementById("requestPreview");
     if (!el) return;
@@ -651,6 +763,14 @@
       el.textContent = "הערכת בקשות תופיע אחרי הזנת סימולים.";
       return;
     }
+    if (provider === "yahoo" && mode === "twoStage") {
+      el.textContent = `⚠️ ${YAHOO_TWO_STAGE_BLOCKED_MESSAGE} בחר ספק FMP, או מצב Momentum / Market לבדיקת Yahoo.`;
+      return;
+    }
+    if (mode === "twoStage") {
+      el.textContent = twoStagePreviewText(symbols);
+      return;
+    }
     if (provider === "yahoo") {
       const cached = symbols.filter(symbol => readCachedYahoo(symbol)).length;
       const deepNote = mode === "deep" ? " ⚠️ Deep Scan חסום עם Yahoo — עבור ל־Momentum / Market." : "";
@@ -659,7 +779,7 @@
     }
     const plan = estimateRequestPlan(symbols, mode);
     const modeLabel = mode === "quick" ? "Momentum / Market" : "Deep Scan";
-    const warning = mode === "deep" && symbols.length > 10 ? " מומלץ לצמצם רשימה או להסתמך על Cache." : "";
+    const warning = mode === "deep" && symbols.length > 10 ? " מומלץ לצמצם רשימה, להסתמך על Cache או להשתמש ב־Two-stage scan." : "";
     el.textContent = `${providerLabel(provider)} — ${modeLabel}: עד ${plan.total} קריאות (${plan.endpoints} לכל סימול). לפי ה־Cache הנוכחי: כ־${plan.api} API וכ־${plan.cached} מה־Cache.${warning}`;
   }
 
@@ -1699,10 +1819,27 @@
     const api = row.raw.apiCalls || 0;
     const cache = row.raw.cacheHits || 0;
     const providerNote = row.raw.provider === "yahoo" ? `<br><span class="pill warn">Yahoo Experimental / Browser test only</span>` : "";
-    if (api > 0 && cache > 0) return `<span class="pill info">מעורב</span><br><span class="small">API ${api} / Cache ${cache}</span>${providerNote}`;
-    if (cache > 0) return `<span class="pill good">Cache</span><br><span class="small">${cache} קריאות</span>${providerNote}`;
-    if (api > 0) return `<span class="pill warn">API</span><br><span class="small">${api} קריאות</span>${providerNote}`;
-    return `<span class="pill gray">אין</span>${providerNote}`;
+    const notes = providerNote + twoStagePill(row);
+    if (api > 0 && cache > 0) return `<span class="pill info">מעורב</span><br><span class="small">API ${api} / Cache ${cache}</span>${notes}`;
+    if (cache > 0) return `<span class="pill good">Cache</span><br><span class="small">${cache} קריאות</span>${notes}`;
+    if (api > 0) return `<span class="pill warn">API</span><br><span class="small">${api} קריאות</span>${notes}`;
+    return `<span class="pill gray">אין</span>${notes}`;
+  }
+
+  function twoStagePill(row) {
+    const meta = row.scanMeta;
+    if (!meta || meta.mode !== "twoStage") return "";
+    if (meta.stage === 2) return `<br><span class="pill info">Two-stage: Deep</span><br><span class="small">Stage 1 #${meta.stage1Rank}</span>`;
+    return `<br><span class="pill gray">Stage 1 בלבד (quote)</span><br><span class="small">Preliminary</span>`;
+  }
+
+  function twoStageDetailsHtml(row) {
+    const meta = row.scanMeta;
+    if (!meta || meta.mode !== "twoStage") return "";
+    if (meta.stage === 2) {
+      return `<b>Two-stage scan:</b> מועמדת #${meta.stage1Rank} מתוך ${meta.stage1Total} ב־Stage 1 (סידור לפי נתוני quote בלבד), ולאחר מכן בוצע לה Deep Scan מלא ב־Stage 2.<br/>`;
+    }
+    return `<b>Two-stage scan — Preliminary (quote-level):</b> שורת Stage 1 בלבד (#${meta.stage1Rank} מתוך ${meta.stage1Total}). Stage 2 (Deep Scan) לא רץ או לא הושלם עבורה, ולכן אין דוחות כספיים, השוואה יחסית או DCF. הציון הכולל כאן הוא ציון ביניים ולא ציון ערך סופי.<br/>`;
   }
 
   function relativeBasisCell(row) {
@@ -1754,6 +1891,7 @@
       <details>
         <summary>פתח פירוט</summary>
         <div class="details-box">
+          ${twoStageDetailsHtml(row)}
           <b>Momentum / Market:</b> ${row.quick.notes.map(escapeHtml).join(", ") || "אין"}<br/>
           <b>Graham:</b><ul>${testListHtml(row.value.graham)}</ul>
           <b>Fisher:</b><ul>${testListHtml(row.value.fisher)}</ul>
@@ -1853,6 +1991,16 @@
     document.getElementById("strongCount").textContent = strong;
     document.getElementById("averageScore").textContent = avg.toFixed(1);
     document.getElementById("bestStock").textContent = summaryRows[0] ? summaryRows[0].m.symbol : "-";
+
+    const ts = lastScanStats.twoStage;
+    const twoStageEl = document.getElementById("twoStageSummary");
+    if (!ts) {
+      twoStageEl.textContent = "";
+      return;
+    }
+    const skipped = ts.inputCount > ts.stage1Total ? ` · ${ts.inputCount - ts.stage1Total} סימולים מעבר ל־Stage 1 max לא נבדקו` : "";
+    const preliminary = ts.preliminaryOnly ? " · ⚠️ Table shows preliminary Stage 1 quote-level rows only — not final Deep Scan results" : "";
+    twoStageEl.textContent = `Two-stage scan: Stage 1 checked ${ts.stage1Checked}/${ts.stage1Total} (quote-level) · Candidates selected: ${ts.candidatesSelected} (Top N = ${ts.topN}) · Stage 2 deep-scanned: ${ts.stage2Scanned}/${ts.stage2Total} · API: ${lastScanStats.apiCalls} · Cache: ${lastScanStats.cacheHits}${skipped}${preliminary}`;
   }
 
   function resetResults() {
@@ -1884,9 +2032,10 @@
       }
     };
 
-    // Safer option: block Deep Scan for Yahoo instead of silently downgrading, so no request is made.
-    if (!PROVIDERS[provider].supportsDeep && mode === "deep") {
-      setStatus(YAHOO_DEEP_BLOCKED_MESSAGE + " (בחר מצב Momentum / Market או ספק FMP)", "warn");
+    // Safer option: block Deep Scan / Two-stage for Yahoo instead of silently downgrading, so no request is made.
+    if (!PROVIDERS[provider].supportsDeep && mode !== "quick") {
+      const blockedMessage = mode === "twoStage" ? YAHOO_TWO_STAGE_BLOCKED_MESSAGE : YAHOO_DEEP_BLOCKED_MESSAGE;
+      setStatus(blockedMessage + " (בחר מצב Momentum / Market או ספק FMP)", "warn");
       updateRequestPreview();
       return;
     }
@@ -1902,9 +2051,22 @@
         return;
       }
     }
+    if (mode === "twoStage") {
+      readTwoStageSettings(true);
+      const twoStagePlan = estimateTwoStagePlan(symbols);
+      updateRequestPreview();
+      if (twoStagePlan.maxWithQuoteCache > TWO_STAGE_CONFIRM_CALLS) {
+        const ok = confirm(`Two-stage scan: Stage 1 עד ${twoStagePlan.stage1Count} קריאות quote (${twoStagePlan.stage1Api} אחרי Cache נוכחי), Stage 2 עד ${twoStagePlan.stage2Max} קריאות Deep. להמשיך?`);
+        if (!ok) {
+          setStatus("הסריקה בוטלה לפני ביצוע קריאות API", "warn");
+          return;
+        }
+      }
+    }
 
     if (apiKey) localStorage.setItem("valueStockFinderApiKey", apiKey);
     resetResults();
+    lastScanStats.mode = mode;
     stopRequested = false;
     button.disabled = true;
     stopButton.disabled = false;
@@ -1912,6 +2074,10 @@
     const evaluated = [];
 
     try {
+      if (mode === "twoStage") {
+        await runTwoStageScan(symbols, apiKey, provider, settings);
+        return;
+      }
       for (let i = 0; i < symbols.length; i++) {
         if (stopRequested) {
           lastScanStats.stopped = true;
@@ -1973,6 +2139,145 @@
     }
   }
 
+  // Practical candidate ordering for Two-stage scan, not an investment methodology.
+  // Stage 1 has quote-level data only, so it reuses existing outputs in this order: basic filter pass,
+  // total score, Momentum / Market score, Data Confidence, then symbol for a stable tie-break.
+  // Missing fundamentals are never treated as passing; they simply are not part of Stage 1.
+  function rankStageOneCandidates(rows) {
+    const ranked = rows.slice().sort((a, b) =>
+      (Number(b.passBasic) - Number(a.passBasic)) ||
+      (b.totalScore - a.totalScore) ||
+      (b.quick.score - a.quick.score) ||
+      (b.dataConfidence.pct - a.dataConfidence.pct) ||
+      String(a.m.symbol).localeCompare(String(b.m.symbol))
+    );
+    ranked.forEach((row, index) => {
+      row.scanMeta = { mode: "twoStage", stage: 1, stage1Rank: index + 1, stage1Total: ranked.length };
+    });
+    return ranked;
+  }
+
+  // Deep rows get relative strategies and the usual total-score sort. Preliminary Stage 1 rows keep the
+  // Stage 1 order and skip relative strategies, which would otherwise score Dreman on market cap alone.
+  function showTwoStageResults(rows, settings, isDeep) {
+    if (lastScanStats.twoStage) lastScanStats.twoStage.preliminaryOnly = !isDeep && rows.length > 0;
+    if (isDeep) {
+      applyRelativeStrategies(rows, settings);
+      allResults = rows.slice().sort((a,b)=>b.totalScore-a.totalScore);
+    } else {
+      allResults = rows.slice();
+    }
+    lastResults = allResults.slice(0, settings.topLimit);
+    if (lastResults.length) {
+      renderTable();
+    } else {
+      document.getElementById("stocksTable").innerHTML = `<tr><td colspan="36">לא נאספו תוצאות</td></tr>`;
+    }
+    updateSummary();
+  }
+
+  async function runTwoStageScan(symbols, apiKey, provider, settings) {
+    const { maxSymbols, topN } = readTwoStageSettings();
+    const stage1Symbols = symbols.slice(0, maxSymbols);
+    const stats = {
+      inputCount: symbols.length,
+      stage1Total: stage1Symbols.length,
+      stage1Checked: 0,
+      topN,
+      candidatesSelected: 0,
+      stage2Total: 0,
+      stage2Scanned: 0
+    };
+    lastScanStats.twoStage = stats;
+    const stage1Rows = [];
+    const stage2Rows = [];
+    let ranked = null;
+    let stage = 1;
+
+    const countRaw = raw => {
+      lastScanStats.apiCalls += raw.apiCalls || 0;
+      lastScanStats.cacheHits += raw.cacheHits || 0;
+    };
+    const callsText = () => `API: ${lastScanStats.apiCalls}, Cache: ${lastScanStats.cacheHits}.`;
+
+    try {
+      // Stage 1: the same quote-only path as Momentum / Market. No deep endpoints are called here.
+      for (let i = 0; i < stage1Symbols.length; i++) {
+        if (stopRequested) {
+          lastScanStats.stopped = true;
+          break;
+        }
+        const symbol = stage1Symbols[i];
+        setStatus(`Stage 1 (quote-level): בודק ${i + 1}/${stage1Symbols.length}: ${symbol}`, "");
+        const raw = await fetchStockDataByProvider(symbol, apiKey, "quick", provider);
+        stats.stage1Checked++;
+        lastScanStats.checked++;
+        countRaw(raw);
+        if (raw.quote) stage1Rows.push(evaluateStock(raw, settings));
+        await sleep(60);
+      }
+
+      ranked = rankStageOneCandidates(stage1Rows);
+      if (lastScanStats.stopped || stopRequested) {
+        lastScanStats.stopped = true;
+        showTwoStageResults(ranked, settings, false);
+        setStatus(`הסריקה נעצרה לפי בקשתך במהלך Stage 1, ולכן Stage 2 (Deep Scan) לא הורץ. ${stageOnePreliminaryText(ranked.length)} ${callsText()}`, "warn");
+        return;
+      }
+
+      const candidates = ranked.filter(row => row.passBasic).slice(0, topN);
+      stats.candidatesSelected = candidates.length;
+      if (!candidates.length) {
+        showTwoStageResults(ranked, settings, false);
+        setStatus(`Stage 1 הסתיים: נבדקו ${stats.stage1Checked} סימולים, אך אף מניה לא עברה את הסינון הבסיסי (מחיר / Volume / Market Cap), ולכן Stage 2 לא הורץ. ${stageOnePreliminaryText(ranked.length)} ${callsText()}`, "warn");
+        return;
+      }
+
+      // Stage 2: full FMP Deep Scan, only for the selected candidates.
+      stage = 2;
+      stats.stage2Total = candidates.length;
+      for (let i = 0; i < candidates.length; i++) {
+        if (stopRequested) {
+          lastScanStats.stopped = true;
+          break;
+        }
+        const candidate = candidates[i];
+        const symbol = candidate.raw.symbol;
+        setStatus(`Stage 2 (Deep Scan): ${i + 1}/${candidates.length}: ${symbol} (Stage 1 #${candidate.scanMeta.stage1Rank})`, "");
+        const raw = await fetchStockDataByProvider(symbol, apiKey, "deep", provider);
+        stats.stage2Scanned++;
+        countRaw(raw);
+        if (raw.quote) {
+          const row = evaluateStock(raw, settings);
+          row.scanMeta = { mode: "twoStage", stage: 2, stage1Rank: candidate.scanMeta.stage1Rank, stage1Total: ranked.length };
+          stage2Rows.push(row);
+        }
+        await sleep(120);
+      }
+
+      if (lastScanStats.stopped && !stage2Rows.length) {
+        showTwoStageResults(ranked, settings, false);
+        setStatus(`הסריקה נעצרה לפי בקשתך לפני שהושלם Deep Scan למועמדת כלשהי, ולכן Stage 2 לא הושלם. ${stageOnePreliminaryText(ranked.length)} ${callsText()}`, "warn");
+        return;
+      }
+      showTwoStageResults(stage2Rows, settings, true);
+      const stopText = lastScanStats.stopped ? ` הסריקה נעצרה לפי בקשתך במהלך Stage 2 (בוצע Deep Scan ל־${stats.stage2Scanned}/${stats.stage2Total}).` : "";
+      setStatus(`Two-stage scan הסתיים. Stage 1: נבדקו ${stats.stage1Checked}/${stats.stage1Total} סימולים ברמת quote, ונבחרו ${stats.candidatesSelected} מועמדות. Stage 2: בוצע Deep Scan ל־${stats.stage2Scanned} מניות, ומוצגות תוצאות ה־Deep בלבד. ${callsText()}${stopText}`, lastScanStats.stopped ? "warn" : "good");
+    } catch (e) {
+      if (!e.rateLimited && !e.providerBlocked) throw e;
+      console.error(e);
+      stats.haltedAtStage = stage;
+      if (stage === 2 && stage2Rows.length) {
+        showTwoStageResults(stage2Rows, settings, true);
+        setStatus(`${e.message} (Stage 2). מוצגות ${stage2Rows.length} תוצאות Deep שנאספו לפני העצירה. ${callsText()} נסה שוב מאוחר יותר או השתמש ב־Cache קיים.`, "warn");
+      } else {
+        const preliminary = ranked || rankStageOneCandidates(stage1Rows);
+        showTwoStageResults(preliminary, settings, false);
+        setStatus(`${e.message} (Stage ${stage}). Stage 2 (Deep Scan) לא הושלם. ${stageOnePreliminaryText(preliminary.length)} ${callsText()} נסה שוב מאוחר יותר, הקטן את Top N או השתמש ב־Cache קיים.`, "warn");
+      }
+    }
+  }
+
   async function testEndpoints() {
     const apiKey = document.getElementById("apiKey").value.trim();
     if (!apiKey) { setStatus("חסר API Key", "bad"); return; }
@@ -2022,7 +2327,7 @@
 
   function exportCSV() {
     if (!lastResults.length) { setStatus("אין תוצאות לייצוא", "warn"); return; }
-    const headers = ["rank", "symbol", "name", "sector", "price", "marketCap", "pe", "ps", "pb", "roe", "roa", "debtEquity", "currentRatio", "fcf", "paysDividend", "dividendAmount", "dividendYield", "quickScore", "graham", "fisher", "cash", "buffett", "piotroski", "dreman", "neff", "relativeBasis", "relativePeerCount", "fairValue", "currentPrice", "upsideToFairValue", "discountFromFairValue", "marginOfSafetyPassed", "dcfConfidence", "dcfBaseFcf", "dcfGrowthRate", "dcfDiscountRate", "dcfTerminalGrowth", "dcfProjectionYears", "totalScore", "decision", "dataProvider"];
+    const headers = ["rank", "symbol", "name", "sector", "price", "marketCap", "pe", "ps", "pb", "roe", "roa", "debtEquity", "currentRatio", "fcf", "paysDividend", "dividendAmount", "dividendYield", "quickScore", "graham", "fisher", "cash", "buffett", "piotroski", "dreman", "neff", "relativeBasis", "relativePeerCount", "fairValue", "currentPrice", "upsideToFairValue", "discountFromFairValue", "marginOfSafetyPassed", "dcfConfidence", "dcfBaseFcf", "dcfGrowthRate", "dcfDiscountRate", "dcfTerminalGrowth", "dcfProjectionYears", "totalScore", "decision", "dataProvider", "scanMode", "scanStage", "stage1Rank"];
     const lines = [headers.join(",")];
     lastResults.forEach((row, i) => {
       const m = row.m;
@@ -2067,7 +2372,10 @@
         row.dcf?.projectionYears,
         row.totalScore,
         row.decisionText,
-        providerLabel(row.raw.provider)
+        providerLabel(row.raw.provider),
+        row.scanMeta?.mode || lastScanStats.mode || "",
+        row.scanMeta?.stage ?? "",
+        row.scanMeta?.stage1Rank ?? ""
       ].map(v => `"${String(v ?? "").replaceAll('"', '""')}"`);
       lines.push(values.join(","));
     });

@@ -61,7 +61,7 @@ When behavior changes, update the affected docs (SPEC, methodology, user guide, 
 | Single-file HTML | Keep the app in `index.html`. Do not split it into files or introduce a framework (React, Vite, Next.js…) unless the owner explicitly requests it and an ADR is added. |
 | No backend | Do not add servers, serverless functions or proxies unless explicitly requested. See [ADR-0003](docs/decisions/ADR-0003-no-backend-yet.md). |
 | No dependencies | No `package.json`, npm packages, CDN scripts, build tools or bundlers unless explicitly requested. |
-| Preserve features | Do not remove or weaken existing functionality: FMP deep scan, cache, request preview, stop scan, rate-limit handling, endpoint tests, DCF, relative basis, data confidence, CSV export, presets, manual symbols. |
+| Preserve features | Do not remove or weaken existing functionality: FMP deep scan, Two-stage scan, cache, request preview, stop scan, rate-limit handling, endpoint tests, DCF, relative basis, data confidence, CSV export, presets, manual symbols. |
 | FMP stays primary | Do not make Yahoo (or any unofficial source) the default or present it as reliable. See [ADR-0002](docs/decisions/ADR-0002-fmp-primary-provider.md). |
 | Storage safety | Wrap `localStorage` access in `try/catch`. |
 | Escaping | Pass every dynamic value inserted with `innerHTML` through `escapeHtml`. |
@@ -154,7 +154,7 @@ After a task, report:
 
 All agents:
 
-- Inspect before editing. `index.html` is about 2,100 lines; read the relevant functions, not just search hits.
+- Inspect before editing. `index.html` is about 2,400 lines; read the relevant functions, not just search hits.
 - Do not assume work by another agent is correct. Verify it against the code.
 - Never discard uncommitted work you did not create.
 - Ask the owner before architecture changes, new providers, dependency or backend additions, or scoring changes.

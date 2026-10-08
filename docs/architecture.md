@@ -1,6 +1,6 @@
 # Architecture
 
-Last updated: 2026-10-08 (main at `09dbd5d`, after PR #3)
+Last updated: 2026-10-08 (after PR #6: Two-stage scan)
 
 ## 1. Current architecture: a single-file static app
 
@@ -55,7 +55,7 @@ flowchart TB
 
 ### UI layer
 
-- **Settings:** provider, API key (FMP), preset list, scan mode, top-N, market-cap thresholds (US / non-US), minimum volume, minimum price, DCF assumptions, and the symbol textarea.
+- **Settings:** provider, API key (FMP), preset list, scan mode, top-N, market-cap thresholds (US / non-US), minimum volume, minimum price, Two-stage settings (Stage 1 max symbols, Deep Scan Top N), DCF assumptions, and the symbol textarea.
 - **Actions:** scan, stop, FMP endpoint test, selected-provider test, CSV export, clear cache, clear API key.
 - **Feedback:** `#requestPreview`, `#status` (via `setStatus`), `#endpointStatus`, and `#providerWarning`, which is visible only for Yahoo.
 - **RTL:** the page is `lang="he" dir="rtl"`. Symbol input and numbers are LTR.
@@ -70,7 +70,7 @@ These module-level variables live only in memory:
 | `lastResults` | Top-N slice that is displayed and exported |
 | `currentFilter` | Active table tab |
 | `stopRequested` | Set by the stop button |
-| `lastScanStats` | `{ checked, apiCalls, cacheHits, stopped }` |
+| `lastScanStats` | `{ checked, apiCalls, cacheHits, stopped, mode, twoStage? }`. `twoStage` holds the Stage 1 / Stage 2 counters for the summary line. |
 
 These values are persisted in `localStorage`: the API key, the selected provider, and the cache entries.
 
@@ -122,6 +122,18 @@ Entries are `{timestamp, data}` JSON in `localStorage`. FMP uses a 10-minute TTL
 6. `applyRelativeStrategies` runs across all rows: relative basis, Dreman, Neff, then the final total and decision.
 7. Sort, slice to top-N, render, and update the summary.
 
+In `twoStage` mode, `scanStocks` hands off to `runTwoStageScan()` after the same validation:
+
+1. **Stage 1:**
+   - Quick fetch for up to *Stage 1 max symbols*, then `evaluateStock`.
+   - `rankStageOneCandidates` orders the rows (candidate ordering only).
+2. **Stage 2:**
+   - The top N candidates that pass `passBasic` get a deep fetch, reusing the cached Stage 1 quote, then `evaluateStock`.
+   - `showTwoStageResults` applies `applyRelativeStrategies` to the Stage 2 rows only, then sorts and renders.
+3. **Stop / rate limit:** the scan halts immediately. It shows the partial Stage 2 rows, or the preliminary Stage 1 rows labeled via `scanMeta.stage = 1`.
+
+For Two-stage rows, `renderDetails` and the source column show `scanMeta`, and `#twoStageSummary` shows the stage counters.
+
 ### Rendering layer
 
 - `renderTable` builds the 36-column table for the active tab.
@@ -138,16 +150,22 @@ Entries are `{timestamp, data}` JSON in `localStorage`. FMP uses a 10-minute TTL
 ```mermaid
 flowchart TD
   S([Click scan]) --> P{Provider supports<br/>selected mode?}
-  P -- "no (Yahoo + Deep)" --> W[Warn, no requests] --> X([End])
+  P -- "no (Yahoo + Deep or Two-stage)" --> W[Warn, no requests] --> X([End])
   P -- yes --> K{FMP and no key?}
   K -- yes --> E1[Status: missing API key] --> X
   K -- no --> L{Symbols empty?}
   L -- yes --> E2[Status: missing list] --> X
-  L -- no --> C{FMP Deep and over 10 symbols?}
+  L -- no --> C{"Large scan? Deep over 10 symbols,<br/>or Two-stage over 100 calls"}
   C -- yes --> CF{User confirms?}
   CF -- no --> X
-  CF -- yes --> LOOP
-  C -- no --> LOOP
+  CF -- yes --> TS
+  C -- no --> TS{Two-stage mode?}
+  TS -- yes --> TS1[Stage 1: quote-only fetch<br/>up to max symbols] --> TSR[rankStageOneCandidates]
+  TSR --> TSC{Stopped, or no basic-filter pass?}
+  TSC -- yes --> TSP[Show preliminary Stage 1 rows] --> X
+  TSC -- no --> TS2[Stage 2: Deep Scan top N candidates]
+  TS2 --> TSF[Relative strategies on Stage 2 rows,<br/>sort, render, two-stage summary] --> X
+  TS -- no --> LOOP
   LOOP[Next symbol] --> ST{Stop requested?}
   ST -- yes --> REL
   ST -- no --> F[fetchStockDataByProvider]
@@ -173,7 +191,7 @@ flowchart TD
 | --- | --- | --- |
 | Split into `index.html` + `app.js` + `styles.css` (still static) | Easier reviews and diffs | Needs a new ADR. Breaks "single file". |
 | Small serverless proxy (e.g. Cloudflare Worker, Netlify Function) | Hide the FMP key, add CORS for other providers, server-side caching | Hosting, secrets management, abuse protection |
-| Background / batch scanner | Large universes, scheduled screens | Needs storage and a backend |
+| Background / batch scanner | Market-wide universes, scheduled screens (the browser-side Two-stage scan already exists) | Needs storage and a backend |
 | Provider plugin interface | Cleaner multi-provider support (TASE, global) | Refactor of the provider layer |
 | Automated tests (headless browser or extracted pure functions) | Regression safety for scoring | Tooling. Must not add runtime dependencies. |
 

@@ -56,9 +56,10 @@ Value Stock Finder automates that **first pass**. It does not decide what to buy
 
 | Feature | Status | Description |
 | --- | --- | --- |
-| Preset & manual symbol lists | ✅ Current | Four preset US lists (large caps, value, tech, dividend), plus free-form symbol entry |
+| Preset & manual symbol lists | ✅ Current | Four preset US lists (large caps, value, tech, dividend, 30 each), three curated expanded US lists (90 / 95 / 60 symbols), plus free-form symbol entry |
 | Momentum / Market scan | ✅ Current | Quote-only quick scan, 1 request per symbol |
 | Deep Scan | ✅ Current | Quote plus 9 fundamental FMP endpoints per symbol |
+| Two-stage scan | ✅ Current | Quote-only Stage 1 over a larger list (up to 200), then Deep Scan only on the top N candidates (up to 30) |
 | Strategy scoring | ✅ Current | Graham, Fisher, Cash Flow, Buffett-inspired, Piotroski approx., Dreman/Neff relative |
 | Estimated Fair Value / DCF | ✅ Current | Configurable educational DCF with margin of safety and DCF confidence |
 | Data Confidence | ✅ Current | Share of key metrics actually available for each stock |
@@ -68,7 +69,7 @@ Value Stock Finder automates that **first pass**. It does not decide what to buy
 | Endpoint test | ✅ Current | Checks which FMP endpoints your plan allows, using AAPL |
 | CSV export | ✅ Current | Exports the displayed top-N results with scores and DCF fields |
 | Yahoo Finance provider | 🧪 Experimental | Browser connectivity test only; likely blocked by CORS |
-| Two-stage scan, larger universes, TASE, global markets | 🗓 Planned | See [roadmap](docs/roadmap.md) |
+| Automatic universe discovery, TASE, global markets | 🗓 Planned / Future | See [roadmap](docs/roadmap.md) |
 
 ## 🏗 Current Architecture
 
@@ -135,7 +136,7 @@ Then open <http://localhost:8000/>. A real `http://` origin behaves more predict
 1. Keep **Data Provider** on **Financial Modeling Prep**.
 2. Enter your FMP API key.
 3. Choose a preset list, or pick **ידני** (manual) and type symbols such as `AAPL, MSFT, KO`.
-4. Choose a scan mode (see below) and review the **request preview** under the buttons.
+4. Choose a scan mode (see below) and review the **request preview** under the buttons. For larger lists, choose **Two-stage scan** and set *Stage 1 max symbols* and *Deep Scan Top N*.
 5. Optionally adjust the filters (minimum market cap, volume, price) and the DCF assumptions.
 6. Click **סרוק מניות** (scan stocks). Use **עצור סריקה** (stop scan) to stop before the next symbol.
 7. Read the summary, filter the table tabs (All / Strong / Watchlist / Rejected) and open **פתח פירוט** (open details) on any row.
@@ -149,8 +150,17 @@ The full walkthrough is in the [User Guide](docs/USER_GUIDE.md).
 | --- | --- | --- |
 | **Value Scan מלא ככל האפשר** (Deep Scan, default) | 10 (quote + 9 fundamentals) | Everything: strategies, Piotroski, relative checks, DCF |
 | **Momentum / Market בלבד** | 1 (quote) | Momentum / Market score. Fundamental strategies and DCF show as missing. |
+| **Two-stage scan** | Stage 1: 1 per symbol (up to *Stage 1 max symbols*, default 50). Stage 2: 9 per candidate (up to *Deep Scan Top N*, default 10), reusing the Stage 1 quote from cache. | Final table shows only the deep-scanned candidates, fully scored |
 
-A Deep Scan of more than 10 symbols asks for confirmation first. Cached responses don't consume API calls.
+A Deep Scan of more than 10 symbols asks for confirmation first, as does a Two-stage scan estimated at more than 100 calls. Cached responses don't consume API calls.
+
+**Two-stage scan** is the cost-saving way to screen the expanded lists:
+
+1. Stage 1 checks quote-level data only.
+2. Candidates are ordered by the existing basic filter, total score and Momentum / Market score. This is a practical ordering, **not a value signal**, and it favors large, liquid, trending stocks.
+3. Only the top N candidates that passed the basic filter get the full Deep Scan.
+
+Scoring rules are unchanged. Two-stage scan is FMP-only; it is blocked with Yahoo.
 
 ## 📐 Value Strategies Included
 
@@ -189,8 +199,8 @@ Data Confidence is the percentage of 19 key metrics (price, market cap, volume, 
 - Results are only as good as the provider's data. Fields can be missing, stale, or defined differently than in a course.
 - Relative (Dreman / Neff) comparisons use **only the symbols in the current scan**, not a full industry or market universe.
 - The DCF ignores net debt and cash, uses a capped growth rate and is highly sensitive to its assumptions.
-- Preset lists are US-only. Israel/TASE and global coverage are **planned**, not implemented.
-- Scans run one symbol at a time in the browser, so large universes are slow and limited by your FMP plan.
+- Preset lists are US-only and hand-curated. There is no automatic market-wide discovery. Israel/TASE and global coverage are **planned**, not implemented.
+- Scans run one symbol at a time in the browser, so large universes are slow and limited by your FMP plan. Two-stage scan reduces deep calls, but Stage 1 ordering uses quote-level data only and can miss value candidates that are trading weakly.
 - The Yahoo provider is experimental and usually blocked by browser CORS.
 - The UI is primarily Hebrew (RTL). Metric names are in English.
 
@@ -211,8 +221,9 @@ Full details: [docs/security.md](docs/security.md)
 | M1 Cache, confidence and rate-limit safety | ✅ Done |
 | M2 DCF / fair value | ✅ Done |
 | M3 Provider abstraction + Yahoo experimental | ✅ Done (Yahoo 🧪 Experimental) |
-| M4 Documentation foundation | ✅ This PR |
-| Two-stage scan, larger universes, TASE, global, tests/CI, optional backend | 🗓 Planned / Future |
+| M4 Documentation foundation | ✅ Done |
+| M5 Two-stage scan + expanded preset lists | ✅ Done |
+| Automatic universe discovery, TASE, global, tests/CI, optional backend | 🗓 Planned / Future |
 
 Full roadmap: [docs/roadmap.md](docs/roadmap.md)
 

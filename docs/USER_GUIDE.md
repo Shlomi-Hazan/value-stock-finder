@@ -44,7 +44,10 @@ An orange warning box appears whenever Yahoo is selected.
   - **טכנולוגיה** (technology)
   - **דיבידנד/יציבות** (dividend / stability)
 
-  Each preset has 30 US symbols.
+  Each of these has 30 US symbols. There are also three larger, curated lists, meant for Two-stage scan:
+  - **ארה״ב - חברות גדולות מורחב (90)** (US large caps, expanded)
+  - **ארה״ב - Value מורחב (95)** (US value, expanded)
+  - **ארה״ב - דיבידנד מורחב (60)** (US dividend, expanded)
 - **ידני - לא לשנות את הרשימה** (manual, keep my list): type your own symbols in **רשימת מניות לבדיקה** (list of stocks to check), separated by commas, spaces or new lines. Example: `AAPL, MSFT, KO, JNJ`. Use FMP-style symbols such as `BRK-B`.
 
 ## 5. Choose the scan mode
@@ -53,8 +56,24 @@ An orange warning box appears whenever Yahoo is selected.
 | --- | --- | --- |
 | **Value Scan מלא ככל האפשר** (full value scan, default) | 10 API calls per symbol | All strategies, Piotroski, relative checks, DCF |
 | **Momentum / Market בלבד** (momentum / market only) | 1 API call per symbol | Momentum score only. The other columns show "חסר" (missing). |
+| **Two-stage scan** | Stage 1: 1 call per symbol. Stage 2: 9 calls per selected candidate. | Full results for the top candidates only |
 
-The line under the buttons previews the cost, including how many responses will come from the cache. A Deep Scan of more than 10 symbols asks you to confirm first.
+The line under the buttons previews the cost, including how many responses will come from the cache. A Deep Scan of more than 10 symbols asks you to confirm first, as does a Two-stage scan estimated at more than 100 calls.
+
+### Using Two-stage scan (FMP only)
+
+1. Pick a larger list, such as an expanded preset, or paste your own.
+2. Choose **Two-stage — Quick then Deep** in the scan-mode list. The request preview spells it out as "Two-stage scan — Quick filter first, then Deep Scan top candidates".
+3. Set **Two-stage: Stage 1 max symbols** (default 50, 1–200). Only the first that many symbols in the list are checked.
+4. Set **Two-stage: Deep Scan Top N** (default 10, 1–30). This is how many candidates get the full Deep Scan.
+5. Check the preview: Stage 1 quote calls, Stage 2 maximum (Top N × 9), and the total before cache.
+6. Scan. The status shows `Stage 1 … X/Y`, then `Stage 2 … X/Y`.
+
+How candidates are picked: only stocks that pass the basic filter (price, volume, market cap) qualify. They are then ordered by the existing total and Momentum / Market scores. This ordering favors large, liquid, rising stocks. It is **not** a value judgement, and it can skip cheap stocks that are falling. Raise Top N if you want a wider net.
+
+The final table shows the deep-scanned candidates, with all columns. A line under the summary boxes reports Stage 1 checked, candidates selected, Stage 2 deep-scanned, API calls and cache hits. If you stop during Stage 1, or nothing passes the basic filter, you'll see preliminary rows marked **Stage 1 בלבד (quote)** (Stage 1 only). These rows have no fundamentals and no DCF.
+
+Two-stage scan is blocked when Yahoo is selected.
 
 Other settings:
 
@@ -96,7 +115,7 @@ Click **סרוק מניות** (scan stocks). Click **עצור סריקה** (stop
 | Relative Basis | Which peers Dreman/Neff were compared against, and how many |
 | Fair Value … DCF Confidence | DCF outputs (§8) |
 | Data Confidence | % of 19 key metrics available |
-| מקור נתונים | Data source: API calls vs cache. Yahoo rows carry a Yahoo badge. |
+| מקור נתונים | Data source: API calls vs cache. Yahoo rows carry a Yahoo badge. Two-stage rows show **Two-stage: Deep** with their Stage 1 rank, or **Stage 1 בלבד (quote)** (Stage 1 only). |
 | ציון כולל | Total score |
 | החלטה | Decision: מועמדת חזקה (strong) / Watchlist / בדיקה ידנית (manual review) / נפסלה (rejected) |
 | פירוט | Details: click **פתח פירוט** (open details) for every test, as ✅ pass, ❌ fail or ⚪ missing |
@@ -151,7 +170,9 @@ Click **ייצא CSV** (export CSV) to download `value_stock_finder_results.csv`
 | Many "חסר" columns | Your FMP plan may restrict endpoints. Run **בדוק endpoints על AAPL** (test endpoints on AAPL). You may also be in Momentum mode. |
 | "הגעת למגבלת הבקשות של FMP" (you've reached FMP's request limit) | Wait, use smaller lists, or rely on the cache. Partial results are shown. |
 | Yahoo: "Yahoo quote request failed…" | Expected: the browser blocked the request (CORS). Switch to FMP. |
-| Yahoo + Deep Scan warning | Yahoo is quote-only. Choose Momentum, or switch to FMP. |
+| Yahoo + Deep Scan / Two-stage warning | Yahoo is quote-only. Choose Momentum, or switch to FMP. |
+| Two-stage showed only "Stage 1 בלבד" (Stage 1 only) / **Preliminary** rows | You stopped during Stage 1, an FMP rate limit stopped Stage 2 before any deep row completed, or no stock passed the basic filter. These rows are preliminary and quote-level only: they are **not** final Deep Scan or value-score results. Their total score is a preliminary number. For full Deep Scan results, retry later (the cache keeps finished calls), lower *Deep Scan Top N*, or adjust the filters. |
+| Two-stage checked fewer symbols than the list has | Only the first *Stage 1 max symbols* are checked. Raise it (up to 200). |
 | All Yahoo rows show "נפסלה" (rejected) | Yahoo provides no market cap, so the basic filter fails. Use FMP. |
 | Settings not remembered | Your browser may block storage, for example in private mode or embedded previews. The app still works, but won't remember anything. |
 | Results look stale | Quotes are cached for 10 minutes and fundamentals for 7 days. Click **נקה Cache** (clear cache). |
@@ -161,7 +182,7 @@ Click **ייצא CSV** (export CSV) to download `value_stock_finder_results.csv`
 - Data may be missing, delayed or defined differently than in your course.
 - Relative comparisons use only your scanned list.
 - At most 5 years of history are used.
-- US presets only. TASE and global support are planned for the future.
+- US presets only, hand-curated. There is no automatic market-wide discovery. TASE and global support are planned for the future.
 - Your API key cannot be truly hidden in a static web page.
 
 **This tool does not provide investment advice and does not tell you what to buy or sell.** Use it to learn and to decide what to research further, and consult a licensed professional for investment decisions.

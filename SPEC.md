@@ -1,6 +1,6 @@
 # Value Stock Finder — Specification
 
-Status: **current as of 2026-10-08** (main at `09dbd5d`, after PR #3)
+Status: **current as of 2026-10-08** (after PR #6: Two-stage scan and expanded presets)
 
 This specification describes what the app does **today** and what is **planned**. Sections are marked **Current**, **Experimental**, **Planned** or **Non-goal**. Thresholds are summarized here. The authoritative list is in [docs/investment-methodology.md](docs/investment-methodology.md).
 
@@ -66,8 +66,8 @@ Secondary flows: **Test endpoints on AAPL** (FMP), **Test selected provider** (o
 | --- | --- |
 | FR-1 | The user can choose a data provider: Financial Modeling Prep (default) or Yahoo Finance Experimental / Browser test only. The choice persists in `localStorage`. |
 | FR-2 | The user can enter an FMP API key. It is saved to `localStorage` when a scan or test runs, and can be cleared. |
-| FR-3 | The user can load one of 4 preset US lists (30 symbols each) or keep a manual list. Symbols are split on whitespace, commas and semicolons, upper-cased and de-duplicated. |
-| FR-4 | The user can choose Deep Scan (default) or Momentum / Market. |
+| FR-3 | The user can load one of 4 preset US lists (30 symbols each), one of 3 curated expanded US lists (Large Cap 90, Value 95, Dividend 60), or keep a manual list. Symbols are split on whitespace, commas and semicolons, upper-cased and de-duplicated. |
+| FR-4 | The user can choose Deep Scan (default), Momentum / Market, or Two-stage scan. |
 | FR-5 | The user can set top-N (default 15), minimum market cap for US (default 2B) and non-US (default 1B), minimum volume (100,000) and minimum price (5). |
 | FR-6 | The user can set DCF assumptions: discount rate 10%, terminal growth 2.5%, projection years 5 (1–10), margin of safety 25%. |
 | FR-7 | A request preview shows the provider, the number of requests and the expected cache hits, and updates as inputs change. |
@@ -77,10 +77,16 @@ Secondary flows: **Test endpoints on AAPL** (FMP), **Test selected provider** (o
 | FR-11 | Results are sorted by total score. The table shows the top N; the summary covers all evaluated stocks. |
 | FR-12 | Table tabs filter All / Strong / Watchlist / Rejected. |
 | FR-13 | Each row has expandable details: per-test results, relative basis, DCF inputs and reasons, data confidence, missing fields, data source and endpoint errors. |
-| FR-14 | CSV export of the displayed top-N results (41 columns, including `dataProvider`). |
+| FR-14 | CSV export of the displayed top-N results (44 columns, including `dataProvider`, `scanMode`, `scanStage`, `stage1Rank`). |
 | FR-15 | The FMP endpoint test checks the quote plus the 9 deep endpoints on AAPL. |
 | FR-16 | The selected-provider test makes a single AAPL quote request on demand. |
 | FR-17 | Clear Cache removes all FMP and Yahoo cache entries. |
+| FR-18 | Two-stage scan settings: *Stage 1 max symbols* (default 50, clamped 1–200) and *Deep Scan Top N* (default 10, clamped 1–30). Invalid values are clamped when a scan starts. |
+| FR-19 | Two-stage Stage 1 fetches the quote only, the same path as Momentum / Market, for the first *max* symbols. It never calls deep endpoints. |
+| FR-20 | Two-stage Stage 2 runs the full FMP Deep Scan only for the top N Stage 1 candidates that pass the basic filter. The final table shows only Stage 2 rows. |
+| FR-21 | The Two-stage preview shows Stage 1 quote calls (with cache), Stage 2 max (candidates × 9), the estimated max before cache, and how many symbols are beyond the Stage 1 max. A scan estimated at more than 100 calls requires confirmation. |
+| FR-22 | Two-stage status shows `Stage 1 … X/Y` and `Stage 2 … X/Y`. A summary line shows Stage 1 checked, candidates selected, Stage 2 deep-scanned, API calls and cache hits. |
+| FR-23 | Two-stage scan is blocked with Yahoo: "Yahoo Experimental / Browser test only does not support Two-stage scan because Stage 2 requires FMP Deep Scan." |
 
 ## 8. Non-functional requirements
 
@@ -101,12 +107,30 @@ Secondary flows: **Test endpoints on AAPL** (FMP), **Test selected provider** (o
 | --- | --- | --- | --- |
 | Value Scan מלא ככל האפשר (Deep Scan) | `deep` | 10 | Quote + profile, ratios TTM, key metrics TTM, ratios annual, key metrics annual, income, cash flow, balance sheet, financial growth. FMP only. |
 | Momentum / Market בלבד | `quick` | 1 | Quote only. Fundamentals and DCF show as missing. |
+| Two-stage — Quick then Deep ("Two-stage scan — Quick filter first, then Deep Scan top candidates") | `twoStage` | Stage 1: 1 per symbol (≤ max). Stage 2: 9 per candidate (≤ Top N); the quote comes from the Stage 1 cache. | FMP only. See §9a. |
+
+### 9a. Two-stage scan behavior
+
+1. **Stage 1:**
+   - Takes `symbols.slice(0, maxSymbols)` and fetches each one in `quick` mode.
+   - Runs `evaluateStock` on each, without relative strategies.
+   - Orders the rows with `rankStageOneCandidates`. This is candidate ordering, not scoring (see [methodology §13](docs/investment-methodology.md#13-two-stage-scan-candidate-ordering)).
+2. **Selection:** only rows with `passBasic`, then the first `topN`. If none pass, Stage 2 is skipped and the preliminary Stage 1 rows are shown, labeled as such.
+3. **Stage 2:** `deep` fetch per candidate, then `evaluateStock` and `applyRelativeStrategies` over the Stage 2 rows only. The usual total-score sort and top-N display limit (`topLimit`) apply.
+4. **Stop:**
+   - During Stage 1, Stage 2 is not run, and the preliminary Stage 1 rows are shown, labeled "Stage 1 בלבד (quote)".
+   - During Stage 2, the partial deep rows are shown.
+5. **Rate limit:** the scan halts immediately. Stage 2 deep rows are shown if any exist; otherwise the preliminary Stage 1 rows.
+6. Rows carry `scanMeta = { mode, stage, stage1Rank, stage1Total }`, which is shown in the source column and the details, and exported to CSV.
 
 ## 10. Scoring strategy (summary)
 
 - Categories: Graham, Fisher, Cash, Buffett (percent), Piotroski (x/9), Dreman and Neff (percent, relative).
 - Missing-data tests are excluded from a category's denominator. A category with no evaluable tests is "missing".
 - `Total = round(0.15 × Momentum + 0.85 × mean(available category %))`.
+  - This formula applies to **final rows**, after `applyRelativeStrategies()` / `recomputeTotalAndDecision()`. All Deep Scan, Momentum / Market and Two-stage Stage 2 rows go through this step.
+  - `evaluateStock()` first computes a preliminary total (`0.20 × Momentum + 0.80 × value average`), which the final recompute replaces.
+  - Two-stage **Stage 1-only fallback rows** skip the final recompute and may display this preliminary score. These are preliminary quote-level rows, shown when Stage 2 did not run or did not complete. They must **not** be interpreted as final value scores.
 - Decision:
   - **Strong:** passBasic, data confidence strong, total ≥ 75, and Cash ≥ 60 or Cash missing.
   - **Watchlist:** passBasic and total ≥ 55.
@@ -182,14 +206,15 @@ The basis is chosen per stock: **industry peers** (≥ 3 in the scan), then **se
 | FMP restricted endpoint / HTTP error | Recorded in `endpointErrors`. That data is treated as missing and the scan continues. |
 | FMP rate limit (429 or limit text) | The scan stops, results collected so far are shown, and a warning appears. |
 | Quote missing for a symbol | The symbol is counted as checked but not evaluated. |
-| Yahoo selected + Deep Scan | Blocked before any request, with a warning. |
+| Yahoo selected + Deep Scan or Two-stage | Blocked before any request, with a warning. |
+| Two-stage rate limit / stop | See §9a: halts immediately and shows the partial Stage 2 rows, or the labeled preliminary Stage 1 rows. |
 | Yahoo network/CORS/401/403 | The scan stops after the first blocked request with the message "Yahoo quote request failed. This may be blocked by browser/CORS or Yahoo restrictions." |
 | Yahoo 429 | Rate-limit path, labeled Yahoo. |
 | Restricted storage | `localStorage` access is wrapped, so the app still loads. |
 
 ## 17. Export behavior
 
-**ייצא CSV** downloads `value_stock_finder_results.csv`, containing the **top-N displayed results**. Table tab filters are not applied. Values are quoted, and embedded quotes are escaped. Columns: rank, symbol, name, sector, price, marketCap, pe, ps, pb, roe, roa, debtEquity, currentRatio, fcf, paysDividend, dividendAmount, dividendYield, quickScore, graham, fisher, cash, buffett, piotroski, dreman, neff, relativeBasis, relativePeerCount, fairValue, currentPrice, upsideToFairValue, discountFromFairValue, marginOfSafetyPassed, dcfConfidence, dcfBaseFcf, dcfGrowthRate, dcfDiscountRate, dcfTerminalGrowth, dcfProjectionYears, totalScore, decision, dataProvider.
+**ייצא CSV** downloads `value_stock_finder_results.csv`, containing the **top-N displayed results**. Table tab filters are not applied. Values are quoted, and embedded quotes are escaped. Columns (44): rank, symbol, name, sector, price, marketCap, pe, ps, pb, roe, roa, debtEquity, currentRatio, fcf, paysDividend, dividendAmount, dividendYield, quickScore, graham, fisher, cash, buffett, piotroski, dreman, neff, relativeBasis, relativePeerCount, fairValue, currentPrice, upsideToFairValue, discountFromFairValue, marginOfSafetyPassed, dcfConfidence, dcfBaseFcf, dcfGrowthRate, dcfDiscountRate, dcfTerminalGrowth, dcfProjectionYears, totalScore, decision, dataProvider, scanMode, scanStage, stage1Rank. `scanStage` and `stage1Rank` are only filled for Two-stage rows.
 
 ## 18. Security constraints
 
@@ -204,7 +229,9 @@ The basis is chosen per stock: **industry peers** (≥ 3 in the scan), then **se
 - The DCF has no net-debt adjustment.
 - At most 5 years of history.
 - US-only presets, no FX handling.
-- Sequential browser scanning is slow for large lists.
+- Sequential browser scanning is slow for large lists. Two-stage scan reduces deep calls but not Stage 1 time.
+- Two-stage Stage 1 ordering is quote-based and favors large, liquid, trending stocks. It is not a value signal.
+- Expanded presets are hand-curated US lists, not market-wide discovery.
 - Yahoo is experimental and usually blocked.
 - No automated tests or CI yet.
 - The Fisher "2 of 3" test is always evaluated, and Piotroski counts missing tests as 0.
@@ -213,8 +240,9 @@ The basis is chosen per stock: **industry peers** (≥ 3 in the scan), then **se
 
 | Milestone | Status |
 | --- | --- |
-| Two-stage scan (quick filter → deep scan on survivors) | Planned |
-| Larger universe / screener-based symbol sourcing | Planned |
+| Two-stage scan (quick filter → deep scan on survivors) | **Done (PR #6)** |
+| Curated expanded preset lists | **Done (PR #6)** |
+| Automatic universe discovery / screener-based symbol sourcing | Planned |
 | Israel / TASE support | Future |
 | Global country support | Future |
 | Cleaner provider abstraction | Planned |
