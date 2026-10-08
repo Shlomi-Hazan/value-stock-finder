@@ -21,7 +21,7 @@ The app's interface is in Hebrew. This guide gives each Hebrew label with its En
 
 ### How the settings page is organized
 
-At the top, a short strip shows the workflow: **1 מקור נתונים → 2 מניות → 3 סריקה → 4 תוצאות** (data source → stocks → scan → results). Each step is a link that scrolls to that part of the page; it is not separate navigation. The same numbers appear next to the section titles below. The small illustration next to the title (on wide screens) explains the margin-of-safety idea: the gap between the estimated fair value and the price. It is an illustration, not data.
+At the top, a short strip shows the workflow: **1 מקור נתונים → 2 מניות → 3 סריקה → 4 תוצאות** (data source → stocks → scan → results). Each step is a link that scrolls to that part of the page; it is not separate navigation. The same numbers appear next to the section titles below. The app's product mark next to the title, and the larger illustration beside it on wide screens, both show the margin-of-safety idea: a gold fair-value line above a green price line, with the gap between them. They are illustrations, not data. Small icons mark the feature chips and the main sections.
 
 The settings are grouped top to bottom in the order you use them:
 
@@ -32,7 +32,7 @@ The settings are grouped top to bottom in the order you use them:
 | **מצב סריקה** (scan mode) | Scan mode, **כמות להצגה** (how many to show), and the two Two-stage settings |
 | **סינון בסיסי** (basic filters) | Minimum market cap (US / outside the US), minimum volume, minimum price. **Collapsed by default**: click the title to open it. |
 | **הנחות Estimated Fair Value / DCF Estimate** | Discount rate, terminal growth, projection years, margin of safety. **Collapsed by default.** |
-| Actions | **סרוק מניות** (scan stocks, the indigo primary button) and **עצור סריקה** (stop scan), then the request preview and status in a small card right below them. Below them, three quieter groups: **בדיקות חיבור** (connection tests), **תוצאות ונתונים** (results and data: CSV export, clear cache) and **מפתח API** (API key: clear the saved key, shown in red). |
+| Actions | **סרוק מניות** (scan stocks, the green primary button) and **עצור סריקה** (stop scan), then the request preview and status in a small card right below them. Below them, three quieter groups: **בדיקות חיבור** (connection tests), **תוצאות ונתונים** (results and data: CSV export, clear cache) and **מפתח API** (API key: clear the saved key, shown in red). |
 
 Collapsed sections keep their values. They are still used in every scan, even while closed.
 

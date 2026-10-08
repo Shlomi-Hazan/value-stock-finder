@@ -77,7 +77,7 @@ Open <http://localhost:8000/> and confirm:
 
 - [ ] The page loads with no console errors (no `ReferenceError`, no `SyntaxError`).
 - [ ] The server log or the network panel shows HTTP 200 for `styles.css` and all 12 `js/*.js` files, with no 404s except the browser's automatic `favicon.ico` request.
-- [ ] The page is styled (the light indigo hero gradient and the indigo scan button), which confirms `styles.css` loaded.
+- [ ] The page is styled (the light green hero with a faint grid, the green product mark and the green scan button), which confirms `styles.css` loaded. The browser tab shows the green product-mark favicon (an inline SVG data URI, with no `favicon.ico` request).
 - [ ] Every inline handler resolves to a defined global function. In the console: `[...document.querySelectorAll('[onclick],[onchange],[oninput]')].flatMap(e => ['onclick','onchange','oninput'].map(a => e.getAttribute(a)).filter(Boolean)).map(h => h.match(/^(\w+)\(/)[1]).filter(f => typeof window[f] !== 'function')` returns `[]`.
 - [ ] **Data Provider** defaults to **Financial Modeling Prep**.
 - [ ] The preset list fills the symbol textarea.
@@ -89,8 +89,8 @@ Open <http://localhost:8000/> and confirm:
 
 - [ ] The settings appear as grouped sections: מקור נתונים, מניות לבדיקה, מצב סריקה, סינון בסיסי (collapsed), DCF assumptions (collapsed), then actions.
 - [ ] Clicking a collapsed section title opens and closes it, and its inputs keep their values. Collapsed inputs still feed the scan (for example, change *מחיר מינימלי* while it is collapsed, then check the basic-filter results).
-- [ ] The hero shows the badge, the title, the subtitle and the 4 feature chips. The workflow strip has 4 numbered links that scroll to `#sec-source`, `#sec-universe`, `#sec-scan` and `#sec-results`. The margin-of-safety illustration shows on wide screens (over 900 px), with its 3 labels inside it, and is hidden on narrow screens.
-- [ ] **סרוק מניות** is the only indigo filled button. Stop is quiet until a scan runs. **נקה API Key שמור** is red. The connection tests and data tools sit in labeled groups.
+- [ ] The hero shows the badge, the title, the subtitle and the 4 feature chips. The workflow strip has 4 numbered links that scroll to `#sec-source`, `#sec-universe`, `#sec-scan` and `#sec-results`. The product mark sits beside the title. The feature chips and the main section titles show their small icons, and every `<use>` resolves to a symbol in the inline sprite. The margin-of-safety illustration shows on wide screens (over 900 px), with its 3 labels inside it, and is hidden on narrow screens. The results empty state shows its small magnifier-over-chart illustration.
+- [ ] **סרוק מניות** is the only green filled button. Stop is quiet until a scan runs. **נקה API Key שמור** is red. The connection tests and data tools sit in labeled groups.
 - [ ] Helper texts appear under the API key, the preset list, the symbols field and *כמות להצגה*, and as footers under the data-source, scan-mode, basic-filter, DCF and action sections.
 - [ ] Before any scan, the empty table message ("עדיין לא בוצעה סריקה") is visible without scrolling the table. A soft shadow on the table's edge shows when more columns are off-screen.
 - [ ] Color contrast: body, muted, button, pill and status text all meet WCAG AA (4.5:1) against their backgrounds.
