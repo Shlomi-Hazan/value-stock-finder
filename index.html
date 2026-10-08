@@ -300,7 +300,7 @@
         <select id="scanMode" onchange="updateRequestPreview()">
           <option value="deep">Value Scan מלא ככל האפשר</option>
           <option value="quick">Momentum / Market בלבד</option>
-          <option value="twoStage">Two-stage scan — Quick filter first, then Deep Scan top candidates</option>
+          <option value="twoStage">Two-stage — Quick then Deep</option>
         </select>
       </label>
 
@@ -569,6 +569,11 @@
   const TWO_STAGE_CONFIRM_CALLS = 100;
   const TWO_STAGE_WARNING = "Two-stage scan can still use many FMP calls. Stage 1 is quote-level only; Stage 2 deep-scans only the top N candidates.";
 
+  // Stage 1-only fallback rows keep the preliminary evaluateStock() total (no relative strategies / final recompute).
+  function stageOnePreliminaryText(count) {
+    return `מוצגות ${count} שורות Preliminary (quote-level) של Stage 1 בלבד — אלה אינן תוצאות Deep Scan / ציון ערך סופי. ציון ערך מלא דורש Stage 2 (Deep Scan).`;
+  }
+
   function escapeHtml(value) {
     return String(value ?? "")
       .replaceAll("&", "&amp;")
@@ -740,7 +745,7 @@
     const skipped = plan.inputCount > plan.stage1Count
       ? `\nרק ${plan.stage1Count} הסימולים הראשונים מתוך ${plan.inputCount} ייבדקו ב־Stage 1 (לפי Stage 1 max symbols).`
       : "";
-    return `Two-stage scan (${providerLabel("fmp")}):` +
+    return `Two-stage scan — Quick filter first, then Deep Scan top candidates (${providerLabel("fmp")}):` +
       `\nStage 1: up to ${plan.stage1Count} quote calls (לפי ה־Cache הנוכחי: כ־${plan.stage1Api} API וכ־${plan.stage1Cached} מה־Cache).` +
       `\nStage 2: up to ${plan.candidates} candidates × ${plan.deepEndpoints} deep endpoints = up to ${plan.stage2Max} calls (ה־Quote נלקח מה־Cache של Stage 1).` +
       `\nEstimated max before cache: ${plan.maxBeforeCache} calls. Cache may reduce this.` +
@@ -1825,7 +1830,7 @@
     const meta = row.scanMeta;
     if (!meta || meta.mode !== "twoStage") return "";
     if (meta.stage === 2) return `<br><span class="pill info">Two-stage: Deep</span><br><span class="small">Stage 1 #${meta.stage1Rank}</span>`;
-    return `<br><span class="pill gray">Stage 1 בלבד (quote)</span>`;
+    return `<br><span class="pill gray">Stage 1 בלבד (quote)</span><br><span class="small">Preliminary</span>`;
   }
 
   function twoStageDetailsHtml(row) {
@@ -1834,7 +1839,7 @@
     if (meta.stage === 2) {
       return `<b>Two-stage scan:</b> מועמדת #${meta.stage1Rank} מתוך ${meta.stage1Total} ב־Stage 1 (סידור לפי נתוני quote בלבד), ולאחר מכן בוצע לה Deep Scan מלא ב־Stage 2.<br/>`;
     }
-    return `<b>Two-stage scan:</b> תוצאה מקדימה של Stage 1 בלבד (#${meta.stage1Rank} מתוך ${meta.stage1Total}). נתוני quote בלבד — לא נאספו דוחות כספיים, השוואה יחסית או DCF.<br/>`;
+    return `<b>Two-stage scan — Preliminary (quote-level):</b> שורת Stage 1 בלבד (#${meta.stage1Rank} מתוך ${meta.stage1Total}). Stage 2 (Deep Scan) לא רץ או לא הושלם עבורה, ולכן אין דוחות כספיים, השוואה יחסית או DCF. הציון הכולל כאן הוא ציון ביניים ולא ציון ערך סופי.<br/>`;
   }
 
   function relativeBasisCell(row) {
@@ -1994,7 +1999,8 @@
       return;
     }
     const skipped = ts.inputCount > ts.stage1Total ? ` · ${ts.inputCount - ts.stage1Total} סימולים מעבר ל־Stage 1 max לא נבדקו` : "";
-    twoStageEl.textContent = `Two-stage scan: Stage 1 checked ${ts.stage1Checked}/${ts.stage1Total} (quote-level) · Candidates selected: ${ts.candidatesSelected} (Top N = ${ts.topN}) · Stage 2 deep-scanned: ${ts.stage2Scanned}/${ts.stage2Total} · API: ${lastScanStats.apiCalls} · Cache: ${lastScanStats.cacheHits}${skipped}`;
+    const preliminary = ts.preliminaryOnly ? " · ⚠️ Table shows preliminary Stage 1 quote-level rows only — not final Deep Scan results" : "";
+    twoStageEl.textContent = `Two-stage scan: Stage 1 checked ${ts.stage1Checked}/${ts.stage1Total} (quote-level) · Candidates selected: ${ts.candidatesSelected} (Top N = ${ts.topN}) · Stage 2 deep-scanned: ${ts.stage2Scanned}/${ts.stage2Total} · API: ${lastScanStats.apiCalls} · Cache: ${lastScanStats.cacheHits}${skipped}${preliminary}`;
   }
 
   function resetResults() {
@@ -2154,6 +2160,7 @@
   // Deep rows get relative strategies and the usual total-score sort. Preliminary Stage 1 rows keep the
   // Stage 1 order and skip relative strategies, which would otherwise score Dreman on market cap alone.
   function showTwoStageResults(rows, settings, isDeep) {
+    if (lastScanStats.twoStage) lastScanStats.twoStage.preliminaryOnly = !isDeep && rows.length > 0;
     if (isDeep) {
       applyRelativeStrategies(rows, settings);
       allResults = rows.slice().sort((a,b)=>b.totalScore-a.totalScore);
@@ -2214,7 +2221,7 @@
       if (lastScanStats.stopped || stopRequested) {
         lastScanStats.stopped = true;
         showTwoStageResults(ranked, settings, false);
-        setStatus(`הסריקה נעצרה לפי בקשתך במהלך Stage 1, ולכן Stage 2 (Deep Scan) לא הורץ. מוצגות ${ranked.length} תוצאות מקדימות ברמת quote בלבד (ללא דוחות כספיים ו־DCF). ${callsText()}`, "warn");
+        setStatus(`הסריקה נעצרה לפי בקשתך במהלך Stage 1, ולכן Stage 2 (Deep Scan) לא הורץ. ${stageOnePreliminaryText(ranked.length)} ${callsText()}`, "warn");
         return;
       }
 
@@ -2222,7 +2229,7 @@
       stats.candidatesSelected = candidates.length;
       if (!candidates.length) {
         showTwoStageResults(ranked, settings, false);
-        setStatus(`Stage 1 הסתיים: נבדקו ${stats.stage1Checked} סימולים, אך אף מניה לא עברה את הסינון הבסיסי (מחיר / Volume / Market Cap), ולכן Stage 2 לא הורץ. מוצגות תוצאות מקדימות ברמת quote בלבד. ${callsText()}`, "warn");
+        setStatus(`Stage 1 הסתיים: נבדקו ${stats.stage1Checked} סימולים, אך אף מניה לא עברה את הסינון הבסיסי (מחיר / Volume / Market Cap), ולכן Stage 2 לא הורץ. ${stageOnePreliminaryText(ranked.length)} ${callsText()}`, "warn");
         return;
       }
 
@@ -2250,7 +2257,7 @@
 
       if (lastScanStats.stopped && !stage2Rows.length) {
         showTwoStageResults(ranked, settings, false);
-        setStatus(`הסריקה נעצרה לפי בקשתך לפני שהושלם Deep Scan למועמדת כלשהי. מוצגות תוצאות מקדימות של Stage 1 (quote בלבד). ${callsText()}`, "warn");
+        setStatus(`הסריקה נעצרה לפי בקשתך לפני שהושלם Deep Scan למועמדת כלשהי, ולכן Stage 2 לא הושלם. ${stageOnePreliminaryText(ranked.length)} ${callsText()}`, "warn");
         return;
       }
       showTwoStageResults(stage2Rows, settings, true);
@@ -2266,7 +2273,7 @@
       } else {
         const preliminary = ranked || rankStageOneCandidates(stage1Rows);
         showTwoStageResults(preliminary, settings, false);
-        setStatus(`${e.message} (Stage ${stage}). מוצגות ${preliminary.length} תוצאות מקדימות של Stage 1 (quote בלבד). ${callsText()} נסה שוב מאוחר יותר או השתמש ב־Cache קיים.`, "warn");
+        setStatus(`${e.message} (Stage ${stage}). Stage 2 (Deep Scan) לא הושלם. ${stageOnePreliminaryText(preliminary.length)} ${callsText()} נסה שוב מאוחר יותר, הקטן את Top N או השתמש ב־Cache קיים.`, "warn");
       }
     }
   }

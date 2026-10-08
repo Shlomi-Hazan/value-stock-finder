@@ -63,7 +63,7 @@ The line under the buttons previews the cost, including how many responses will 
 ### Using Two-stage scan (FMP only)
 
 1. Pick a larger list, such as an expanded preset, or paste your own.
-2. Choose **Two-stage scan — Quick filter first, then Deep Scan top candidates**.
+2. Choose **Two-stage — Quick then Deep** in the scan-mode list. The request preview spells it out as "Two-stage scan — Quick filter first, then Deep Scan top candidates".
 3. Set **Two-stage: Stage 1 max symbols** (default 50, 1–200). Only the first that many symbols in the list are checked.
 4. Set **Two-stage: Deep Scan Top N** (default 10, 1–30). This is how many candidates get the full Deep Scan.
 5. Check the preview: Stage 1 quote calls, Stage 2 maximum (Top N × 9), and the total before cache.
@@ -171,7 +171,7 @@ Click **ייצא CSV** (export CSV) to download `value_stock_finder_results.csv`
 | "הגעת למגבלת הבקשות של FMP" (you've reached FMP's request limit) | Wait, use smaller lists, or rely on the cache. Partial results are shown. |
 | Yahoo: "Yahoo quote request failed…" | Expected: the browser blocked the request (CORS). Switch to FMP. |
 | Yahoo + Deep Scan / Two-stage warning | Yahoo is quote-only. Choose Momentum, or switch to FMP. |
-| Two-stage showed only "Stage 1 בלבד" (Stage 1 only) rows | You stopped during Stage 1, hit a rate limit, or no stock passed the basic filter. Adjust the filters or try again later. |
+| Two-stage showed only "Stage 1 בלבד" (Stage 1 only) / **Preliminary** rows | You stopped during Stage 1, an FMP rate limit stopped Stage 2 before any deep row completed, or no stock passed the basic filter. These rows are preliminary and quote-level only: they are **not** final Deep Scan or value-score results. Their total score is a preliminary number. For full Deep Scan results, retry later (the cache keeps finished calls), lower *Deep Scan Top N*, or adjust the filters. |
 | Two-stage checked fewer symbols than the list has | Only the first *Stage 1 max symbols* are checked. Raise it (up to 200). |
 | All Yahoo rows show "נפסלה" (rejected) | Yahoo provides no market cap, so the basic filter fails. Use FMP. |
 | Settings not remembered | Your browser may block storage, for example in private mode or embedded previews. The app still works, but won't remember anything. |

@@ -254,11 +254,13 @@ The share of these 19 fields that are present: Price\*, Market Cap\*, Volume\*, 
 To pick which symbols get the expensive Deep Scan, Stage 1 orders the quote-only rows with `rankStageOneCandidates`. This is a **practical candidate ordering, not an investment methodology**. It reuses existing outputs only:
 
 1. Passes the basic filter (price / volume / market cap) first. Only these rows can become Stage 2 candidates.
-2. Higher total score. With quote-only data, no value category can be evaluated, so this is effectively 0.2 × the Momentum / Market score.
+2. Higher total score. With quote-only data, the only value test that resolves is Fisher's always-evaluated "2 of 3 cheap" test, which scores 0%. So this is effectively 0.2 × the Momentum / Market score.
 3. Higher Momentum / Market score.
 4. Higher Data Confidence.
 5. Symbol (alphabetical), for a stable tie-break.
 
 Missing fundamentals are never treated as passing. Relative strategies are not applied in Stage 1, because with quote-only data Dreman would be scored on market cap alone.
+
+**Stage 1-only rows are preliminary UI fallback rows, not final value-ranked results.** The app shows them when you stop during Stage 1, when no candidate passes the basic filter, or when a rate limit stops the scan before any Stage 2 row completes. They are labeled "Preliminary (quote-level)". They skip relative strategies and the final recompute, so their total is the preliminary `evaluateStock()` value (0.20 × Momentum + 0.80 × value average; with quote-only data the value average is 0, because only Fisher's always-evaluated "2 of 3 cheap" test resolves, to 0%). That is not the final 0.15 / 0.85 score from §1. No scoring rule changed; only the final Stage 2 rows carry final value scores.
 
 **Bias to be aware of:** the Momentum / Market score rewards size, liquidity and price strength (above moving averages, near the 52-week high). Stage 1 therefore tends to promote large, trending stocks, and it can skip cheap stocks that are trading weakly, which are exactly what some value approaches look for. To reduce this, raise *Deep Scan Top N*, or Deep Scan a smaller list directly.

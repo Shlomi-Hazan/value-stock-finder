@@ -107,7 +107,7 @@ Secondary flows: **Test endpoints on AAPL** (FMP), **Test selected provider** (o
 | --- | --- | --- | --- |
 | Value Scan מלא ככל האפשר (Deep Scan) | `deep` | 10 | Quote + profile, ratios TTM, key metrics TTM, ratios annual, key metrics annual, income, cash flow, balance sheet, financial growth. FMP only. |
 | Momentum / Market בלבד | `quick` | 1 | Quote only. Fundamentals and DCF show as missing. |
-| Two-stage scan — Quick filter first, then Deep Scan top candidates | `twoStage` | Stage 1: 1 per symbol (≤ max). Stage 2: 9 per candidate (≤ Top N); the quote comes from the Stage 1 cache. | FMP only. See §9a. |
+| Two-stage — Quick then Deep ("Two-stage scan — Quick filter first, then Deep Scan top candidates") | `twoStage` | Stage 1: 1 per symbol (≤ max). Stage 2: 9 per candidate (≤ Top N); the quote comes from the Stage 1 cache. | FMP only. See §9a. |
 
 ### 9a. Two-stage scan behavior
 
@@ -128,6 +128,9 @@ Secondary flows: **Test endpoints on AAPL** (FMP), **Test selected provider** (o
 - Categories: Graham, Fisher, Cash, Buffett (percent), Piotroski (x/9), Dreman and Neff (percent, relative).
 - Missing-data tests are excluded from a category's denominator. A category with no evaluable tests is "missing".
 - `Total = round(0.15 × Momentum + 0.85 × mean(available category %))`.
+  - This formula applies to **final rows**, after `applyRelativeStrategies()` / `recomputeTotalAndDecision()`. All Deep Scan, Momentum / Market and Two-stage Stage 2 rows go through this step.
+  - `evaluateStock()` first computes a preliminary total (`0.20 × Momentum + 0.80 × value average`), which the final recompute replaces.
+  - Two-stage **Stage 1-only fallback rows** skip the final recompute and may display this preliminary score. These are preliminary quote-level rows, shown when Stage 2 did not run or did not complete. They must **not** be interpreted as final value scores.
 - Decision:
   - **Strong:** passBasic, data confidence strong, total ≥ 75, and Cash ≥ 60 or Cash missing.
   - **Watchlist:** passBasic and total ≥ 55.
