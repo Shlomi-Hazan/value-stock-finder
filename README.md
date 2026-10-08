@@ -81,7 +81,8 @@ flowchart LR
   UI -.->|experimental, usually CORS-blocked| YF["Yahoo Finance chart endpoint"]
 ```
 
-- **Static files:** `index.html` (markup), `styles.css`, and 12 classic scripts in `js/` loaded in a fixed order with `defer`. No bundler, no modules, no build step.
+- **Static files:** `index.html` (markup), `styles.css`, and 13 classic scripts in `js/` loaded in a fixed order with `defer`. No bundler, no modules, no build step.
+- **App shell:** two screens, **Setup** (`#/setup`) and **Results** (`#/results`), switched by hash navigation, with a global scan bar that shows progress and Stop on both ([ADR-0005](docs/decisions/ADR-0005-app-shell-navigation-plan.md)).
 - **Browser-only runtime:** every API call goes directly from your browser to the data provider.
 - **State:** in memory during a scan, plus `localStorage` for the API key, the selected provider and the response cache.
 
@@ -141,8 +142,8 @@ The settings page is grouped in the order you use it: **מקור נתונים** 
 4. Choose a scan mode (see below) and review the **request preview** under the buttons. For larger lists, choose **Two-stage scan** and set *Stage 1 max symbols* and *Deep Scan Top N*.
 5. Optionally open **סינון בסיסי** (basic filters: minimum market cap, volume, price) or the DCF assumptions section, and adjust them. Both are collapsed by default.
 6. Click the green **סרוק מניות** (scan stocks) button. Use **עצור סריקה** (stop scan) to stop before the next symbol. The connection tests, export and cache tools, and **נקה API Key שמור** (clear saved API key) are grouped below it.
-7. Read the summary, filter the table tabs (All / Strong / Watchlist / Rejected) and open **פתח פירוט** (open details) on any row.
-8. Click **ייצא CSV** (export CSV) to export.
+7. On the **תוצאות** (Results) screen, read the summary, filter the table tabs (All / Strong / Watchlist / Rejected) and open **פתח פירוט** (open details) on any row.
+8. Open the **תוצאות** (Results) tab to read the results, and click **ייצא CSV** (export CSV) there to export. Scans never switch screens on their own: a bar under the tabs shows progress and Stop, and a dot marks the Results tab when new results are ready.
 
 The full walkthrough is in the [User Guide](docs/USER_GUIDE.md).
 
@@ -227,8 +228,9 @@ Full details: [docs/security.md](docs/security.md)
 | M5 Two-stage scan + expanded preset lists | ✅ Done |
 | M6 Static file split (`index.html` + `styles.css` + `js/`) | ✅ Done |
 | M7 UI polish and green visual identity | ✅ Done |
-| M8 App shell navigation plan ([ADR-0005](docs/decisions/ADR-0005-app-shell-navigation-plan.md)) | 📝 Proposed |
-| M9–M12 App shell rollout: Setup/Results, Methodology, Results UX, Settings & tools | 🗓 Planned |
+| M8 App shell navigation plan ([ADR-0005](docs/decisions/ADR-0005-app-shell-navigation-plan.md)) | ✅ Accepted |
+| M9 App shell: Setup + Results screens, global scan bar | ✅ Done |
+| M10–M12 Methodology, Results UX, Settings & tools screens | 🗓 Planned |
 | Automatic universe discovery, TASE, global, tests/CI, optional backend | 🗓 Planned / Future |
 
 Full roadmap: [docs/roadmap.md](docs/roadmap.md)

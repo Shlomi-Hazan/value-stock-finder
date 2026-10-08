@@ -1,6 +1,6 @@
 # Architecture
 
-Last updated: 2026-10-09 (PR #10: app shell navigation plan; app unchanged since PR #9)
+Last updated: 2026-10-09 (PR #11: app shell stage 1, Setup and Results screens)
 
 ## 1. Current architecture: static files, no build
 
@@ -21,7 +21,8 @@ The app is a static frontend ([ADR-0004](decisions/ADR-0004-split-static-assets.
 | `js/render.js` | Status, request preview, pills, table, details, tabs, summary |
 | `js/scan.js` | Request planning, `scanStocks`, Two-stage scan, stop, endpoint tests |
 | `js/export.js` | `exportCSV` |
-| `js/app.js` | `initializePage` and settings handlers. Loaded last; the only file that runs code at load time. |
+| `js/app.js` | `initializePage` and settings handlers. Runs `initializePage()` at load time. |
+| `js/shell.js` | App shell (PR #11, [ADR-0005](decisions/ADR-0005-app-shell-navigation-plan.md)): hash routing between screens, the global scan bar, focus and title handling. Loaded last and self-initializing; it only observes the DOM and calls `requestStopScan()`. |
 
 The scripts are **classic scripts loaded with `defer` in the order above**. They share one global scope, so functions in one file can call functions in another at runtime. There is no `package.json`, build step, bundler, transpiler, module system, backend or external (CDN) script.
 
@@ -68,7 +69,7 @@ flowchart TB
 
 - **Settings:** provider, API key (FMP), preset list, scan mode, top-N, market-cap thresholds (US / non-US), minimum volume, minimum price, Two-stage settings (Stage 1 max symbols, Deep Scan Top N), DCF assumptions, and the symbol textarea.
 - **Layout (PR #9):** the settings are grouped sections, each with a title, a white panel and a short helper footer. In order: data source, stocks to check, scan mode, basic filters and DCF assumptions (both native `<details>`, collapsed by default), then actions. Only the markup and CSS are grouped; all element IDs and inline handlers are unchanged, so the JS is unaware of the layout.
-- **Actions:** scan (the primary button) and stop, then three groups: connection tests (FMP endpoint test, selected-provider test), results and data (CSV export, clear cache), and API key (clear the saved key).
+- **Actions:** scan (the primary button) and stop, then three groups: connection tests (FMP endpoint test, selected-provider test), Cache (clear cache), and API key (clear the saved key). Since PR #11, CSV export is on the Results screen.
 - **Feedback:** `#requestPreview`, `#status` (via `setStatus`), `#endpointStatus`, and `#providerWarning`, which is visible only for Yahoo.
 - **RTL:** the page is `lang="he" dir="rtl"`. Symbol input and numbers are LTR.
 
@@ -207,16 +208,29 @@ flowchart TD
 
 There is no routing. Every control is always in the DOM and always visible, apart from the collapsed `<details>` sections.
 
-**Proposed (not implemented):** [ADR-0005](decisions/ADR-0005-app-shell-navigation-plan.md) plans a lightweight static app shell:
+**Implemented in PR #11 (stage 1 of [ADR-0005](decisions/ADR-0005-app-shell-navigation-plan.md)):**
+
+- **Sticky shell bar** under the header, with a segmented nav: **הגדרת סריקה** `#/setup` and **תוצאות** `#/results`.
+- **Two screens,** `#shell-screen-setup` (hero, workflow strip, all settings, action dock) and `#shell-screen-results` (summary, Two-stage summary, tabs, table, Export CSV). They are `<div class="screen" data-screen>` wrappers toggled with `hidden`. Every original element and ID sits inside, unchanged.
+- **Routing:** an empty or unknown hash shows Setup. Element hashes such as `#sec-scan` open the screen that contains them, then scroll and focus. `hashchange` drives Back/Forward.
+- **Global scan bar:**
+  - shows a spinner while `#scanButton` is disabled (that is, while `scanStocks()` runs)
+  - mirrors `#status` through a `MutationObserver`
+  - has a Stop proxy that calls `requestStopScan()`
+  - after the scan, keeps the final status with a "results ready" link, plus a dot on the Results tab
+  - never navigates automatically
+- **Compact header on Results:** the hero collapses to the product mark and title.
+- **Scroll memory:** each screen's scroll position is kept in memory. `--shell-offset` follows the sticky bar's height, so anchors land below it.
+- **No `localStorage`, no new dependencies, no changes to the 12 existing scripts.**
+
+**Still planned (ADR-0005):** the full plan for the remaining stages:
 
 - **Screens:** **Setup**, **Results**, **Methodology** and **Settings & tools**. They are plain `<section>` elements; one is visible at a time, chosen by the URL hash (`#/setup`, `#/results` …).
 - **Element-ID hashes** such as `#sec-scan` resolve to the screen that owns them.
 - **A global scan bar** mirrors `#status` and offers Stop through the existing `requestStopScan()`, so scan feedback is never hidden.
 - **One new classic script,** `js/shell.js`, loaded after `app.js`. The existing 12 scripts, all IDs, the inline handlers and the `localStorage` keys stay unchanged.
 - **The architecture stays the same:** static files, no build, no dependencies, no framework, no backend.
-- **Staged rollout:** PR #11 (shell + Setup/Results), #12 (Methodology), #13 (Results UX), #14 (Settings & tools).
-
-PR #10 changes documentation only.
+- **Staged rollout:** PR #11 (shell + Setup/Results, done), #12 (Methodology), #13 (Results UX), #14 (Settings & tools).
 
 ## 7. Future architecture options (not implemented)
 

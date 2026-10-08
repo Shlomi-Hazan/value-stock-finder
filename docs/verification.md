@@ -16,7 +16,7 @@ python3 - <<'PY'
 # Every js/*.js file is referenced exactly once by index.html, as a deferred classic script, in the expected order.
 import re
 from pathlib import Path
-EXPECTED = ["constants", "state", "utils", "cache", "providers", "metrics", "dcf", "scoring", "render", "scan", "export", "app"]
+EXPECTED = ["constants", "state", "utils", "cache", "providers", "metrics", "dcf", "scoring", "render", "scan", "export", "app", "shell"]
 html = Path("index.html").read_text(encoding="utf-8")
 refs = re.findall(r'<script src="js/([a-z]+)\.js" defer></script>', html)
 on_disk = sorted(p.stem for p in Path("js").glob("*.js"))
@@ -76,8 +76,8 @@ python3 -m http.server 8000
 Open <http://localhost:8000/> and confirm:
 
 - [ ] The page loads with no console errors (no `ReferenceError`, no `SyntaxError`).
-- [ ] The server log or the network panel shows HTTP 200 for `styles.css` and all 12 `js/*.js` files, with no 404s except the browser's automatic `favicon.ico` request.
-- [ ] The page is styled (the light green hero with a faint grid, the green product mark and the green scan button), which confirms `styles.css` loaded. The browser tab shows the green product-mark favicon (an inline SVG data URI, with no `favicon.ico` request).
+- [ ] The server log or the network panel shows HTTP 200 for `styles.css` and all 13 `js/*.js` files, with no 404s except the browser's automatic `favicon.ico` request.
+- [ ] The page is styled (the light green hero with a faint grid, the green product mark and the green scan button), which confirms `styles.css` loaded. The browser tab shows the green product-mark favicon (an inline SVG data URI). Some browsers still probe `/favicon.ico` and log a harmless 404; the project has no such file on purpose.
 - [ ] Every inline handler resolves to a defined global function. In the console: `[...document.querySelectorAll('[onclick],[onchange],[oninput]')].flatMap(e => ['onclick','onchange','oninput'].map(a => e.getAttribute(a)).filter(Boolean)).map(h => h.match(/^(\w+)\(/)[1]).filter(f => typeof window[f] !== 'function')` returns `[]`.
 - [ ] **Data Provider** defaults to **Financial Modeling Prep**.
 - [ ] The preset list fills the symbol textarea.
@@ -85,12 +85,30 @@ Open <http://localhost:8000/> and confirm:
 
 > Embedded preview panes that load the file as a `data:` or `file://` snapshot may restrict `localStorage`. The app should still load, because access is wrapped in `try/catch`.
 
+### App shell checks (since PR #11)
+
+| Check | Expected |
+| --- | --- |
+| No hash, `#/setup`, unknown hash (`#/nope`, `#does-not-exist`) | Setup is the only visible screen. The **הגדרת סריקה** tab has `aria-current="page"`, and the title starts with "הגדרת סריקה ·". |
+| `#/results` | Only Results is visible; the tab and title update |
+| `#sec-source`, `#sec-universe`, `#sec-scan` | Setup opens and the section scrolls into view **below** the sticky bar, with focus on its title |
+| `#sec-results` | Results opens, scrolled to the summary |
+| Back / Forward | Moves between the previous screens |
+| Keyboard | Tab reaches both nav tabs. Enter switches screens. Focus moves to the new screen's heading. |
+| Scan from Setup, then switch to Results | The global scan bar shows a spinner, mirrors `#status` exactly, and has **עצור סריקה** (stop scan) |
+| Global Stop | Halts the scan exactly like `#stopButton` (stops before the next symbol) |
+| Scan finishes while on Setup | **No auto-navigation.** The bar keeps the final status, with "צפה בתוצאות" (view results) and a ✕ to dismiss. A green dot appears on the **תוצאות** tab. |
+| Visiting Results | Clears the dot. The "no results yet" hint shows only before any result rows exist. |
+| Export CSV | The button is on the Results screen and downloads the same 44-column CSV |
+| `localStorage` | Same keys before and after navigating and scanning. The shell adds none. |
+| 1280 / 424 / 375 px | No page overflow. The nav tabs are ≥ 40 px tall (44 px on phones). The sticky bar never hides a scrolled-to section. The table scrolls only inside its wrapper. |
+
 ### UI layout checks (since PR #9)
 
 - [ ] The settings appear as grouped sections: מקור נתונים, מניות לבדיקה, מצב סריקה, סינון בסיסי (collapsed), DCF assumptions (collapsed), then actions.
 - [ ] Clicking a collapsed section title opens and closes it, and its inputs keep their values. Collapsed inputs still feed the scan (for example, change *מחיר מינימלי* while it is collapsed, then check the basic-filter results).
 - [ ] The hero shows the badge, the title, the subtitle and the 4 feature chips. The workflow strip has 4 numbered links that scroll to `#sec-source`, `#sec-universe`, `#sec-scan` and `#sec-results`. The product mark sits beside the title. The feature chips and the main section titles show their small icons, and every `<use>` resolves to a symbol in the inline sprite. The margin-of-safety illustration shows on wide screens (over 900 px), with its 3 labels inside it, and is hidden on narrow screens. The results empty state shows its small magnifier-over-chart illustration.
-- [ ] **סרוק מניות** is the only green filled button. Stop is quiet until a scan runs. **נקה API Key שמור** is red. The connection tests and data tools sit in labeled groups.
+- [ ] **סרוק מניות** is the only green filled button. (Since PR #11, **ייצא CSV** lives on the Results screen, and the Setup tools are בדיקות חיבור, Cache and מפתח API.) Stop is quiet until a scan runs. **נקה API Key שמור** is red. The connection tests and data tools sit in labeled groups.
 - [ ] Helper texts appear under the API key, the preset list, the symbols field and *כמות להצגה*, and as footers under the data-source, scan-mode, basic-filter, DCF and action sections.
 - [ ] Before any scan, the empty table message ("עדיין לא בוצעה סריקה") is visible without scrolling the table. A soft shadow on the table's edge shows when more columns are off-screen.
 - [ ] Color contrast: body, muted, button, pill and status text all meet WCAG AA (4.5:1) against their backgrounds.

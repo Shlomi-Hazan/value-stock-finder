@@ -80,7 +80,30 @@
   </nav>
 </header>
 
+<!-- App shell (PR #11, ADR-0005): navigation and the global scan bar. Behavior lives in js/shell.js. -->
+<div class="shell-bar" id="shell-bar">
+  <nav class="shell-nav" aria-label="ניווט ראשי">
+    <a class="shell-tab" id="shell-tab-setup" href="#/setup" data-route="setup">
+      <svg class="icon" aria-hidden="true"><use href="#i-sliders" /></svg>הגדרת סריקה
+    </a>
+    <a class="shell-tab" id="shell-tab-results" href="#/results" data-route="results">
+      <svg class="icon" aria-hidden="true"><use href="#i-chart" /></svg>תוצאות
+      <span class="shell-dot" id="shell-results-dot" hidden></span>
+      <span class="visually-hidden" id="shell-results-dot-label" hidden>(יש תוצאות חדשות)</span>
+    </a>
+  </nav>
+  <div class="shell-scanbar" id="shell-scanbar" hidden>
+    <span class="shell-spinner" id="shell-spinner" aria-hidden="true"></span>
+    <span class="shell-scan-text" id="shell-scan-text" role="status" aria-live="off"></span>
+    <a class="shell-scan-link" id="shell-results-link" href="#/results" hidden>צפה בתוצאות</a>
+    <button type="button" class="btn btn-stop shell-stop" id="shell-stop" hidden>עצור סריקה</button>
+    <button type="button" class="shell-dismiss" id="shell-dismiss" aria-label="סגור הודעה" hidden>✕</button>
+  </div>
+</div>
+
 <main>
+  <!-- Screen: Setup (#/setup) -->
+  <div class="screen" id="shell-screen-setup" data-screen="setup" data-title="הגדרת סריקה">
   <section class="settings" aria-labelledby="settingsTitle">
     <h2 id="settingsTitle" class="settings-title">הגדרות סריקה</h2>
 
@@ -260,10 +283,9 @@
               <button class="btn btn-quiet" onclick="testSelectedProvider()">בדוק ספק נבחר (AAPL)</button>
             </div>
           </div>
-          <div class="action-group" role="group" aria-label="תוצאות ונתונים">
-            <span class="action-group-label">תוצאות ונתונים</span>
+          <div class="action-group" role="group" aria-label="Cache">
+            <span class="action-group-label">Cache</span>
             <div class="actions">
-              <button class="btn btn-quiet" onclick="exportCSV()">ייצא CSV</button>
               <button class="btn btn-quiet" onclick="clearCache()">נקה Cache</button>
             </div>
           </div>
@@ -280,7 +302,11 @@
       </p>
     </div>
   </section>
+  </div>
 
+  <!-- Screen: Results (#/results) -->
+  <div class="screen" id="shell-screen-results" data-screen="results" data-title="תוצאות" hidden>
+  <p class="shell-empty-hint" id="shell-results-empty">עדיין אין תוצאות. <a href="#/setup">עבור להגדרת סריקה</a> ולחץ על "סרוק מניות".</p>
   <section class="card summary-card" id="sec-results">
     <h2><span class="section-icon" aria-hidden="true"><svg class="icon"><use href="#i-chart" /></svg></span>סיכום</h2>
     <div class="summary">
@@ -297,6 +323,9 @@
     <div class="results-head">
       <h2>תוצאות</h2>
       <p class="results-hint">הטבלה רחבה: גלול הצידה כדי לראות את כל 36 העמודות. לחץ על "פתח פירוט" בכל שורה להסבר מלא.</p>
+      <div class="results-tools">
+        <button class="btn btn-quiet" onclick="exportCSV()"><svg class="icon" aria-hidden="true"><use href="#i-export" /></svg>ייצא CSV</button>
+      </div>
     </div>
     <div class="tabs" role="group" aria-label="סינון תוצאות">
       <button class="tab active" id="tabAll" onclick="setTableFilter('all')">הכול</button>
@@ -353,6 +382,7 @@
       </table>
     </div>
   </section>
+  </div>
 </main>
 
 <!-- Static assets, no build step. Classic deferred scripts run in this order and share globals (inline handlers call them). -->
@@ -368,5 +398,6 @@
 <script src="js/scan.js" defer></script>
 <script src="js/export.js" defer></script>
 <script src="js/app.js" defer></script>
+<script src="js/shell.js" defer></script>
 </body>
 </html>

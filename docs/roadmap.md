@@ -18,7 +18,8 @@ Nothing marked Planned or Future is implemented. Each needs owner approval befor
 | **M5** Two-stage scan + larger universe controls | ✅ Done | Two-stage scan (quote-only Stage 1, Deep Scan of the top N), Stage 1 max / Top N settings, per-stage request preview, stage summary, CSV stage columns, expanded US presets: Large Cap 90, Value 95, Dividend 60 (PR #6) |
 | **M6** Maintainability: static file split | ✅ Done | Post-merge hardening (PR #7). `index.html` + `styles.css` + 12 classic scripts in `js/`, no build step (PR #8, [ADR-0004](decisions/ADR-0004-split-static-assets.md)) |
 | **M7** UI polish and visual identity | ✅ Done | Grouped settings with collapsible advanced sections, button hierarchy, helper microcopy, segmented result tabs, green finance identity, product mark and favicon, icons and the margin-of-safety illustration (PR #9) |
-| **M8** App shell navigation plan | 📝 Proposed | [ADR-0005](decisions/ADR-0005-app-shell-navigation-plan.md): a static app shell with hash-routed screens. Docs only, no code change (PR #10). |
+| **M8** App shell navigation plan | ✅ Accepted | [ADR-0005](decisions/ADR-0005-app-shell-navigation-plan.md): a static app shell with hash-routed screens. Docs only, no code change (PR #10). |
+| **M9** App shell: Setup + Results | ✅ Done | `js/shell.js`: hash router (`#/setup`, `#/results`, element-hash anchors), sticky segmented nav, global scan bar (mirrors `#status`, Stop proxy, results-ready cue, no auto-navigation), compact Results header, Export CSV on Results (PR #11) |
 
 ## App shell rollout (planned, per ADR-0005)
 
@@ -26,7 +27,7 @@ Each step is a separate PR that preserves all existing IDs, handlers, `localStor
 
 | Milestone | Planned PR | Status | Scope |
 | --- | --- | --- | --- |
-| **M9** App shell: Setup + Results | #11 | 🗓 Planned | `js/shell.js` (hash router, nav, global scan bar with a Stop proxy and a "Results ready" cue); compact header; bottom tab bar on phones; Export CSV moves to Results |
+| **M9** App shell: Setup + Results | #11 | ✅ Done | Delivered as planned. On phones the nav is a full-width sticky segmented control at the top rather than a bottom tab bar, so it never covers the table's horizontal scroll area or the action dock. |
 | **M10** Methodology screen | #12 | 🗓 Planned | In-app plain-language explanation of the strategies, Data Confidence, DCF and margin of safety, and the Two-stage bias. Links to `docs/investment-methodology.md` (no thresholds duplicated). |
 | **M11** Results UX refinement | #13 | 🗓 Planned | Sticky summary or toolbar, display-limit note, better empty and preliminary states, column-group hints |
 | **M12** Settings & tools screen | #14 | 🗓 Planned | Endpoint tests, Clear Cache, Clear saved API key, storage explanation. API key **entry** stays in Setup. |

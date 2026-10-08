@@ -59,15 +59,18 @@ grep -n 'src="js/' index.html                            # script load order
 | `js/render.js` | `setStatus`, `updateRequestPreview`, pills, `renderTable`, `renderDetails`, `setTableFilter`, `updateSummary`, `resetResults` |
 | `js/scan.js` | `estimateRequestPlan`, `estimateTwoStagePlan`, `readTwoStageSettings`, `scanStocks`, `requestStopScan`, `runTwoStageScan`, `rankStageOneCandidates`, `showTwoStageResults`, `testEndpoints`, `testSelectedProvider` |
 | `js/export.js` | `exportCSV` |
-| `js/app.js` | `initializePage`, `onProviderChange`, `loadPresetList`, `clearApiKey`, and the single load-time call `initializePage()` |
+| `js/app.js` | `initializePage`, `onProviderChange`, `loadPresetList`, `clearApiKey`, and the load-time call `initializePage()` |
+| `js/shell.js` | App shell (ADR-0005): hash router for `#/setup` and `#/results`, element-hash anchors, focus/title, the global scan bar (mirrors `#status`, Stop proxy calling `requestStopScan()`), the results-ready cue. Self-initializing, loaded last. It only observes the DOM; it never touches scan, scoring, cache or rendering. |
 
 Functions called from inline HTML handlers: `onProviderChange`, `loadPresetList`, `updateRequestPreview`, `scanStocks`, `requestStopScan`, `testEndpoints`, `testSelectedProvider`, `exportCSV`, `clearCache`, `clearApiKey`, `setTableFilter`. Keep these names global.
+
+Screens: `index.html` wraps the setup flow in `#shell-screen-setup` and the summary and table in `#shell-screen-results` (`data-screen`, toggled with `hidden`). Shell-owned elements use the `shell-` ID prefix. When moving markup between screens, keep every ID and handler exactly once.
 
 ## 4. Preserving existing behavior
 
 - Make the smallest change that satisfies the request. Do not reformat or reorganize unrelated code.
 - Match the existing style: classic scripts (no `import`/`export`), global functions, 2-space indentation, template-literal HTML, `escapeHtml` on dynamic values.
-- Put new code in the file that owns the concern. Only `js/app.js` may run code at load time. A new file needs a `<script src="js/….js" defer></script>` tag in the right order in `index.html`.
+- Put new code in the file that owns the concern. Only `js/app.js` and `js/shell.js` (loaded last) may run code at load time. A new file needs a `<script src="js/….js" defer></script>` tag in the right order in `index.html`.
 - When adding table columns, update `colspan="36"` everywhere (`js/render.js`, `js/scan.js`, `index.html`), the `<th>` list, `renderTable` and `exportCSV`. Add CSV columns **at the end**.
 - Keep the FMP path intact when touching providers.
 - Wrap new `localStorage` access in `try/catch`.
@@ -118,5 +121,8 @@ Follow [AGENTS.md §9](AGENTS.md#9-expected-final-response-format). Keep it fact
 | PR #6 `e553b59` | Two-stage scan (quote-only Stage 1, Deep Scan of the top N), expanded US presets, CSV stage columns, and Stage 1-only fallback rows labeled preliminary. Scoring unchanged. |
 | PR #7 `dceef78` | Post-merge hardening: doc consistency and a zero-rows status message |
 | PR #8 | Split into `index.html` + `styles.css` + `js/*.js` (ADR-0004). Code moved verbatim; no behavior, scoring, DCF or provider changes. |
+| PR #9 `ccb5e3d` | UI polish, green finance identity, product mark, icons and illustrations (UI-only) |
+| PR #10 `638d9dd` | App shell plan (ADR-0005), docs only |
+| PR #11 | App shell stage 1: Setup and Results screens, hash navigation, global scan bar (`js/shell.js`). No scan, scoring, DCF, provider, CSV or table changes. |
 
 Details are in [docs/HISTORY.md](docs/HISTORY.md).
