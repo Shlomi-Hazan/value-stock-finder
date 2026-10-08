@@ -23,7 +23,7 @@ All endpoints are requested as `https://financialmodelingprep.com{path}?symbol={
 | balance | Balance Sheet | `/stable/balance-sheet-statement` | `period=annual&limit=5` | Deep |
 | growth | Financial Growth | `/stable/financial-growth` | `period=annual&limit=5` | Deep |
 
-Request cost: **1 per symbol** (Momentum) or **10 per symbol** (Deep), minus cache hits.
+Request cost: **1 per symbol** (Momentum) or **10 per symbol** (Deep), minus cache hits. **Two-stage scan:** 1 quote per Stage 1 symbol (≤ *Stage 1 max symbols*), plus 9 deep endpoints per Stage 2 candidate (≤ *Top N*). The Stage 2 quote is served from the Stage 1 cache (10-minute TTL).
 
 ### Why FMP is the main provider
 

@@ -1,6 +1,6 @@
 # Investment Methodology
 
-Last updated: 2026-10-08 (documentation foundation, after PR #3)
+Last updated: 2026-10-08 (after PR #6: Two-stage scan; scoring rules unchanged)
 
 > ⚠️ **Educational disclaimer.** This document describes the mechanical rules Value Stock Finder applies. The rules are **inspired by** well-known investors and by a value-investing course summary. They **do not exactly reproduce** any professional, published or proprietary strategy. Nothing here is investment advice, and no score implies that a stock is good, bad, cheap or expensive in any absolute sense.
 
@@ -246,3 +246,19 @@ The share of these 19 fields that are present: Price\*, Market Cap\*, Volume\*, 
 - Cached fundamentals can be up to 7 days old, and cached quotes up to 10 minutes old.
 
 **This app does not claim to exactly reproduce Graham, Fisher, Dreman, Neff, Piotroski, Buffett or any course methodology.** It is a transparent checklist tool for learning and first-pass screening.
+
+## 13. Two-stage scan candidate ordering
+
+**Two-stage scan does not change any scoring rule, threshold, weight, DCF formula or decision rule.** The final rows are produced by the same Deep Scan evaluation described above.
+
+To pick which symbols get the expensive Deep Scan, Stage 1 orders the quote-only rows with `rankStageOneCandidates`. This is a **practical candidate ordering, not an investment methodology**. It reuses existing outputs only:
+
+1. Passes the basic filter (price / volume / market cap) first. Only these rows can become Stage 2 candidates.
+2. Higher total score. With quote-only data, no value category can be evaluated, so this is effectively 0.2 × the Momentum / Market score.
+3. Higher Momentum / Market score.
+4. Higher Data Confidence.
+5. Symbol (alphabetical), for a stable tie-break.
+
+Missing fundamentals are never treated as passing. Relative strategies are not applied in Stage 1, because with quote-only data Dreman would be scored on market cap alone.
+
+**Bias to be aware of:** the Momentum / Market score rewards size, liquidity and price strength (above moving averages, near the 52-week high). Stage 1 therefore tends to promote large, trending stocks, and it can skip cheap stocks that are trading weakly, which are exactly what some value approaches look for. To reduce this, raise *Deep Scan Top N*, or Deep Scan a smaller list directly.

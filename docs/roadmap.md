@@ -14,14 +14,15 @@ Nothing marked Planned or Future is implemented. Each needs owner approval befor
 | **M1** Cache / confidence / rate-limit safety | ✅ Done | Local FMP cache, request preview, stop scan, rate-limit halt, EPS CAGR and Graham total EPS growth fix, Data Confidence, safer labels (PR #1) |
 | **M2** DCF / fair value | ✅ Done | DCF assumptions, Estimated Fair Value, upside/discount/MoS, DCF Confidence, relative basis labels, US vs non-US market-cap threshold (PR #2) |
 | **M3** Provider abstraction / Yahoo experimental | ✅ Done · Yahoo 🧪 Experimental | Provider selector, FMP default, Yahoo quote-only browser test, Deep Scan blocked for Yahoo, selected-provider test, CSV `dataProvider`, safe storage init (PR #3) |
-| **M4** Documentation foundation | ✅ Done (this PR) | README, SPEC, AGENTS, CLAUDE, architecture, product requirements, methodology, API integrations, security, verification, roadmap, ADRs, user guide, history |
+| **M4** Documentation foundation | ✅ Done | README, SPEC, AGENTS, CLAUDE, architecture, product requirements, methodology, API integrations, security, verification, roadmap, ADRs, user guide, history (PR #4), MIT License (PR #5) |
+| **M5** Two-stage scan + larger universe controls | ✅ Done | Two-stage scan (quote-only Stage 1, Deep Scan of the top N), Stage 1 max / Top N settings, per-stage request preview, stage summary, CSV stage columns, expanded US presets: Large Cap 90, Value 95, Dividend 60 (PR #6) |
 
 ## Planned and future work
 
 | Item | Status | Description | Notes |
 | --- | --- | --- | --- |
-| Two-stage scan | 🗓 Planned | Quick quote filter over many symbols, then Deep Scan only for survivors | Biggest API-cost saver |
-| Larger universe | 🗓 Planned | Source symbols from a screener or index list instead of 30-symbol presets | Depends on the FMP plan and browser limits |
+| Automatic universe discovery | 🗓 Planned | Source symbols from a screener or index list instead of curated presets | Depends on the FMP plan and browser limits. Would feed Two-stage scan. |
+| Value-aware Stage 1 ordering | 🗓 Planned | A cheaper Stage 1 signal that doesn't favor momentum (for example, a quote-level P/E if available) | Would be a scoring change, so it needs explicit approval |
 | Better provider abstraction | 🗓 Planned | Capability-based provider interface | Keep FMP behavior identical |
 | Tests / CI | 🗓 Planned | GitHub Actions running the syntax and secret checks; unit tests for pure scoring functions | Must not add runtime dependencies |
 | Better UI | 🗓 Planned | Column groups, inline explanations, screenshots in README | Keep RTL |
