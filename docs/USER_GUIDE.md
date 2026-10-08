@@ -10,7 +10,7 @@ The app's interface is in Hebrew. This guide gives each Hebrew label with its En
 
 ## 1. Open the app
 
-- **Simplest:** double-click `index.html` to open it in Chrome, Edge, Firefox or Safari.
+- **Simplest:** double-click `index.html` to open it in Chrome, Edge, Firefox or Safari. Keep `styles.css` and the `js/` folder next to it, because the page loads them.
 - **Recommended:** from the project folder, run:
 
   ```bash

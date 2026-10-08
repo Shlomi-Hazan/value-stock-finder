@@ -20,7 +20,7 @@ This means:
 | The key is sent as the `apikey` URL query parameter | Visible in dev tools network logs, and potentially in proxy or corporate logs |
 | No backend | **A static HTML app cannot truly hide API keys.** |
 
-**Never** host this page publicly with a key filled in, embed a key in `index.html`, or commit a key to Git.
+**Never** host this page publicly with a key filled in, embed a key in `index.html` or `js/`, or commit a key to Git.
 
 ## 3. localStorage risk
 

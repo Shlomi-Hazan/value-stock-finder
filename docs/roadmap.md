@@ -16,6 +16,7 @@ Nothing marked Planned or Future is implemented. Each needs owner approval befor
 | **M3** Provider abstraction / Yahoo experimental | ✅ Done · Yahoo 🧪 Experimental | Provider selector, FMP default, Yahoo quote-only browser test, Deep Scan blocked for Yahoo, selected-provider test, CSV `dataProvider`, safe storage init (PR #3) |
 | **M4** Documentation foundation | ✅ Done | README, SPEC, AGENTS, CLAUDE, architecture, product requirements, methodology, API integrations, security, verification, roadmap, ADRs, user guide, history (PR #4), MIT License (PR #5) |
 | **M5** Two-stage scan + larger universe controls | ✅ Done | Two-stage scan (quote-only Stage 1, Deep Scan of the top N), Stage 1 max / Top N settings, per-stage request preview, stage summary, CSV stage columns, expanded US presets: Large Cap 90, Value 95, Dividend 60 (PR #6) |
+| **M6** Maintainability: static file split | ✅ Done | Post-merge hardening (PR #7). `index.html` + `styles.css` + 12 classic scripts in `js/`, no build step (PR #8, [ADR-0004](decisions/ADR-0004-split-static-assets.md)) |
 
 ## Planned and future work
 

@@ -8,7 +8,7 @@ This specification describes what the app does **today** and what is **planned**
 
 ## 1. Product overview
 
-Value Stock Finder is a single-file, browser-only stock screener. It fetches market and fundamental data for a user-supplied list of symbols, applies value-investing checklists inspired by Graham, Fisher, Dreman, John Neff, Piotroski and Buffett, estimates an educational DCF fair value, and ranks the results in a table that can be exported to CSV.
+Value Stock Finder is a static, browser-only stock screener (`index.html`, `styles.css` and `js/`, no build step). It fetches market and fundamental data for a user-supplied list of symbols, applies value-investing checklists inspired by Graham, Fisher, Dreman, John Neff, Piotroski and Buffett, estimates an educational DCF fair value, and ranks the results in a table that can be exported to CSV.
 
 It is an **educational, personal research tool**. It is **not investment advice**.
 
@@ -27,7 +27,7 @@ Course checklists (P/E ranges, Graham ratio, cash-flow quality, debt limits and 
 1. Apply well-defined, documented checklists consistently across a list of symbols.
 2. Make missing or restricted data visible, never silent.
 3. Minimize API usage (cache, request preview, stop, rate-limit halt).
-4. Stay trivially runnable: one HTML file, no install, no build.
+4. Stay trivially runnable: a few static files, no install, no build.
 5. Stay honest: educational labels, confidence indicators, no recommendations.
 
 ## 5. Non-goals
@@ -39,7 +39,7 @@ Course checklists (P/E ranges, Graham ratio, cash-flow quality, debt limits and 
 | Hiding API keys | Impossible without a backend (see [ADR-0003](docs/decisions/ADR-0003-no-backend-yet.md)). |
 | Real-time trading, portfolios, alerts | Out of scope. |
 | Exactly reproducing any investor's or course's proprietary method | The rules are approximations. |
-| Framework migration (React, Vite, Next.js…) | See [ADR-0001](docs/decisions/ADR-0001-single-file-static-app.md). |
+| Framework migration (React, Vite, Next.js…) | See [ADR-0004](docs/decisions/ADR-0004-split-static-assets.md) (and the original [ADR-0001](docs/decisions/ADR-0001-single-file-static-app.md)). |
 
 ## 6. Core user flows
 
@@ -92,7 +92,7 @@ Secondary flows: **Test endpoints on AAPL** (FMP), **Test selected provider** (o
 
 | ID | Requirement |
 | --- | --- |
-| NFR-1 | Single static file: `index.html`. No dependencies, no build, no backend. |
+| NFR-1 | Static frontend: `index.html`, `styles.css` and classic scripts in `js/`, loaded with `defer` in a fixed order. No dependencies, no build step, no modules, no backend. Element IDs and the global functions used by inline handlers are part of the contract. |
 | NFR-2 | Runs in a modern browser, opened directly or from a simple static server. |
 | NFR-3 | The UI is RTL Hebrew-first. Metric and strategy names stay in English. |
 | NFR-4 | The page must not crash when storage is restricted. `localStorage` reads are wrapped in `try/catch`. |

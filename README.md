@@ -4,7 +4,7 @@
 
 Value Stock Finder scans a list of ticker symbols, pulls market and financial-statement data from [Financial Modeling Prep (FMP)](https://site.financialmodelingprep.com/), and scores each company against practical checks inspired by Graham, Fisher, Dreman, John Neff, Piotroski and Buffett. It also shows an educational DCF fair-value estimate and a margin-of-safety check.
 
-The whole app is a single `index.html` file. It has no backend, no build step and no dependencies.
+The app is a handful of static files (`index.html`, `styles.css` and plain scripts in `js/`). It has no backend, no build step and no dependencies.
 
 > ⚠️ **Educational tool, not financial advice.** Value Stock Finder does not recommend, endorse or guarantee any security. Scores are mechanical checklists run over third-party data that may be incomplete, delayed or wrong. Always do your own research and consult a licensed professional before investing.
 
@@ -75,17 +75,17 @@ Value Stock Finder automates that **first pass**. It does not decide what to buy
 
 ```mermaid
 flowchart LR
-  User([User]) --> UI["index.html<br/>UI + JS + CSS"]
+  User([User]) --> UI["index.html + styles.css + js/*.js<br/>static frontend"]
   UI <--> LS[("localStorage<br/>API key · provider · cache")]
   UI -->|HTTPS + apikey| FMP["Financial Modeling Prep<br/>(primary)"]
   UI -.->|experimental, usually CORS-blocked| YF["Yahoo Finance chart endpoint"]
 ```
 
-- **One file:** HTML, CSS and JavaScript all live in `index.html`.
+- **Static files:** `index.html` (markup), `styles.css`, and 12 classic scripts in `js/` loaded in a fixed order with `defer`. No bundler, no modules, no build step.
 - **Browser-only runtime:** every API call goes directly from your browser to the data provider.
 - **State:** in memory during a scan, plus `localStorage` for the API key, the selected provider and the response cache.
 
-Details: [docs/architecture.md](docs/architecture.md) · Decision: [ADR-0001](docs/decisions/ADR-0001-single-file-static-app.md)
+Details: [docs/architecture.md](docs/architecture.md) · Decision: [ADR-0004](docs/decisions/ADR-0004-split-static-assets.md) (supersedes the single-file [ADR-0001](docs/decisions/ADR-0001-single-file-static-app.md))
 
 ## 🔌 Data Providers
 
@@ -121,7 +121,7 @@ There is nothing to install.
 
 **Option A: open the file directly**
 
-Open `index.html` in a modern browser (Chrome, Edge, Firefox or Safari).
+Open `index.html` in a modern browser (Chrome, Edge, Firefox or Safari). Keep `styles.css` and the `js/` folder next to it.
 
 **Option B: serve it with a simple static server (recommended)**
 

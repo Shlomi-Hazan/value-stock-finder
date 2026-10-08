@@ -2,35 +2,33 @@
 
 Last updated: 2026-10-08
 
-Run this before every PR. **Documentation-only PRs** need sections 1–3 and must confirm `index.html` is unchanged. **Code PRs** need everything.
+Run this before every PR. **Documentation-only PRs** need sections 1–3 and must confirm the app files (`index.html`, `styles.css`, `js/`) are unchanged. **Code PRs** need everything.
 
 There is no automated test suite or CI yet; that is planned (see [roadmap.md](roadmap.md)).
 
 ## 1. Static checks (required)
 
-### 1.1 Embedded JavaScript syntax check
+### 1.1 JavaScript syntax and script-order check
 
 ```bash
+find js -name '*.js' -print0 | xargs -0 -n1 node --check && echo "all js files ok"
 python3 - <<'PY'
+# Every js/*.js file is referenced exactly once by index.html, as a deferred classic script, in the expected order.
+import re
 from pathlib import Path
-import re, subprocess, tempfile, os
+EXPECTED = ["constants", "state", "utils", "cache", "providers", "metrics", "dcf", "scoring", "render", "scan", "export", "app"]
 html = Path("index.html").read_text(encoding="utf-8")
-scripts = re.findall(r"<script>(.*?)</script>", html, flags=re.S)
-if not scripts:
-    raise SystemExit("No script tag found")
-with tempfile.NamedTemporaryFile("w", suffix=".js", delete=False, encoding="utf-8") as f:
-    f.write("\n".join(scripts)); p = f.name
-try:
-    r = subprocess.run(["node", "--check", p], text=True, capture_output=True)
-    print(r.stdout + r.stderr, end="")
-    if r.returncode == 0: print("script syntax ok")
-    raise SystemExit(r.returncode)
-finally:
-    os.remove(p)
+refs = re.findall(r'<script src="js/([a-z]+)\.js" defer></script>', html)
+on_disk = sorted(p.stem for p in Path("js").glob("*.js"))
+assert refs == EXPECTED, refs
+assert sorted(refs) == on_disk, (refs, on_disk)
+assert html.count('<link rel="stylesheet" href="styles.css" />') == 1
+assert "<script>" not in html and "<style>" not in html
+print("script order ok")
 PY
 ```
 
-Expected output: `script syntax ok`
+Expected output: `all js files ok` and `script order ok`. The app has no inline `<script>`; all code lives in `js/` ([ADR-0004](decisions/ADR-0004-split-static-assets.md)).
 
 ### 1.2 Whitespace / conflict-marker check
 
@@ -49,7 +47,7 @@ grep -RInE "sk-|AIza|secret|token|api[_-]?key|apikey|BEGIN PRIVATE KEY|password"
 Hits on labels and variable names (`apiKey`, "API Key", `type="password"`, documentation text) are expected. **Any real key value fails the check.** As an extra check, look for long key-like strings:
 
 ```bash
-grep -Eon "[A-Za-z0-9]{32,}" index.html
+grep -Eon "[A-Za-z0-9]{32,}" index.html styles.css js/*.js
 ```
 
 The only expected hits are long FMP field names such as `netCashProvidedByOperatingActivities`.
@@ -58,7 +56,7 @@ The only expected hits are long FMP field names such as `netCashProvidedByOperat
 
 ```bash
 ls package.json node_modules vite.config.* next.config.* server.* 2>/dev/null || echo "none"
-grep -nE "<script src|<link " index.html || echo "no external scripts/styles"
+grep -nE "<script src=\"https?:|<link [^>]*href=\"https?:" index.html || echo "no external scripts/styles (only local styles.css and js/)"
 ```
 
 ### 1.5 Docs-only PRs
@@ -67,7 +65,7 @@ grep -nE "<script src|<link " index.html || echo "no external scripts/styles"
 git diff --name-only origin/main...HEAD
 ```
 
-`index.html` must not be listed.
+`index.html`, `styles.css` and `js/` must not be listed.
 
 ## 2. Local server smoke test
 
@@ -77,7 +75,10 @@ python3 -m http.server 8000
 
 Open <http://localhost:8000/> and confirm:
 
-- [ ] The page loads with no console errors.
+- [ ] The page loads with no console errors (no `ReferenceError`, no `SyntaxError`).
+- [ ] The server log or the network panel shows HTTP 200 for `styles.css` and all 12 `js/*.js` files, with no 404s except the browser's automatic `favicon.ico` request.
+- [ ] The page is styled (the dark header gradient and the blue scan button), which confirms `styles.css` loaded.
+- [ ] Every inline handler resolves to a defined global function. In the console: `[...document.querySelectorAll('[onclick],[onchange],[oninput]')].flatMap(e => ['onclick','onchange','oninput'].map(a => e.getAttribute(a)).filter(Boolean)).map(h => h.match(/^(\w+)\(/)[1]).filter(f => typeof window[f] !== 'function')` returns `[]`.
 - [ ] **Data Provider** defaults to **Financial Modeling Prep**.
 - [ ] The preset list fills the symbol textarea.
 - [ ] The request preview shows "Financial Modeling Prep — Deep Scan: …".
@@ -145,7 +146,8 @@ Open <http://localhost:8000/> and confirm:
 
 ## 4. Regression checklist before every PR
 
-- [ ] Static checks 1.1–1.4 pass
+- [ ] Static checks 1.1–1.4 pass (every `js/*.js` file passes `node --check`, and the script order is correct)
+- [ ] All assets load (no 404s), and all inline-handler functions are defined (see §2)
 - [ ] FMP is still the default provider
 - [ ] FMP Deep Scan still requests quote + 9 endpoints
 - [ ] Request preview, stop scan and rate-limit handling still work

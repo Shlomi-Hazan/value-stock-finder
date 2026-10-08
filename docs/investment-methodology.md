@@ -4,7 +4,7 @@ Last updated: 2026-10-08 (after PR #6: Two-stage scan; scoring rules unchanged)
 
 > ⚠️ **Educational disclaimer.** This document describes the mechanical rules Value Stock Finder applies. The rules are **inspired by** well-known investors and by a value-investing course summary. They **do not exactly reproduce** any professional, published or proprietary strategy. Nothing here is investment advice, and no score implies that a stock is good, bad, cheap or expensive in any absolute sense.
 
-All thresholds below are taken from the current `index.html`. If code and document ever disagree, the code is what runs, and the document must be fixed in the same PR as any rule change (see [AGENTS.md](../AGENTS.md)).
+All thresholds below are taken from the current code (mainly `js/scoring.js`, `js/metrics.js`, `js/dcf.js` and `js/constants.js`). If code and document ever disagree, the code is what runs, and the document must be fixed in the same PR as any rule change (see [AGENTS.md](../AGENTS.md)).
 
 ---
 

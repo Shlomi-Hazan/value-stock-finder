@@ -13,6 +13,8 @@ Last updated: 2026-10-08
 | 4 | **PR #4: Documentation foundation** (merged 2026-10-08) | `31dac23` | README, SPEC, AGENTS, CLAUDE, docs/ (architecture, product requirements, methodology, API integrations, security, verification, roadmap, user guide, history), ADR-0001 to ADR-0003, `.gitignore`. No change to app behavior. |
 | 5 | **PR #5: Add MIT License** (merged 2026-10-08) | `da5f529` | `LICENSE` (MIT) and a README license section |
 | 6 | **PR #6: Two-stage scan and larger universe controls** (merged 2026-10-08) | `e553b59` | Two-stage scan mode (quote-only Stage 1 up to 200 symbols, FMP Deep Scan of the top N ≤ 30), Stage 1 max / Top N settings, per-stage request preview and confirmation, stage status and summary, stop and rate-limit handling per stage, CSV `scanMode`/`scanStage`/`stage1Rank`, expanded US presets (90 / 95 / 60). Yahoo is blocked for Two-stage. **Scoring rules unchanged.** Follow-up: clarified that Stage 1-only fallback rows are preliminary quote-level output (the preliminary `evaluateStock()` score, not final value scores) in the status, details, pill and summary; shortened the UI label to "Two-stage — Quick then Deep". |
+| 7 | **PR #7: Harden two-stage scan after merge** (merged 2026-10-08) | `dceef78` | Doc consistency fixes (UI label, display-limit note, history SHAs) and a clearer status when a rate limit hits the very first Stage 1 call. No scoring changes. |
+| 8 | **PR #8: Split app into static files** | — | `index.html` reduced to markup; CSS moved to `styles.css`; JavaScript moved verbatim into 12 classic scripts in `js/`, loaded with `defer` in a fixed order ([ADR-0004](decisions/ADR-0004-split-static-assets.md) supersedes ADR-0001). **No behavior, UI, scoring, DCF, provider or CSV changes.** No build step, dependencies or backend. |
 
 ## Key lessons learned
 
@@ -23,3 +25,4 @@ Last updated: 2026-10-08
 5. **Missing data must be visible.** Data Confidence and ⚪ "missing" tests were added because high scores can come from very few evaluable tests.
 6. **API cost matters.** The cache, request preview, stop button and rate-limit halt made Deep Scans practical on limited plans. Two-stage scan (PR #6) goes further by deep-scanning only the top N candidates.
 7. **Cheap filters carry bias.** Stage 1 can only use quote data, so its ordering leans toward momentum. It is documented as candidate ordering, not a value methodology.
+8. **Structure follows size.** At about 2,400 lines the single file became hard to review. Splitting it into static files, without a build step, kept the zero-setup benefit (ADR-0004).
