@@ -67,7 +67,8 @@ flowchart TB
 ### UI layer
 
 - **Settings:** provider, API key (FMP), preset list, scan mode, top-N, market-cap thresholds (US / non-US), minimum volume, minimum price, Two-stage settings (Stage 1 max symbols, Deep Scan Top N), DCF assumptions, and the symbol textarea.
-- **Actions:** scan, stop, FMP endpoint test, selected-provider test, CSV export, clear cache, clear API key.
+- **Layout (PR #9):** the settings are grouped sections, each with a title, a white panel and a short helper footer. In order: data source, stocks to check, scan mode, basic filters and DCF assumptions (both native `<details>`, collapsed by default), then actions. Only the markup and CSS are grouped; all element IDs and inline handlers are unchanged, so the JS is unaware of the layout.
+- **Actions:** scan (the primary button) and stop, then three groups: connection tests (FMP endpoint test, selected-provider test), results and data (CSV export, clear cache), and API key (clear the saved key).
 - **Feedback:** `#requestPreview`, `#status` (via `setStatus`), `#endpointStatus`, and `#providerWarning`, which is visible only for Yahoo.
 - **RTL:** the page is `lang="he" dir="rtl"`. Symbol input and numbers are LTR.
 

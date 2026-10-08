@@ -19,6 +19,21 @@ The app's interface is in Hebrew. This guide gives each Hebrew label with its En
 
   Then open <http://localhost:8000/>.
 
+### How the settings page is organized
+
+The settings are grouped top to bottom in the order you use them:
+
+| Section | Contains |
+| --- | --- |
+| **מקור נתונים** (data source) | Data Provider, API Key (FMP), and the Yahoo warning when Yahoo is selected |
+| **מניות לבדיקה** (stocks to check) | Preset list and the symbols textarea |
+| **מצב סריקה** (scan mode) | Scan mode, **כמות להצגה** (how many to show), and the two Two-stage settings |
+| **סינון בסיסי** (basic filters) | Minimum market cap (US / outside the US), minimum volume, minimum price. **Collapsed by default**: click the title to open it. |
+| **הנחות Estimated Fair Value / DCF Estimate** | Discount rate, terminal growth, projection years, margin of safety. **Collapsed by default.** |
+| Actions | **סרוק מניות** (scan stocks, the blue primary button) and **עצור סריקה** (stop scan), then the request preview and status. Below them, three quieter groups: **בדיקות חיבור** (connection tests), **תוצאות ונתונים** (results and data: CSV export, clear cache) and **מפתח API** (API key: clear the saved key, shown in red). |
+
+Collapsed sections keep their values. They are still used in every scan, even while closed.
+
 ## 2. Enter your FMP API key
 
 1. Get a key from Financial Modeling Prep.
@@ -77,11 +92,12 @@ Two-stage scan is blocked when Yahoo is selected.
 
 Other settings:
 
-- **כמות להצגה** (how many to show): top-N rows, default 15.
-- **שווי שוק מינימלי בארה״ב / מחוץ לארה״ב** (minimum market cap, US / outside the US): default 2B / 1B.
-- **Volume מינימלי** (minimum volume): default 100,000.
-- **מחיר מינימלי** (minimum price): default 5.
-- DCF assumptions: see §8.
+- **כמות להצגה** (how many to show), in the scan-mode section: top-N rows, default 15.
+- In the collapsed **סינון בסיסי** (basic filters) section:
+  - **שווי שוק מינימלי בארה״ב / מחוץ לארה״ב** (minimum market cap, US / outside the US): default 2B / 1B.
+  - **Volume מינימלי** (minimum volume): default 100,000.
+  - **מחיר מינימלי** (minimum price): default 5.
+- DCF assumptions, in their own collapsed section: see §8.
 
 Click **סרוק מניות** (scan stocks). Click **עצור סריקה** (stop scan) to stop before the next symbol.
 

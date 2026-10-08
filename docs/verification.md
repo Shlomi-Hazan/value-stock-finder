@@ -85,6 +85,16 @@ Open <http://localhost:8000/> and confirm:
 
 > Embedded preview panes that load the file as a `data:` or `file://` snapshot may restrict `localStorage`. The app should still load, because access is wrapped in `try/catch`.
 
+### UI layout checks (since PR #9)
+
+- [ ] The settings appear as grouped sections: מקור נתונים, מניות לבדיקה, מצב סריקה, סינון בסיסי (collapsed), DCF assumptions (collapsed), then actions.
+- [ ] Clicking a collapsed section title opens and closes it, and its inputs keep their values. Collapsed inputs still feed the scan (for example, change *מחיר מינימלי* while it is collapsed, then check the basic-filter results).
+- [ ] **סרוק מניות** is the only blue filled button. Stop is quiet until a scan runs. **נקה API Key שמור** is red. The connection tests and data tools sit in labeled groups.
+- [ ] Helper texts appear under the API key, the preset list, the symbols field and *כמות להצגה*, and as footers under the data-source, scan-mode, basic-filter, DCF and action sections.
+- [ ] Before any scan, the empty table message ("עדיין לא בוצעה סריקה") is visible without scrolling the table.
+- [ ] At 1280, 424 and 375 px: no horizontal page overflow; sections stack; buttons wrap; no clipped labels; the table scrolls only inside its wrapper.
+- [ ] Keyboard: Tab reaches every control, and focus rings are visible on inputs, buttons and section titles.
+
 ## 3. Behavior checklist
 
 ### FMP
