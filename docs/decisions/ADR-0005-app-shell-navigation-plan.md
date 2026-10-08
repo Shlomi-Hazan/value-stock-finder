@@ -2,7 +2,7 @@
 
 ## Status
 
-**Proposed** (2026-10-09, PR #10). This is a planning record only. Nothing in this ADR is implemented yet. It becomes **Accepted** when the owner approves the plan, and is implemented starting with PR #11.
+**Accepted.** Planned in PR #10 (2026-10-09). **Stage 1 (Setup + Results, global scan bar) implemented in PR #11.** Methodology (#12), Results UX (#13) and Settings & tools (#14) are still planned.
 
 ## Context
 

@@ -19,6 +19,20 @@ The app's interface is in Hebrew. This guide gives each Hebrew label with its En
 
   Then open <http://localhost:8000/>.
 
+### Screens: Setup and Results
+
+The app has two screens. You switch between them with the tabs under the header:
+
+- **הגדרת סריקה** (Setup) is where you prepare and start a scan: data source, stocks, scan mode, filters, DCF assumptions, and the Scan and Stop buttons.
+- **תוצאות** (Results) is where you read, filter and export results: the summary, the Two-stage summary, the result tabs, the table and **ייצא CSV** (export CSV).
+
+The address bar shows `#/setup` or `#/results`, so the browser Back and Forward buttons work, and you can bookmark a screen. The numbered workflow links (1 מקור נתונים … 4 תוצאות) still jump to the right place.
+
+**While a scan runs**, a bar under the tabs shows the live progress (the same text as the status line on Setup) and an **עצור סריקה** (stop scan) button. You can switch to Results during the scan and still watch it or stop it. **The app does not jump to Results by itself when the scan finishes.** Instead:
+
+- the bar keeps the final message, with a **צפה בתוצאות** (view results) link and a ✕ to close it
+- a small green dot appears on the **תוצאות** tab until you open it
+
 ### How the settings page is organized
 
 At the top, a short strip shows the workflow: **1 מקור נתונים → 2 מניות → 3 סריקה → 4 תוצאות** (data source → stocks → scan → results). Each step is a link that scrolls to that part of the page; it is not separate navigation. The same numbers appear next to the section titles below. The app's product mark next to the title, and the larger illustration beside it on wide screens, both show the margin-of-safety idea: a gold fair-value line above a green price line, with the gap between them. They are illustrations, not data. Small icons mark the feature chips and the main sections.
@@ -32,7 +46,7 @@ The settings are grouped top to bottom in the order you use them:
 | **מצב סריקה** (scan mode) | Scan mode, **כמות להצגה** (how many to show), and the two Two-stage settings |
 | **סינון בסיסי** (basic filters) | Minimum market cap (US / outside the US), minimum volume, minimum price. **Collapsed by default**: click the title to open it. |
 | **הנחות Estimated Fair Value / DCF Estimate** | Discount rate, terminal growth, projection years, margin of safety. **Collapsed by default.** |
-| Actions | **סרוק מניות** (scan stocks, the green primary button) and **עצור סריקה** (stop scan), then the request preview and status in a small card right below them. Below them, three quieter groups: **בדיקות חיבור** (connection tests), **תוצאות ונתונים** (results and data: CSV export, clear cache) and **מפתח API** (API key: clear the saved key, shown in red). |
+| Actions | **סרוק מניות** (scan stocks, the green primary button) and **עצור סריקה** (stop scan), then the request preview and status in a small card right below them. Below them, three quieter groups: **בדיקות חיבור** (connection tests), **Cache** (clear cache) and **מפתח API** (API key: clear the saved key, shown in red). CSV export is on the Results screen. |
 
 Collapsed sections keep their values. They are still used in every scan, even while closed.
 
@@ -173,7 +187,7 @@ The DCF is a **rough educational estimate**. Small changes in the assumptions mo
 
 ## 9. Export CSV
 
-Click **ייצא CSV** (export CSV) to download `value_stock_finder_results.csv` with the **displayed top-N** results, including the DCF fields and the data provider.
+On the **תוצאות** (Results) screen, click **ייצא CSV** (export CSV) to download `value_stock_finder_results.csv` with the **displayed top-N** results, including the DCF fields and the data provider.
 
 ## 10. Clear cache or API key
 

@@ -58,7 +58,7 @@ When behavior changes, update the affected docs (SPEC, methodology, user guide, 
 
 | Constraint | Rule |
 | --- | --- |
-| Simple static assets | Keep the app as `index.html` + `styles.css` + classic scripts in `js/`. Do not introduce ES modules, a framework (React, Vite, Next.js…), a bundler or a build step unless the owner explicitly requests it and an ADR is added. Preserve element IDs and the global functions used by inline handlers. A new script file needs a `<script defer>` tag in the right load order, and only `app.js` may run code at load time. |
+| Simple static assets | Keep the app as `index.html` + `styles.css` + classic scripts in `js/`. Do not introduce ES modules, a framework (React, Vite, Next.js…), a bundler or a build step unless the owner explicitly requests it and an ADR is added. Preserve element IDs and the global functions used by inline handlers. A new script file needs a `<script defer>` tag in the right load order. Only `app.js` and the app shell `shell.js` (loaded last, ADR-0005) may run code at load time. |
 | No backend | Do not add servers, serverless functions or proxies unless explicitly requested. See [ADR-0003](docs/decisions/ADR-0003-no-backend-yet.md). |
 | No dependencies | No `package.json`, npm packages, CDN scripts, build tools or bundlers unless explicitly requested. |
 | Preserve features | Do not remove or weaken existing functionality: FMP deep scan, Two-stage scan, cache, request preview, stop scan, rate-limit handling, endpoint tests, DCF, relative basis, data confidence, CSV export, presets, manual symbols. |
@@ -96,7 +96,7 @@ python3 - <<'PY'
 # Every js/*.js file is referenced exactly once by index.html, as a deferred classic script, in the expected order.
 import re
 from pathlib import Path
-EXPECTED = ["constants", "state", "utils", "cache", "providers", "metrics", "dcf", "scoring", "render", "scan", "export", "app"]
+EXPECTED = ["constants", "state", "utils", "cache", "providers", "metrics", "dcf", "scoring", "render", "scan", "export", "app", "shell"]
 html = Path("index.html").read_text(encoding="utf-8")
 refs = re.findall(r'<script src="js/([a-z]+)\.js" defer></script>', html)
 on_disk = sorted(p.stem for p in Path("js").glob("*.js"))

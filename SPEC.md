@@ -87,12 +87,15 @@ Secondary flows: **Test endpoints on AAPL** (FMP), **Test selected provider** (o
 | FR-21 | The Two-stage preview shows Stage 1 quote calls (with cache), Stage 2 max (candidates × 9), the estimated max before cache, and how many symbols are beyond the Stage 1 max. A scan estimated at more than 100 calls requires confirmation. |
 | FR-22 | Two-stage status shows `Stage 1 … X/Y` and `Stage 2 … X/Y`. A summary line shows Stage 1 checked, candidates selected, Stage 2 deep-scanned, API calls and cache hits. |
 | FR-23 | Two-stage scan is blocked with Yahoo: "Yahoo Experimental / Browser test only does not support Two-stage scan because Stage 2 requires FMP Deep Scan." |
+| FR-24 | App shell (PR #11): two screens, Setup (`#/setup`, default) and Results (`#/results`), switched by URL hash with Back/Forward support. An empty or unknown hash shows Setup. Element-ID hashes (for example `#sec-scan`) open the screen that contains the element and scroll to it. |
+| FR-25 | A global scan bar is visible on every screen while a scan runs. It mirrors `#status` and offers Stop (calling `requestStopScan()`). After the scan, it keeps the final status and a "view results" link until dismissed. The Results tab shows a dot for unseen results. The app never navigates to Results automatically. |
+| FR-26 | Export CSV is on the Results screen. All setup controls stay on Setup and keep feeding scans while hidden. |
 
 ## 8. Non-functional requirements
 
 | ID | Requirement |
 | --- | --- |
-| NFR-1 | Static frontend: `index.html`, `styles.css` and classic scripts in `js/`, loaded with `defer` in a fixed order. No dependencies, no build step, no modules, no backend. Element IDs and the global functions used by inline handlers are part of the contract. |
+| NFR-1 | Static frontend: `index.html`, `styles.css` and classic scripts in `js/`, loaded with `defer` in a fixed order. Since PR #11 the last script is the self-initializing app shell `js/shell.js`. No dependencies, no build step, no modules, no backend. Element IDs and the global functions used by inline handlers are part of the contract. |
 | NFR-2 | Runs in a modern browser, opened directly or from a simple static server. |
 | NFR-3 | The UI is RTL Hebrew-first. Metric and strategy names stay in English. |
 | NFR-4 | The page must not crash when storage is restricted. `localStorage` reads are wrapped in `try/catch`. |
