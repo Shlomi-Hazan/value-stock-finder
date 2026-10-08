@@ -266,7 +266,15 @@
 
     <div class="grid">
       <label>
-        API Key
+        Data Provider
+        <select id="dataProvider" onchange="onProviderChange()">
+          <option value="fmp">Financial Modeling Prep</option>
+          <option value="yahoo">Yahoo Finance Experimental</option>
+        </select>
+      </label>
+
+      <label>
+        API Key (FMP)
         <input type="password" id="apiKey" placeholder="הדבק כאן את ה־API Key שלך" />
       </label>
 
@@ -315,6 +323,11 @@
       </label>
     </div>
 
+    <div id="providerWarning" class="notice warning" style="display:none; margin-top:14px;">
+      ⚠️ <b dir="ltr">Yahoo Finance Experimental: quote-level data only. Not an official unlimited API. Browser/CORS restrictions may apply. Use FMP for Deep Scan / DCF.</b><br />
+      ספק ניסיוני: מחיר, שינוי יומי, Volume, טווח שנתי וממוצעים נעים בלבד. אין Market Cap, דוחות כספיים או DCF, ולכן רוב המניות לא יעברו סינון בסיסי. לא נדרש API Key.
+    </div>
+
     <br />
     <h3>הנחות Estimated Fair Value / DCF Estimate</h3>
     <p class="small">
@@ -352,6 +365,7 @@
       <button id="scanButton" onclick="scanStocks()">סרוק מניות</button>
       <button id="stopButton" class="secondary" onclick="requestStopScan()" disabled>עצור סריקה</button>
       <button class="secondary" onclick="testEndpoints()">בדוק endpoints על AAPL</button>
+      <button class="secondary" onclick="testSelectedProvider()">בדוק ספק נבחר (AAPL)</button>
       <button class="secondary" onclick="exportCSV()">ייצא CSV</button>
       <button class="secondary" onclick="clearCache()">נקה Cache</button>
       <button class="danger" onclick="clearApiKey()">נקה API Key שמור</button>
@@ -485,6 +499,17 @@
     { key: "growth", label: "Financial Growth", path: "/stable/financial-growth", extra: { period: "annual", limit: "5" } }
   ];
 
+  const PROVIDERS = {
+    fmp: { label: "Financial Modeling Prep", supportsDeep: true, needsApiKey: true },
+    yahoo: { label: "Yahoo Finance Experimental", supportsDeep: false, needsApiKey: false }
+  };
+  const DEFAULT_PROVIDER = "fmp";
+  const PROVIDER_STORAGE_KEY = "valueStockFinderProvider";
+  const YAHOO_CACHE_PREFIX = "valueStockFinderYahooCache:";
+  const YAHOO_CHART_URL = "https://query1.finance.yahoo.com/v8/finance/chart/";
+  const YAHOO_FAILED_MESSAGE = "Yahoo quote request failed. This may be blocked by browser/CORS or Yahoo restrictions.";
+  const YAHOO_DEEP_BLOCKED_MESSAGE = "Yahoo Experimental currently supports quote-level scan only. Use FMP for Deep Scan / DCF.";
+
   function escapeHtml(value) {
     return String(value ?? "")
       .replaceAll("&", "&amp;")
@@ -497,7 +522,27 @@
   function initializePage() {
     const savedKey = localStorage.getItem("valueStockFinderApiKey");
     if (savedKey) document.getElementById("apiKey").value = savedKey;
+    try {
+      const savedProvider = localStorage.getItem(PROVIDER_STORAGE_KEY);
+      if (PROVIDERS[savedProvider]) document.getElementById("dataProvider").value = savedProvider;
+    } catch (_) {}
     loadPresetList();
+    onProviderChange();
+  }
+
+  function getSelectedProvider() {
+    const value = document.getElementById("dataProvider")?.value;
+    return PROVIDERS[value] ? value : DEFAULT_PROVIDER;
+  }
+
+  function providerLabel(provider) {
+    return (PROVIDERS[provider] || PROVIDERS[DEFAULT_PROVIDER]).label;
+  }
+
+  function onProviderChange() {
+    const provider = getSelectedProvider();
+    try { localStorage.setItem(PROVIDER_STORAGE_KEY, provider); } catch (_) {}
+    document.getElementById("providerWarning").style.display = provider === "yahoo" ? "block" : "none";
     updateRequestPreview();
   }
 
@@ -567,7 +612,7 @@
     let count = 0;
     for (let i = localStorage.length - 1; i >= 0; i--) {
       const key = localStorage.key(i);
-      if (key && key.startsWith(FMP_CACHE_PREFIX)) {
+      if (key && (key.startsWith(FMP_CACHE_PREFIX) || key.startsWith(YAHOO_CACHE_PREFIX))) {
         localStorage.removeItem(key);
         count++;
       }
@@ -598,14 +643,21 @@
     if (!el) return;
     const symbols = parseSymbols(document.getElementById("symbolsInput")?.value || "");
     const mode = document.getElementById("scanMode")?.value || "deep";
-    const plan = estimateRequestPlan(symbols, mode);
+    const provider = getSelectedProvider();
     if (!symbols.length) {
       el.textContent = "הערכת בקשות תופיע אחרי הזנת סימולים.";
       return;
     }
+    if (provider === "yahoo") {
+      const cached = symbols.filter(symbol => readCachedYahoo(symbol)).length;
+      const deepNote = mode === "deep" ? " ⚠️ Deep Scan חסום עם Yahoo — עבור ל־Momentum / Market." : "";
+      el.textContent = `Yahoo Experimental: quote-level scan only. Up to ${symbols.length} quote requests (כ־${symbols.length - cached} בקשות וכ־${cached} מה־Cache). Deep Scan / DCF requires FMP.${deepNote}`;
+      return;
+    }
+    const plan = estimateRequestPlan(symbols, mode);
     const modeLabel = mode === "quick" ? "Momentum / Market" : "Deep Scan";
     const warning = mode === "deep" && symbols.length > 10 ? " מומלץ לצמצם רשימה או להסתמך על Cache." : "";
-    el.textContent = `${modeLabel}: עד ${plan.total} קריאות (${plan.endpoints} לכל סימול). לפי ה־Cache הנוכחי: כ־${plan.api} API וכ־${plan.cached} מה־Cache.${warning}`;
+    el.textContent = `${providerLabel(provider)} — ${modeLabel}: עד ${plan.total} קריאות (${plan.endpoints} לכל סימול). לפי ה־Cache הנוכחי: כ־${plan.api} API וכ־${plan.cached} מה־Cache.${warning}`;
   }
 
   function requestStopScan() {
@@ -647,8 +699,9 @@
       text.includes("429");
   }
 
-  function rateLimitError(message) {
-    const err = new Error("הגעת למגבלת הבקשות של FMP. הסריקה נעצרה כדי לא לבזבז קריאות נוספות.");
+  function rateLimitError(message, provider = "fmp") {
+    const name = provider === "yahoo" ? "Yahoo" : "FMP";
+    const err = new Error(`הגעת למגבלת הבקשות של ${name}. הסריקה נעצרה כדי לא לבזבז קריאות נוספות.`);
     err.rateLimited = true;
     err.detail = message;
     return err;
@@ -701,6 +754,7 @@
   async function fetchStockData(symbol, apiKey, mode) {
     const out = {
       symbol,
+      provider: "fmp",
       quote: null,
       profile: null,
       ratiosTtm: null,
@@ -745,6 +799,141 @@
       await sleep(70);
     }
 
+    return out;
+  }
+
+  // Yahoo Finance Experimental: unofficial, keyless chart endpoint. Quote-level data only;
+  // usually blocked by browser CORS, so every failure is surfaced as a clean, non-fatal error.
+  function yahooCacheKey(symbol) {
+    return YAHOO_CACHE_PREFIX + symbol;
+  }
+
+  function readCachedYahoo(symbol) {
+    try {
+      const raw = localStorage.getItem(yahooCacheKey(symbol));
+      if (!raw) return null;
+      const cached = JSON.parse(raw);
+      if (!cached || typeof cached.timestamp !== "number") return null;
+      if (Date.now() - cached.timestamp > QUOTE_CACHE_TTL_MS) return null;
+      return cached.data;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function writeCachedYahoo(symbol, data) {
+    try {
+      localStorage.setItem(yahooCacheKey(symbol), JSON.stringify({ timestamp: Date.now(), data }));
+    } catch (_) {}
+  }
+
+  function yahooError(detail, blocked = false) {
+    const err = new Error(YAHOO_FAILED_MESSAGE);
+    err.detail = detail;
+    err.providerBlocked = blocked;
+    return err;
+  }
+
+  function trailingAverage(values, count) {
+    const nums = values.map(numberOrNull).filter(v => v !== null);
+    return nums.length >= count ? mean(nums.slice(-count)) : null;
+  }
+
+  // Maps the Yahoo chart response onto the FMP quote field names so buildMetrics() works unchanged.
+  function yahooChartToQuote(symbol, data) {
+    const result = data?.chart?.result?.[0];
+    const meta = result?.meta;
+    if (!meta || numberOrNull(meta.regularMarketPrice) === null) {
+      const desc = data?.chart?.error?.description || "invalid response";
+      throw yahooError(desc);
+    }
+    const closes = result.indicators?.quote?.[0]?.close || [];
+    const validCloses = closes.map(numberOrNull).filter(v => v !== null);
+    const prevClose = validCloses.length >= 2 ? validCloses[validCloses.length - 2] : null;
+    const price = numberOrNull(meta.regularMarketPrice);
+    const changePercentage = numberOrNull(meta.regularMarketChangePercent)
+      ?? (prevClose ? ((price / prevClose) - 1) * 100 : null);
+    return {
+      symbol: meta.symbol || symbol,
+      name: meta.longName || meta.shortName || null,
+      price,
+      changePercentage,
+      volume: numberOrNull(meta.regularMarketVolume),
+      marketCap: null,
+      priceAvg50: trailingAverage(closes, 50),
+      priceAvg200: trailingAverage(closes, 200),
+      yearHigh: numberOrNull(meta.fiftyTwoWeekHigh),
+      yearLow: numberOrNull(meta.fiftyTwoWeekLow),
+      exchange: meta.fullExchangeName || meta.exchangeName || null,
+      currency: meta.currency || null
+    };
+  }
+
+  async function fetchYahooQuote(symbol) {
+    const cached = readCachedYahoo(symbol);
+    if (cached !== null) return { data: cached, source: "cache" };
+
+    const url = new URL(YAHOO_CHART_URL + encodeURIComponent(symbol));
+    url.searchParams.set("interval", "1d");
+    url.searchParams.set("range", "1y");
+
+    let response;
+    try {
+      response = await fetch(url.toString());
+    } catch (e) {
+      // Network-level failure (typically CORS): every following symbol would fail the same way.
+      throw yahooError(e.message || "network error", true);
+    }
+    let data = null;
+    try { data = await response.json(); } catch (_) {}
+    if (response.status === 429) throw rateLimitError("HTTP 429", "yahoo");
+    if (response.status === 401 || response.status === 403) throw yahooError("HTTP " + response.status, true);
+    if (!response.ok) throw yahooError(data?.chart?.error?.description || ("HTTP " + response.status));
+
+    const quote = yahooChartToQuote(symbol, data);
+    writeCachedYahoo(symbol, quote);
+    return { data: quote, source: "api" };
+  }
+
+  async function fetchQuoteData(provider, symbol, apiKey) {
+    if (provider === "yahoo") return fetchYahooQuote(symbol);
+    const result = await callFmp("/stable/quote", symbol, apiKey);
+    return { data: firstArrayItem(result.data), source: result.source };
+  }
+
+  async function fetchStockDataByProvider(symbol, apiKey, mode, provider) {
+    if (provider !== "yahoo") return fetchStockData(symbol, apiKey, mode);
+    if (mode !== "quick") throw new Error(YAHOO_DEEP_BLOCKED_MESSAGE);
+
+    const out = {
+      symbol,
+      provider: "yahoo",
+      quote: null,
+      profile: null,
+      ratiosTtm: null,
+      keyMetricsTtm: null,
+      ratiosAnnual: [],
+      keyMetricsAnnual: [],
+      income: [],
+      cash: [],
+      balance: [],
+      growth: [],
+      endpointErrors: [],
+      endpointSources: [],
+      apiCalls: 0,
+      cacheHits: 0
+    };
+
+    try {
+      const res = await fetchQuoteData("yahoo", symbol);
+      out.quote = res.data;
+      out.endpointSources.push("Yahoo Quote (experimental): " + res.source);
+      if (res.source === "cache") out.cacheHits++;
+      if (res.source === "api") out.apiCalls++;
+    } catch (e) {
+      if (e.rateLimited || e.providerBlocked) throw e;
+      out.endpointErrors.push("Yahoo Quote: " + (e.detail || e.message));
+    }
     return out;
   }
 
@@ -1443,6 +1632,9 @@
     const value = computeValueScores(m, settings);
     const dataConfidence = computeDataConfidence(m);
     const dcf = computeDcfEstimate(m, settings.dcf);
+    if (raw.provider === "yahoo") {
+      dcf.reasons.unshift("Yahoo Experimental provides quote-level data only; fundamentals needed for DCF are not available. Use FMP for DCF.");
+    }
 
     const minCap = m.isUsListed ? settings.marketCapUS : settings.marketCapDefault;
     const passBasic =
@@ -1503,10 +1695,11 @@
   function dataSourcePill(row) {
     const api = row.raw.apiCalls || 0;
     const cache = row.raw.cacheHits || 0;
-    if (api > 0 && cache > 0) return `<span class="pill info">מעורב</span><br><span class="small">API ${api} / Cache ${cache}</span>`;
-    if (cache > 0) return `<span class="pill good">Cache</span><br><span class="small">${cache} קריאות</span>`;
-    if (api > 0) return `<span class="pill warn">API</span><br><span class="small">${api} קריאות</span>`;
-    return `<span class="pill gray">אין</span>`;
+    const providerNote = row.raw.provider === "yahoo" ? `<br><span class="pill warn">Yahoo Experimental</span>` : "";
+    if (api > 0 && cache > 0) return `<span class="pill info">מעורב</span><br><span class="small">API ${api} / Cache ${cache}</span>${providerNote}`;
+    if (cache > 0) return `<span class="pill good">Cache</span><br><span class="small">${cache} קריאות</span>${providerNote}`;
+    if (api > 0) return `<span class="pill warn">API</span><br><span class="small">${api} קריאות</span>${providerNote}`;
+    return `<span class="pill gray">אין</span>${providerNote}`;
   }
 
   function relativeBasisCell(row) {
@@ -1671,6 +1864,7 @@
     const apiKey = document.getElementById("apiKey").value.trim();
     const symbols = parseSymbols(document.getElementById("symbolsInput").value);
     const mode = document.getElementById("scanMode").value;
+    const provider = getSelectedProvider();
     const button = document.getElementById("scanButton");
     const stopButton = document.getElementById("stopButton");
     const settings = {
@@ -1687,12 +1881,18 @@
       }
     };
 
-    if (!apiKey) { setStatus("חסר API Key", "bad"); return; }
+    // Safer option: block Deep Scan for Yahoo instead of silently downgrading, so no request is made.
+    if (!PROVIDERS[provider].supportsDeep && mode === "deep") {
+      setStatus(YAHOO_DEEP_BLOCKED_MESSAGE + " (בחר מצב Momentum / Market או ספק FMP)", "warn");
+      updateRequestPreview();
+      return;
+    }
+    if (PROVIDERS[provider].needsApiKey && !apiKey) { setStatus("חסר API Key", "bad"); return; }
     if (!symbols.length) { setStatus("חסרה רשימת מניות", "bad"); return; }
 
     const plan = estimateRequestPlan(symbols, mode);
     updateRequestPreview();
-    if (mode === "deep" && symbols.length > 10) {
+    if (provider === "fmp" && mode === "deep" && symbols.length > 10) {
       const ok = confirm(`Deep Scan על ${symbols.length} סימולים עשוי לבצע עד ${plan.total} קריאות (${plan.api} אחרי Cache נוכחי). להמשיך?`);
       if (!ok) {
         setStatus("הסריקה בוטלה לפני ביצוע קריאות API", "warn");
@@ -1700,7 +1900,7 @@
       }
     }
 
-    localStorage.setItem("valueStockFinderApiKey", apiKey);
+    if (apiKey) localStorage.setItem("valueStockFinderApiKey", apiKey);
     resetResults();
     stopRequested = false;
     button.disabled = true;
@@ -1715,8 +1915,8 @@
           break;
         }
         const symbol = symbols[i];
-        setStatus(`בודק ${i + 1}/${symbols.length}: ${symbol}`, "");
-        const raw = await fetchStockData(symbol, apiKey, mode);
+        setStatus(`בודק ${i + 1}/${symbols.length}: ${symbol} (${providerLabel(provider)})`, "");
+        const raw = await fetchStockDataByProvider(symbol, apiKey, mode, provider);
         lastScanStats.checked++;
         lastScanStats.apiCalls += raw.apiCalls || 0;
         lastScanStats.cacheHits += raw.cacheHits || 0;
@@ -1732,7 +1932,8 @@
       renderTable();
       updateSummary();
       const stopText = lastScanStats.stopped ? " הסריקה נעצרה לפי בקשתך." : "";
-      setStatus(`הסריקה הסתיימה. נבדקו ${lastScanStats.checked} סימולים ונמצאו נתונים עבור ${evaluated.length} מניות. API: ${lastScanStats.apiCalls}, Cache: ${lastScanStats.cacheHits}.${stopText}`, lastScanStats.stopped ? "warn" : "good");
+      const providerText = provider === "yahoo" ? " Yahoo Experimental: quote-level only, ללא DCF/דוחות." : "";
+      setStatus(`הסריקה הסתיימה.${providerText} נבדקו ${lastScanStats.checked} סימולים ונמצאו נתונים עבור ${evaluated.length} מניות. API: ${lastScanStats.apiCalls}, Cache: ${lastScanStats.cacheHits}.${stopText}`, lastScanStats.stopped ? "warn" : "good");
     } catch (e) {
       console.error(e);
       if (e.rateLimited) {
@@ -1746,6 +1947,17 @@
           document.getElementById("stocksTable").innerHTML = `<tr><td colspan="36">לא נאספו תוצאות לפני מגבלת ה־API</td></tr>`;
         }
         setStatus((e.message || "הגעת למגבלת הבקשות של FMP.") + ` מוצגות ${evaluated.length} תוצאות שנאספו לפני העצירה. נסה שוב מאוחר יותר או השתמש ב־Cache קיים.`, "warn");
+      } else if (e.providerBlocked) {
+        if (evaluated.length) {
+          applyRelativeStrategies(evaluated, settings);
+          allResults = evaluated.sort((a,b)=>b.totalScore-a.totalScore);
+          lastResults = allResults.slice(0, settings.topLimit);
+          renderTable();
+          updateSummary();
+        } else {
+          document.getElementById("stocksTable").innerHTML = `<tr><td colspan="36">Yahoo Experimental לא החזיר נתונים. השתמש ב־FMP.</td></tr>`;
+        }
+        setStatus(`${e.message} הסריקה נעצרה כדי לא לחזור על בקשות שנחסמו (${e.detail || ""}). השתמש ב־FMP.`, "bad");
       } else {
         setStatus(e.message || "אירעה שגיאה", "bad");
         document.getElementById("stocksTable").innerHTML = `<tr><td colspan="36">אירעה שגיאה</td></tr>`;
@@ -1782,9 +1994,32 @@
     }
   }
 
+  // Single quote request for the selected provider, on demand only.
+  async function testSelectedProvider() {
+    const provider = getSelectedProvider();
+    const label = providerLabel(provider);
+    const apiKey = document.getElementById("apiKey").value.trim();
+    const statusEl = document.getElementById("endpointStatus");
+    if (PROVIDERS[provider].needsApiKey && !apiKey) { setStatus("חסר API Key", "bad"); return; }
+    if (apiKey) localStorage.setItem("valueStockFinderApiKey", apiKey);
+
+    setStatus(`בודק את ${label} על AAPL...`, "");
+    try {
+      const res = await fetchQuoteData(provider, "AAPL", apiKey);
+      const price = numberOrNull(res.data?.price);
+      if (price === null) throw new Error(provider === "yahoo" ? YAHOO_FAILED_MESSAGE : "Quote ריק");
+      statusEl.innerHTML = `<span class="pill good">${escapeHtml(label)}: Quote עובד / ${escapeHtml(res.source)} — AAPL ${formatMoney(price)}</span>`;
+      setStatus(`בדיקת ${label} הצליחה`, "good");
+    } catch (e) {
+      const detail = e.detail ? ` (${e.detail})` : "";
+      statusEl.innerHTML = `<span class="pill bad">${escapeHtml(label)}: חסום/שגיאה</span>`;
+      setStatus((e.message || "הבדיקה נכשלה") + detail, "bad");
+    }
+  }
+
   function exportCSV() {
     if (!lastResults.length) { setStatus("אין תוצאות לייצוא", "warn"); return; }
-    const headers = ["rank", "symbol", "name", "sector", "price", "marketCap", "pe", "ps", "pb", "roe", "roa", "debtEquity", "currentRatio", "fcf", "paysDividend", "dividendAmount", "dividendYield", "quickScore", "graham", "fisher", "cash", "buffett", "piotroski", "dreman", "neff", "relativeBasis", "relativePeerCount", "fairValue", "currentPrice", "upsideToFairValue", "discountFromFairValue", "marginOfSafetyPassed", "dcfConfidence", "dcfBaseFcf", "dcfGrowthRate", "dcfDiscountRate", "dcfTerminalGrowth", "dcfProjectionYears", "totalScore", "decision"];
+    const headers = ["rank", "symbol", "name", "sector", "price", "marketCap", "pe", "ps", "pb", "roe", "roa", "debtEquity", "currentRatio", "fcf", "paysDividend", "dividendAmount", "dividendYield", "quickScore", "graham", "fisher", "cash", "buffett", "piotroski", "dreman", "neff", "relativeBasis", "relativePeerCount", "fairValue", "currentPrice", "upsideToFairValue", "discountFromFairValue", "marginOfSafetyPassed", "dcfConfidence", "dcfBaseFcf", "dcfGrowthRate", "dcfDiscountRate", "dcfTerminalGrowth", "dcfProjectionYears", "totalScore", "decision", "dataProvider"];
     const lines = [headers.join(",")];
     lastResults.forEach((row, i) => {
       const m = row.m;
@@ -1828,7 +2063,8 @@
         row.dcf?.terminalGrowth,
         row.dcf?.projectionYears,
         row.totalScore,
-        row.decisionText
+        row.decisionText,
+        providerLabel(row.raw.provider)
       ].map(v => `"${String(v ?? "").replaceAll('"', '""')}"`);
       lines.push(values.join(","));
     });
