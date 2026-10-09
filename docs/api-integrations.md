@@ -49,8 +49,8 @@ Request cost: **1 per symbol** (Momentum) or **10 per symbol** (Deep), minus cac
 
 | Condition | Detection | Behavior |
 | --- | --- | --- |
-| Rate limit | HTTP 429, or response text containing "limit reach", "rate limit", "too many requests", "daily limit" and similar | Throws `rateLimited`. The scan stops, partial results are rendered and a warning appears. |
-| Restricted endpoint | Text "restricted endpoint" or "not available under your current subscription" | Recorded as `Label: Restricted Endpoint`. That data is missing and the scan continues. |
+| Rate limit | HTTP status 429, or an explicit error field (`Error Message`, `error`, `message`) containing "limit reach", "rate limit", "too many requests", "daily limit" and similar. The financial data body of a successful (HTTP 200) response is never scanned, so numbers such as `4.4294…` cannot trigger it. | Throws `rateLimited`. The scan stops, partial results are rendered and a warning appears. |
+| Restricted endpoint | Explicit error field containing "restricted endpoint" or "not available under your current subscription" | Recorded as `Label: Restricted Endpoint`. That data is missing and the scan continues. |
 | Other HTTP error | Non-2xx | Recorded per endpoint. The scan continues. |
 
 Use **בדוק endpoints על AAPL** to see which endpoints your plan allows.
