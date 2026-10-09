@@ -246,7 +246,7 @@ There is no routing. Every control is always in the DOM and always visible, apar
 - **A global scan bar** mirrors `#status` and offers Stop through the existing `requestStopScan()`, so scan feedback is never hidden.
 - **One new classic script,** `js/shell.js`, loaded after `app.js`. The existing 12 scripts, all IDs, the inline handlers and the `localStorage` keys stay unchanged.
 - **The architecture stays the same:** static files, no build, no dependencies, no framework, no backend.
-- **Staged rollout:** PR #11 (shell + Setup/Results, done), #12 (Methodology), #13 (Results UX), #14 (Settings & tools).
+- **Staged rollout:** PR #11 (shell + Setup/Results, done), then Methodology, Results UX and Settings & tools as future PRs (numbers not assigned; see [roadmap.md](roadmap.md)).
 
 ## 7. Future architecture options (not implemented)
 

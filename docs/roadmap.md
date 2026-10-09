@@ -29,9 +29,9 @@ Each step is a separate PR that preserves all existing IDs, handlers, `localStor
 | --- | --- | --- | --- |
 | **M9** App shell: Setup + Results | #11 | ✅ Done | Delivered as planned. On phones the nav is a full-width sticky segmented control at the top rather than a bottom tab bar, so it never covers the table's horizontal scroll area or the action dock. |
 | **M10** Results details dialog + XLSX/PDF exports | #12 | ✅ Done | Inserted before the remaining shell stages at the owner's request: native `<dialog>` for row details; real XLSX and PDF from shared export rows; vendored on-demand libraries ([ADR-0006](decisions/ADR-0006-export-dependencies.md)). |
-| **M11** Methodology screen | #13 | 🗓 Planned | In-app plain-language explanation of the strategies, Data Confidence, DCF and margin of safety, and the Two-stage bias. Links to `docs/investment-methodology.md` (no thresholds duplicated). |
-| **M12** Results UX refinement | #14 | 🗓 Planned | Sticky summary or toolbar, display-limit note, better empty and preliminary states, column-group hints |
-| **M13** Settings & tools screen | #15 | 🗓 Planned | Endpoint tests, Clear Cache, Clear saved API key, storage explanation. API key **entry** stays in Setup. |
+| **M11** Methodology screen | TBD | 🗓 Planned | In-app plain-language explanation of the strategies, Data Confidence, DCF and margin of safety, and the Two-stage bias. Links to `docs/investment-methodology.md` (no thresholds duplicated). |
+| **M12** Results UX refinement | TBD | 🗓 Planned | Sticky summary or toolbar, display-limit note, better empty and preliminary states, column-group hints |
+| **M13** Settings & tools screen | TBD | 🗓 Planned | Endpoint tests, Clear Cache, Clear saved API key, storage explanation. API key **entry** stays in Setup. |
 
 ## Planned and future work
 

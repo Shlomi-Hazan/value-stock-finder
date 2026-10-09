@@ -2,7 +2,7 @@
 
 ## Status
 
-**Accepted.** Planned in PR #10 (2026-10-09). **Stage 1 (Setup + Results, global scan bar) implemented in PR #11.** Methodology, Results UX and Settings & tools are still planned. Since PR #12 was used for the row details dialog and XLSX/PDF exports ([ADR-0006](ADR-0006-export-dependencies.md)), those stages shift to PRs #13–#15 (see [roadmap.md](../roadmap.md)). The PR numbers in the plan below are the original ones.
+**Accepted.** Planned in PR #10 (2026-10-09). **Stage 1 (Setup + Results, global scan bar) implemented in PR #11.** Methodology, Results UX and Settings & tools are still planned. Since PR #12 was used for the row details dialog and XLSX/PDF exports ([ADR-0006](ADR-0006-export-dependencies.md)), and PR #13 became a rate-limit bugfix, those stages move to future PRs with numbers not yet assigned (see [roadmap.md](../roadmap.md)). The PR numbers in the plan below are the original ones.
 
 ## Context
 
