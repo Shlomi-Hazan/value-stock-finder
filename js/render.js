@@ -162,34 +162,135 @@ function dcfDetailsHtml(dcf) {
   `;
 }
 
-function renderDetails(row) {
-  const e = row.raw.endpointErrors || [];
+// Rows currently shown in the table, so a details button can find its row (declaration only, no load-time code).
+let detailsRows = [];
+let detailsOpener = null;
+
+// Table cell: a compact button. The details themselves open in the #detailsDialog modal (PR #12),
+// not inside the narrow, horizontally scrolling table cell.
+function renderDetails(row, index) {
+  return `<button type="button" class="details-open" onclick="openRowDetails(${index})" aria-haspopup="dialog">פתח פירוט</button>`;
+}
+
+function detailsItemsHtml(items) {
+  return items.map(x => `<li>${escapeHtml(x)}</li>`).join("");
+}
+
+function detailsMetricHtml(label, valueHtml) {
+  return `<div class="dd-metric"><dt>${label}</dt><dd>${valueHtml}</dd></div>`;
+}
+
+function detailsStrategyHtml(title, cat, pillHtml) {
+  return `<article class="dd-strategy"><header><h4>${title}</h4>${pillHtml}</header><ul>${testListHtml(cat)}</ul></article>`;
+}
+
+// Same information as the former inline details, regrouped into sections. Every dynamic string is escaped.
+function detailsDialogBodyHtml(row) {
+  const m = row.m;
+  const errors = row.raw.endpointErrors || [];
   const sources = row.raw.endpointSources || [];
   const missing = row.dataConfidence?.missing || [];
   const coreMissing = row.dataConfidence?.coreMissing || [];
+  const piotroskiPill = row.value.piotroski.score === null
+    ? `<span class="pill gray">חסר</span>`
+    : `<span class="pill ${row.value.piotroski.score >= 7 ? "good" : row.value.piotroski.score >= 5 ? "warn" : "bad"}">${row.value.piotroski.score}/9</span>`;
+
   return `
-    <details>
-      <summary>פתח פירוט</summary>
-      <div class="details-box">
-        ${twoStageDetailsHtml(row)}
-        <b>Momentum / Market:</b> ${row.quick.notes.map(escapeHtml).join(", ") || "אין"}<br/>
-        <b>Graham:</b><ul>${testListHtml(row.value.graham)}</ul>
-        <b>Fisher:</b><ul>${testListHtml(row.value.fisher)}</ul>
-        <b>Cash Flow:</b><ul>${testListHtml(row.value.cash)}</ul>
-        <b>Buffett Inspired:</b><ul>${testListHtml(row.value.buffett)}</ul>
-        <b>Piotroski Approx.:</b><ul>${testListHtml(row.value.piotroski)}</ul>
-        <b>Dreman Inspired / Relative:</b><ul>${testListHtml(row.value.dreman)}</ul>
-        <b>Neff Inspired / Relative:</b><ul>${testListHtml(row.value.neff)}</ul>
-        <b>Relative basis:</b> ${escapeHtml(row.relativeBasis?.label || "Scanned list fallback")} (${row.relativeBasis?.peerCount ?? 0} peers)<br/>
-        <b>Estimated Fair Value / DCF Estimate:</b><ul>${dcfDetailsHtml(row.dcf)}</ul>
-        <b>Data Confidence:</b> ${row.dataConfidence?.pct ?? 0}% (${row.dataConfidence?.available ?? 0}/${row.dataConfidence?.total ?? 0})<br/>
-        ${coreMissing.length ? `<b>שדות ליבה חסרים:</b><ul>${coreMissing.map(x => `<li>${escapeHtml(x)}</li>`).join("")}</ul>` : ""}
-        ${missing.length ? `<b>שדות חסרים:</b><ul>${missing.slice(0,10).map(x => `<li>${escapeHtml(x)}</li>`).join("")}</ul>` : ""}
-        ${sources.length ? `<b>מקור נתונים:</b><ul>${sources.map(x => `<li>${escapeHtml(x)}</li>`).join("")}</ul>` : ""}
-        ${e.length ? `<b>נתונים חסרים/חסומים:</b><ul>${e.slice(0,8).map(x => `<li>${escapeHtml(x)}</li>`).join("")}</ul>` : ""}
+    <section class="dd-section">
+      <h3>סיכום</h3>
+      ${twoStageDetailsHtml(row) ? `<p class="dd-note">${twoStageDetailsHtml(row)}</p>` : ""}
+      <dl class="dd-metrics">
+        ${detailsMetricHtml("סקטור", escapeHtml(m.sector || m.industry || "-"))}
+        ${detailsMetricHtml("מחיר", `<span class="num">${formatMoney(m.price)}</span>`)}
+        ${detailsMetricHtml("שינוי", `<span class="num">${formatPercentValue(m.changePercentage, false)}</span>`)}
+        ${detailsMetricHtml("Market Cap", `<span class="num">${formatNumber(m.marketCap)}</span>`)}
+        ${detailsMetricHtml("P/E", `<span class="num">${formatRatio(m.pe)}</span>`)}
+        ${detailsMetricHtml("P/B", `<span class="num">${formatRatio(m.pb)}</span>`)}
+        ${detailsMetricHtml("ROE", `<span class="num">${formatPercentValue(m.roe, true)}</span>`)}
+        ${detailsMetricHtml("Debt/Equity", `<span class="num">${formatRatio(m.debtEquity)}</span>`)}
+        ${detailsMetricHtml("Current Ratio", `<span class="num">${formatRatio(m.currentRatio)}</span>`)}
+        ${detailsMetricHtml("FCF", `<span class="num">${formatNumber(m.fcf)}</span>`)}
+        ${detailsMetricHtml("דיבידנד", formatDividend(m))}
+        ${detailsMetricHtml("Momentum / Market", categoryPill(row.quick.score))}
+      </dl>
+      <p class="dd-note"><b>Momentum / Market:</b> ${row.quick.notes.map(escapeHtml).join(", ") || "אין"}</p>
+    </section>
+
+    <section class="dd-section">
+      <h3>Estimated Fair Value / DCF Estimate</h3>
+      <dl class="dd-metrics">
+        ${detailsMetricHtml("Fair Value", `<span class="num">${row.dcf?.fairValuePerShare === null ? dcfMissingCell() : formatMoney(row.dcf.fairValuePerShare)}</span>`)}
+        ${detailsMetricHtml("Upside to Fair Value", `<span class="num">${row.dcf?.upsidePct === null ? dcfMissingCell() : formatPercentValue(row.dcf.upsidePct, true)}</span>`)}
+        ${detailsMetricHtml("Discount from Fair Value", `<span class="num">${row.dcf?.discountFromFairValuePct === null ? dcfMissingCell() : formatPercentValue(row.dcf.discountFromFairValuePct, true)}</span>`)}
+        ${detailsMetricHtml("Margin of Safety", dcfMarginCell(row.dcf))}
+        ${detailsMetricHtml("DCF Confidence", dcfConfidencePill(row.dcf))}
+      </dl>
+      <ul class="dd-list">${dcfDetailsHtml(row.dcf)}</ul>
+    </section>
+
+    <section class="dd-section">
+      <h3>Data Confidence</h3>
+      <p class="dd-note">${confidencePill(row.dataConfidence)} <span>${row.dataConfidence?.pct ?? 0}% (${row.dataConfidence?.available ?? 0}/${row.dataConfidence?.total ?? 0})</span></p>
+      ${coreMissing.length ? `<p class="dd-subtitle">שדות ליבה חסרים</p><ul class="dd-list">${detailsItemsHtml(coreMissing)}</ul>` : ""}
+      ${missing.length ? `<p class="dd-subtitle">שדות חסרים</p><ul class="dd-list dd-list-cols">${detailsItemsHtml(missing.slice(0, 10))}</ul>` : ""}
+    </section>
+
+    <section class="dd-section">
+      <h3>בדיקות אסטרטגיה</h3>
+      <p class="dd-note"><b>Relative basis:</b> ${escapeHtml(row.relativeBasis?.label || "Scanned list fallback")} (${row.relativeBasis?.peerCount ?? 0} peers)</p>
+      <div class="dd-strategies">
+        ${detailsStrategyHtml("Graham", row.value.graham, categoryPill(row.value.graham.pct))}
+        ${detailsStrategyHtml("Fisher", row.value.fisher, categoryPill(row.value.fisher.pct))}
+        ${detailsStrategyHtml("Cash Flow", row.value.cash, categoryPill(row.value.cash.pct))}
+        ${detailsStrategyHtml("Buffett Inspired", row.value.buffett, categoryPill(row.value.buffett.pct))}
+        ${detailsStrategyHtml("Piotroski Approx.", row.value.piotroski, piotroskiPill)}
+        ${detailsStrategyHtml("Dreman Inspired / Relative", row.value.dreman, categoryPill(row.value.dreman?.pct))}
+        ${detailsStrategyHtml("Neff Inspired / Relative", row.value.neff, categoryPill(row.value.neff?.pct))}
       </div>
-    </details>
+    </section>
+
+    <section class="dd-section">
+      <h3>מקור נתונים ומגבלות</h3>
+      ${sources.length ? `<p class="dd-subtitle">מקור נתונים</p><ul class="dd-list">${detailsItemsHtml(sources)}</ul>` : `<p class="dd-note">אין מידע על מקור הנתונים.</p>`}
+      ${errors.length ? `<p class="dd-subtitle">נתונים חסרים/חסומים</p><ul class="dd-list">${detailsItemsHtml(errors.slice(0, 8))}</ul>` : ""}
+      <p class="dd-note dd-disclaimer">כלי לימודי בלבד ואינו ייעוץ השקעות. הבדיקות הן קירוב לכללים המתוארים במתודולוגיה.</p>
+    </section>
   `;
+}
+
+function openRowDetails(index) {
+  const row = detailsRows[index];
+  const dialog = document.getElementById("detailsDialog");
+  if (!row || !dialog) return;
+  detailsOpener = document.activeElement;
+  document.getElementById("detailsDialogTitle").textContent = row.m.symbol || "-";
+  document.getElementById("detailsDialogSubtitle").textContent = [row.m.name, row.m.sector || row.m.industry].filter(Boolean).join(" · ");
+  document.getElementById("detailsDialogBadges").innerHTML =
+    `${decisionPill(row)}<span class="dd-score" title="ציון כולל">ציון כולל <b>${row.totalScore}</b></span>`;
+  const body = document.getElementById("detailsDialogBody");
+  body.innerHTML = detailsDialogBodyHtml(row);
+  body.scrollTop = 0;
+  if (typeof dialog.showModal === "function") dialog.showModal();
+  else dialog.setAttribute("open", "");
+  document.getElementById("detailsDialogClose").focus();
+}
+
+function closeRowDetails() {
+  const dialog = document.getElementById("detailsDialog");
+  if (!dialog) return;
+  if (typeof dialog.close === "function") dialog.close();
+  else { dialog.removeAttribute("open"); onRowDetailsClosed(); }
+}
+
+// Runs on every close (close button, Escape, backdrop): return focus to the button that opened the dialog.
+function onRowDetailsClosed() {
+  const target = detailsOpener && document.contains(detailsOpener) ? detailsOpener : document.querySelector("#shell-screen-results h2");
+  detailsOpener = null;
+  if (target) target.focus({ preventScroll: true });
+}
+
+function onRowDetailsBackdropClick(event) {
+  if (event.target === event.currentTarget) closeRowDetails();
 }
 
 function renderTable() {
@@ -207,6 +308,7 @@ function renderTable() {
     return;
   }
 
+  detailsRows = rows;
   tbody.innerHTML = rows.map((row, index) => {
     const m = row.m;
     return `
@@ -246,7 +348,7 @@ function renderTable() {
         <td>${dataSourcePill(row)}</td>
         <td class="score">${row.totalScore}</td>
         <td>${decisionPill(row)}</td>
-        <td>${renderDetails(row)}</td>
+        <td>${renderDetails(row, index)}</td>
       </tr>
     `;
   }).join("");

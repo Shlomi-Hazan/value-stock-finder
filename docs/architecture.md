@@ -1,6 +1,6 @@
 # Architecture
 
-Last updated: 2026-10-09 (PR #11: app shell stage 1, Setup and Results screens)
+Last updated: 2026-10-09 (PR #12: row details dialog and XLSX/PDF exports)
 
 ## 1. Current architecture: static files, no build
 
@@ -20,7 +20,8 @@ The app is a static frontend ([ADR-0004](decisions/ADR-0004-split-static-assets.
 | `js/scoring.js` | Strategy scores, Piotroski, Dreman/Neff relative, total score and decision, `evaluateStock` |
 | `js/render.js` | Status, request preview, pills, table, details, tabs, summary |
 | `js/scan.js` | Request planning, `scanStocks`, Two-stage scan, stop, endpoint tests |
-| `js/export.js` | `exportCSV` |
+| `js/export.js` | Shared export rows plus `exportCSV`, `exportXLSX` and `exportPDF`; loads the `vendor/` libraries on demand |
+| `vendor/` | Pinned third-party export libraries (ExcelJS 4.4.0, jsPDF 4.2.1, jsPDF-AutoTable 5.0.8), never loaded at page start. See [vendor/README.md](../vendor/README.md) and [ADR-0006](decisions/ADR-0006-export-dependencies.md). |
 | `js/app.js` | `initializePage` and settings handlers. Runs `initializePage()` at load time. |
 | `js/shell.js` | App shell (PR #11, [ADR-0005](decisions/ADR-0005-app-shell-navigation-plan.md)): hash routing between screens, the global scan bar, focus and title handling. Loaded last and self-initializing; it only observes the DOM and calls `requestStopScan()`. |
 
@@ -46,7 +47,7 @@ flowchart TB
     Cache["Cache layer<br/>readCachedFmp/writeCachedFmp<br/>readCachedYahoo/writeCachedYahoo"]
     Eval["Evaluation pipeline<br/>buildMetrics · computeQuickScore · computeValueScores<br/>computePiotroski · computeDataConfidence · computeDcfEstimate<br/>applyRelativeStrategies"]
     Render["Rendering layer<br/>renderTable · renderDetails · updateSummary"]
-    Export["Export layer<br/>exportCSV"]
+    Export["Export layer<br/>exportCSV · exportXLSX · exportPDF<br/>(vendor libs on demand)"]
   end
   LS[("localStorage")]
   FMP["financialmodelingprep.com"]
@@ -156,7 +157,22 @@ For Two-stage rows, `renderDetails` and the source column show `scanMeta`, and `
 
 ### Export layer
 
-`exportCSV` serializes `lastResults` into a Blob and triggers a download of `value_stock_finder_results.csv`.
+`buildExportRows()` turns `lastResults` (the displayed top-N) into 44 values per row, in `EXPORT_HEADERS` order. Every format uses it:
+
+- **`exportCSV`:** quotes the values and downloads `value_stock_finder_results.csv`. The output is byte-identical to the format before PR #12.
+- **`exportXLSX`:** loads `vendor/exceljs-4.4.0/exceljs.min.js` on first use and writes a workbook with three sheets: Summary, Results (the same 44 values) and Notes.
+- **`exportPDF`:** loads jsPDF and AutoTable on first use and writes an A4-landscape report with 11 key columns, paginated, with the header repeated on each page.
+
+Feedback goes to `#exportStatus` next to the buttons. Loading is done with injected `<script>` tags, so it still works over `file://` and needs no build step.
+
+### Row details dialog (PR #12)
+
+The last table column renders a **פתח פירוט** (open details) button (`renderDetails(row, index)`).
+
+- `openRowDetails(index)` fills the native `<dialog id="detailsDialog">` from the same row object, using the existing helpers: test lists, DCF details, pills and confidence.
+- The dialog is placed outside the screens, so a hidden screen never hides it.
+- Escape, the ✕ button, the footer button and a backdrop click all close it. Focus returns to the button that opened it.
+- On phones (≤ 650 px) the dialog is full-screen. The body scrolls inside the dialog with contained overscroll.
 
 ## 4. Scan flow
 
@@ -230,7 +246,7 @@ There is no routing. Every control is always in the DOM and always visible, apar
 - **A global scan bar** mirrors `#status` and offers Stop through the existing `requestStopScan()`, so scan feedback is never hidden.
 - **One new classic script,** `js/shell.js`, loaded after `app.js`. The existing 12 scripts, all IDs, the inline handlers and the `localStorage` keys stay unchanged.
 - **The architecture stays the same:** static files, no build, no dependencies, no framework, no backend.
-- **Staged rollout:** PR #11 (shell + Setup/Results, done), #12 (Methodology), #13 (Results UX), #14 (Settings & tools).
+- **Staged rollout:** PR #11 (shell + Setup/Results, done), then Methodology, Results UX and Settings & tools as future PRs (numbers not assigned; see [roadmap.md](roadmap.md)).
 
 ## 7. Future architecture options (not implemented)
 

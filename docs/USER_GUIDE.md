@@ -150,7 +150,7 @@ Click **סרוק מניות** (scan stocks). Click **עצור סריקה** (stop
 | מקור נתונים | Data source: API calls vs cache. Yahoo rows carry a Yahoo badge. Two-stage rows show **Two-stage: Deep** with their Stage 1 rank, or **Stage 1 בלבד (quote)** (Stage 1 only). |
 | ציון כולל | Total score |
 | החלטה | Decision: מועמדת חזקה (strong) / Watchlist / בדיקה ידנית (manual review) / נפסלה (rejected) |
-| פירוט | Details: click **פתח פירוט** (open details) for every test, as ✅ pass, ❌ fail or ⚪ missing |
+| פירוט | Details: click **פתח פירוט** (open details) to open a dialog with that stock's full breakdown. It shows summary metrics, Fair Value / DCF, Data Confidence, every strategy test (✅ pass, ❌ fail, ⚪ missing) and data sources and limitations. Close it with ✕, **סגור** (close), Escape or a click outside it. |
 
 ## 7. Interpret the strategy columns
 
@@ -185,9 +185,19 @@ Assumptions you can set:
 
 The DCF is a **rough educational estimate**. Small changes in the assumptions move it a lot. It ignores debt and cash, and it doesn't affect the total score.
 
-## 9. Export CSV
+## 9. Export results
 
-On the **תוצאות** (Results) screen, click **ייצא CSV** (export CSV) to download `value_stock_finder_results.csv` with the **displayed top-N** results, including the DCF fields and the data provider.
+On the **תוצאות** (Results) screen there are three export buttons. All of them export the **displayed top-N** results (the active tab filter is not applied):
+
+| Button | File | What you get |
+| --- | --- | --- |
+| **ייצא CSV** | `value_stock_finder_results.csv` | The same 44 columns as before; plain text for any tool |
+| **ייצא XLSX** | `value-stock-finder-results-YYYY-MM-DD.xlsx` | A real Excel workbook with three sheets. **Summary** has the run details and counts. **Results** has the same 44 columns, with a frozen header, filters and number formats; ratios show as percentages. **Notes** has the disclaimer and column notes. It opens in Excel, Numbers and Google Sheets. |
+| **ייצא PDF** | `value-stock-finder-results-YYYY-MM-DD.pdf` | A printable landscape report with run details, counts, the disclaimer, and a table of the 11 most important columns. It spans pages with the header repeated. |
+
+The first XLSX or PDF export takes a moment, because the export library loads then. A short message next to the buttons confirms the file or explains a problem.
+
+> **PDF language:** the PDF is in English. Its built-in fonts have no Hebrew letters, so decisions are translated (Strong candidate, Watchlist, Manual review, Rejected), and any other non-Latin text appears as "?". Use XLSX or CSV if you need the Hebrew labels.
 
 ## 10. Clear cache or API key
 

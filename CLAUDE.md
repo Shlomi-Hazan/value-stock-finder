@@ -56,13 +56,13 @@ grep -n 'src="js/' index.html                            # script load order
 | `js/metrics.js` | `buildMetrics`, `isUsListed`, `isTechOrPharma`, EPS growth helpers, `calcSloanRatio`, `computeDataConfidence`, `priceToOperatingCashFlow` |
 | `js/dcf.js` | `computeDcfEstimate` and its FCF / growth helpers |
 | `js/scoring.js` | `computeQuickScore`, `computeValueScores`, `computePiotroski`, `computeDreman`, `computeNeff`, `applyRelativeStrategies`, `recomputeTotalAndDecision`, `evaluateStock` |
-| `js/render.js` | `setStatus`, `updateRequestPreview`, pills, `renderTable`, `renderDetails`, `setTableFilter`, `updateSummary`, `resetResults` |
+| `js/render.js` | `setStatus`, `updateRequestPreview`, pills, `renderTable`, `renderDetails`, `setTableFilter`, `updateSummary`, `resetResults`, the row details dialog (`renderDetails` button, `openRowDetails`, `closeRowDetails`, `detailsDialogBodyHtml`) |
 | `js/scan.js` | `estimateRequestPlan`, `estimateTwoStagePlan`, `readTwoStageSettings`, `scanStocks`, `requestStopScan`, `runTwoStageScan`, `rankStageOneCandidates`, `showTwoStageResults`, `testEndpoints`, `testSelectedProvider` |
-| `js/export.js` | `exportCSV` |
+| `js/export.js` | `EXPORT_HEADERS`, `buildExportRows` (shared by all formats), `exportCSV`, `exportXLSX`, `exportPDF`, `setExportStatus`, on-demand `loadVendorBundle` for `vendor/` |
 | `js/app.js` | `initializePage`, `onProviderChange`, `loadPresetList`, `clearApiKey`, and the load-time call `initializePage()` |
 | `js/shell.js` | App shell (ADR-0005): hash router for `#/setup` and `#/results`, element-hash anchors, focus/title, the global scan bar (mirrors `#status`, Stop proxy calling `requestStopScan()`), the results-ready cue. Self-initializing, loaded last. It only observes the DOM; it never touches scan, scoring, cache or rendering. |
 
-Functions called from inline HTML handlers: `onProviderChange`, `loadPresetList`, `updateRequestPreview`, `scanStocks`, `requestStopScan`, `testEndpoints`, `testSelectedProvider`, `exportCSV`, `clearCache`, `clearApiKey`, `setTableFilter`. Keep these names global.
+Functions called from inline HTML handlers: `onProviderChange`, `loadPresetList`, `updateRequestPreview`, `scanStocks`, `requestStopScan`, `testEndpoints`, `testSelectedProvider`, `exportCSV`, `exportXLSX`, `exportPDF`, `clearCache`, `clearApiKey`, `setTableFilter`, `openRowDetails`, `closeRowDetails`, `onRowDetailsClosed`, `onRowDetailsBackdropClick`. Keep these names global. Do not name app globals `Table`, `Row`, `Column`, `Cell`, `autoTable` or `ExcelJS`: the export libraries define them.
 
 Screens: `index.html` wraps the setup flow in `#shell-screen-setup` and the summary and table in `#shell-screen-results` (`data-screen`, toggled with `hidden`). Shell-owned elements use the `shell-` ID prefix. When moving markup between screens, keep every ID and handler exactly once.
 
@@ -89,7 +89,7 @@ Screens: `index.html` wraps the setup flow in `#shell-screen-setup` and the summ
 - [ ] `node --check` passes for every `js/*.js` file, and the script-order check passes (both in [AGENTS.md §8](AGENTS.md#8-verification-required-before-every-pr))
 - [ ] `git diff --check` is clean
 - [ ] Secret scan shows only labels
-- [ ] No `package.json`, `node_modules` or backend files
+- [ ] No `package.json`, `node_modules` or backend files. Vendored export bundles match `vendor/README.md` (SHA-256).
 - [ ] For code changes, the relevant items from [docs/verification.md](docs/verification.md) were checked in a browser (the in-app browser pane or a local server). Note that `file://` snapshots in preview panes may restrict `localStorage`.
 - [ ] Docs updated for any behavior change
 - [ ] PR opened against `main`, not merged
@@ -123,6 +123,8 @@ Follow [AGENTS.md §9](AGENTS.md#9-expected-final-response-format). Keep it fact
 | PR #8 | Split into `index.html` + `styles.css` + `js/*.js` (ADR-0004). Code moved verbatim; no behavior, scoring, DCF or provider changes. |
 | PR #9 `ccb5e3d` | UI polish, green finance identity, product mark, icons and illustrations (UI-only) |
 | PR #10 `638d9dd` | App shell plan (ADR-0005), docs only |
-| PR #11 | App shell stage 1: Setup and Results screens, hash navigation, global scan bar (`js/shell.js`). No scan, scoring, DCF, provider, CSV or table changes. |
+| PR #11 `7b2b7e2` | App shell stage 1: Setup and Results screens, hash navigation, global scan bar (`js/shell.js`). No scan, scoring, DCF, provider, CSV or table changes. |
+| PR #12 | Row details dialog (native `<dialog>`), real XLSX (ExcelJS) and PDF (jsPDF + AutoTable) exports from shared export rows; vendored on-demand libraries (ADR-0006). CSV byte-identical. No scoring, DCF, provider, scan or cache changes. |
+| PR #13 `91332b7` | Fix false FMP rate-limit detection: only HTTP 429 or an explicit error field counts (never the data body); `clearCache()` collects keys before removing; malformed cache entries are ignored and removed. |
 
 Details are in [docs/HISTORY.md](docs/HISTORY.md).

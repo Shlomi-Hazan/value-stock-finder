@@ -323,10 +323,13 @@
     <div class="results-head">
       <h2>תוצאות</h2>
       <p class="results-hint">הטבלה רחבה: גלול הצידה כדי לראות את כל 36 העמודות. לחץ על "פתח פירוט" בכל שורה להסבר מלא.</p>
-      <div class="results-tools">
+      <div class="results-tools" role="group" aria-label="ייצוא תוצאות">
         <button class="btn btn-quiet" onclick="exportCSV()"><svg class="icon" aria-hidden="true"><use href="#i-export" /></svg>ייצא CSV</button>
+        <button class="btn btn-quiet" onclick="exportXLSX()"><svg class="icon" aria-hidden="true"><use href="#i-export" /></svg>ייצא XLSX</button>
+        <button class="btn btn-quiet" onclick="exportPDF()"><svg class="icon" aria-hidden="true"><use href="#i-export" /></svg>ייצא PDF</button>
       </div>
     </div>
+    <p class="export-status" id="exportStatus" role="status" aria-live="polite"></p>
     <div class="tabs" role="group" aria-label="סינון תוצאות">
       <button class="tab active" id="tabAll" onclick="setTableFilter('all')">הכול</button>
       <button class="tab" id="tabStrong" onclick="setTableFilter('strong')">מועמדות חזקות</button>
@@ -384,6 +387,24 @@
   </section>
   </div>
 </main>
+
+<!-- Row details modal (PR #12). Outside the screens so it is never inside a hidden ancestor. -->
+<dialog id="detailsDialog" class="details-dialog" aria-labelledby="detailsDialogTitle" onclose="onRowDetailsClosed()" onclick="onRowDetailsBackdropClick(event)">
+  <div class="dd-panel">
+    <header class="dd-header">
+      <div class="dd-heading">
+        <h2 id="detailsDialogTitle" class="ltr-title"></h2>
+        <p id="detailsDialogSubtitle"></p>
+      </div>
+      <div class="dd-badges" id="detailsDialogBadges"></div>
+      <button type="button" class="dd-close" id="detailsDialogClose" onclick="closeRowDetails()" aria-label="סגור פירוט">✕</button>
+    </header>
+    <div class="dd-body" id="detailsDialogBody"></div>
+    <footer class="dd-footer">
+      <button type="button" class="btn btn-quiet" onclick="closeRowDetails()">סגור</button>
+    </footer>
+  </div>
+</dialog>
 
 <!-- Static assets, no build step. Classic deferred scripts run in this order and share globals (inline handlers call them). -->
 <script src="js/constants.js" defer></script>

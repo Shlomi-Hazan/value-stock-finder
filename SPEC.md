@@ -76,8 +76,8 @@ Secondary flows: **Test endpoints on AAPL** (FMP), **Test selected provider** (o
 | FR-10 | Each stock gets the Momentum score, the strategy categories, Piotroski, Dreman/Neff relative scores, DCF, Data Confidence, total score and a decision. |
 | FR-11 | Results are sorted by total score. The table shows the top N; the summary covers all evaluated stocks. |
 | FR-12 | Table tabs filter All / Strong / Watchlist / Rejected. |
-| FR-13 | Each row has expandable details: per-test results, relative basis, DCF inputs and reasons, data confidence, missing fields, data source and endpoint errors. |
-| FR-14 | CSV export of the displayed top-N results (44 columns, including `dataProvider`, `scanMode`, `scanStage`, `stage1Rank`). |
+| FR-13 | Each row has a details view (since PR #12, a modal dialog opened by **פתח פירוט**, not an inline expansion): per-test results, relative basis, DCF inputs and reasons, data confidence, missing fields, data source and endpoint errors. |
+| FR-14 | Exports of the displayed top-N results: CSV (44 columns, including `dataProvider`, `scanMode`, `scanStage`, `stage1Rank`); XLSX (sheets Summary, Results with the same 44 columns and values, Notes; frozen header, number formats, RTL view); PDF (A4 landscape summary: run info, counts, disclaimer, and an 11-column table of rank, symbol, company, decision, score, price, fair value, upside, margin of safety, data and DCF confidence, paginated with repeated headers). See §17. |
 | FR-15 | The FMP endpoint test checks the quote plus the 9 deep endpoints on AAPL. |
 | FR-16 | The selected-provider test makes a single AAPL quote request on demand. |
 | FR-17 | Clear Cache removes all FMP and Yahoo cache entries. |
@@ -89,7 +89,7 @@ Secondary flows: **Test endpoints on AAPL** (FMP), **Test selected provider** (o
 | FR-23 | Two-stage scan is blocked with Yahoo: "Yahoo Experimental / Browser test only does not support Two-stage scan because Stage 2 requires FMP Deep Scan." |
 | FR-24 | App shell (PR #11): two screens, Setup (`#/setup`, default) and Results (`#/results`), switched by URL hash with Back/Forward support. An empty or unknown hash shows Setup. Element-ID hashes (for example `#sec-scan`) open the screen that contains the element and scroll to it. |
 | FR-25 | A global scan bar is visible on every screen while a scan runs. It mirrors `#status` and offers Stop (calling `requestStopScan()`). After the scan, it keeps the final status and a "view results" link until dismissed. The Results tab shows a dot for unseen results. The app never navigates to Results automatically. |
-| FR-26 | Export CSV is on the Results screen. All setup controls stay on Setup and keep feeding scans while hidden. |
+| FR-26 | The export buttons (CSV, XLSX, PDF) are on the Results screen. All setup controls stay on Setup and keep feeding scans while hidden. |
 
 ## 8. Non-functional requirements
 
@@ -207,7 +207,7 @@ The basis is chosen per stock: **industry peers** (≥ 3 in the scan), then **se
 | Missing FMP key | The status shows "חסר API Key". No requests are sent. |
 | Empty symbol list | The status shows "חסרה רשימת מניות". |
 | FMP restricted endpoint / HTTP error | Recorded in `endpointErrors`. That data is treated as missing and the scan continues. |
-| FMP rate limit (429 or limit text) | The scan stops, results collected so far are shown, and a warning appears. |
+| FMP rate limit (HTTP 429, or limit text in an explicit error field) | The scan stops, results collected so far are shown, and a warning appears. |
 | Quote missing for a symbol | The symbol is counted as checked but not evaluated. |
 | Yahoo selected + Deep Scan or Two-stage | Blocked before any request, with a warning. |
 | Two-stage rate limit / stop | See §9a: halts immediately and shows the partial Stage 2 rows, or the labeled preliminary Stage 1 rows. |
@@ -218,6 +218,19 @@ The basis is chosen per stock: **industry peers** (≥ 3 in the scan), then **se
 ## 17. Export behavior
 
 **ייצא CSV** downloads `value_stock_finder_results.csv`, containing the **top-N displayed results**. Table tab filters are not applied. Values are quoted, and embedded quotes are escaped. Columns (44): rank, symbol, name, sector, price, marketCap, pe, ps, pb, roe, roa, debtEquity, currentRatio, fcf, paysDividend, dividendAmount, dividendYield, quickScore, graham, fisher, cash, buffett, piotroski, dreman, neff, relativeBasis, relativePeerCount, fairValue, currentPrice, upsideToFairValue, discountFromFairValue, marginOfSafetyPassed, dcfConfidence, dcfBaseFcf, dcfGrowthRate, dcfDiscountRate, dcfTerminalGrowth, dcfProjectionYears, totalScore, decision, dataProvider, scanMode, scanStage, stage1Rank. `scanStage` and `stage1Rank` are only filled for Two-stage rows.
+
+**ייצא XLSX** downloads `value-stock-finder-results-YYYY-MM-DD.xlsx`, a real Office Open XML workbook written with ExcelJS 4.4.0:
+
+- **Summary** sheet: generation time, provider, scan mode, rows exported versus evaluated, decision counts, API calls and cache hits, Two-stage counts, and the disclaimer.
+- **Results** sheet: exactly the CSV's 44 columns and values, with numbers stored as numbers, a frozen and styled header, an autofilter, number formats (prices `#,##0.00`; ratios stored as decimals, shown as `0.00%`) and a right-to-left view.
+- **Notes** sheet: the disclaimer and column notes.
+
+**ייצא PDF** downloads `value-stock-finder-results-YYYY-MM-DD.pdf`, generated with jsPDF 4.2.1 and jsPDF-AutoTable 5.0.8. It is a landscape A4 summary report with an English layout and Latin-only built-in fonts:
+
+- Decisions appear as Strong candidate / Watchlist / Manual review / Rejected.
+- Any other non-Latin text is replaced with "?".
+
+All three formats are built from the same `buildExportRows()`. The XLSX and PDF libraries are vendored and loaded on demand ([ADR-0006](docs/decisions/ADR-0006-export-dependencies.md)).
 
 ## 18. Security constraints
 
