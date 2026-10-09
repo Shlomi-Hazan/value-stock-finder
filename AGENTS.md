@@ -10,7 +10,7 @@ If anything here conflicts with a direct instruction from the repository owner i
 
 - **What it is:** a personal, educational value-investing stock screener.
 - **What it is not:** an advice engine, a trading tool or a product that guarantees results.
-- **Form:** a static frontend made of `index.html` (markup), `styles.css` and classic scripts in `js/` (vanilla JS, loaded with `defer` in a fixed order). There is no backend, no build step and no dependencies. See [ADR-0004](docs/decisions/ADR-0004-split-static-assets.md).
+- **Form:** a static frontend made of `index.html` (markup), `styles.css` and classic scripts in `js/` (vanilla JS, loaded with `defer` in a fixed order). There is no backend and no build step. See [ADR-0004](docs/decisions/ADR-0004-split-static-assets.md). The only third-party code is the vendored export libraries in `vendor/` (ExcelJS, jsPDF, jsPDF-AutoTable), loaded on demand by `js/export.js` ([ADR-0006](docs/decisions/ADR-0006-export-dependencies.md)).
 - **Primary data provider:** Financial Modeling Prep (FMP).
 - **Experimental provider:** Yahoo Finance Experimental / Browser test only. It is quote-level, usually CORS-blocked, and not a replacement for FMP.
 - **UI language:** Hebrew, RTL. Metric names stay in English.
@@ -60,7 +60,7 @@ When behavior changes, update the affected docs (SPEC, methodology, user guide, 
 | --- | --- |
 | Simple static assets | Keep the app as `index.html` + `styles.css` + classic scripts in `js/`. Do not introduce ES modules, a framework (React, Vite, Next.js…), a bundler or a build step unless the owner explicitly requests it and an ADR is added. Preserve element IDs and the global functions used by inline handlers. A new script file needs a `<script defer>` tag in the right load order. Only `app.js` and the app shell `shell.js` (loaded last, ADR-0005) may run code at load time. |
 | No backend | Do not add servers, serverless functions or proxies unless explicitly requested. See [ADR-0003](docs/decisions/ADR-0003-no-backend-yet.md). |
-| No dependencies | No `package.json`, npm packages, CDN scripts, build tools or bundlers unless explicitly requested. |
+| No dependencies (one exception) | No `package.json`, npm packages, CDN scripts, build tools or bundlers unless explicitly requested. **Exception (ADR-0006):** pinned, vendored browser bundles in `vendor/` are allowed **only for file export**. Load them on demand from `js/export.js`, record each one in `vendor/README.md` (version, source, SHA-256, license, audit), and never load them from a CDN. Any other dependency needs its own ADR. |
 | Preserve features | Do not remove or weaken existing functionality: FMP deep scan, Two-stage scan, cache, request preview, stop scan, rate-limit handling, endpoint tests, DCF, relative basis, data confidence, CSV export, presets, manual symbols. |
 | FMP stays primary | Do not make Yahoo (or any unofficial source) the default or present it as reliable. See [ADR-0002](docs/decisions/ADR-0002-fmp-primary-provider.md). |
 | Storage safety | Wrap `localStorage` access in `try/catch`. |
@@ -124,6 +124,7 @@ grep -RInE "sk-|AIza|secret|token|api[_-]?key|apikey|BEGIN PRIVATE KEY|password"
 
 ```bash
 ls package.json node_modules vite.config.* next.config.* 2>/dev/null || echo "none"
+shasum -a 256 vendor/*/*.min.js   # must match the SHA-256 column in vendor/README.md
 ```
 
 **5. Behavior checks.** For code changes, follow the manual checklist in [docs/verification.md](docs/verification.md).

@@ -4,7 +4,7 @@
 
 Value Stock Finder scans a list of ticker symbols, pulls market and financial-statement data from [Financial Modeling Prep (FMP)](https://site.financialmodelingprep.com/), and scores each company against practical checks inspired by Graham, Fisher, Dreman, John Neff, Piotroski and Buffett. It also shows an educational DCF fair-value estimate and a margin-of-safety check.
 
-The app is a handful of static files (`index.html`, `styles.css` and plain scripts in `js/`). It has no backend, no build step and no dependencies.
+The app is a handful of static files (`index.html`, `styles.css` and plain scripts in `js/`). It has no backend and no build step. The only third-party code is a few pinned, vendored libraries used solely for XLSX and PDF export, loaded on demand ([ADR-0006](docs/decisions/ADR-0006-export-dependencies.md)).
 
 > ⚠️ **Educational tool, not financial advice.** Value Stock Finder does not recommend, endorse or guarantee any security. Scores are mechanical checklists run over third-party data that may be incomplete, delayed or wrong. Always do your own research and consult a licensed professional before investing.
 
@@ -67,7 +67,8 @@ Value Stock Finder automates that **first pass**. It does not decide what to buy
 | Request preview | ✅ Current | Estimates API and cache usage before you scan |
 | Stop scan & rate-limit safety | ✅ Current | Stop button; the scan halts cleanly when the provider rate-limits |
 | Endpoint test | ✅ Current | Checks which FMP endpoints your plan allows, using AAPL |
-| CSV export | ✅ Current | Exports the displayed top-N results with scores and DCF fields |
+| CSV / XLSX / PDF export | ✅ Current | CSV (unchanged 44 columns); a real `.xlsx` workbook (Summary, Results, Notes sheets via ExcelJS); a real `.pdf` summary report (jsPDF + AutoTable). All from the same export data. |
+| Row details dialog | ✅ Current | **פתח פירוט** (open details) opens a readable dialog with summary, DCF, data confidence, strategy checks and data sources, instead of expanding inside the table |
 | Yahoo Finance provider | 🧪 Experimental | Browser connectivity test only; likely blocked by CORS |
 | Automatic universe discovery, TASE, global markets | 🗓 Planned / Future | See [roadmap](docs/roadmap.md) |
 
@@ -142,8 +143,8 @@ The settings page is grouped in the order you use it: **מקור נתונים** 
 4. Choose a scan mode (see below) and review the **request preview** under the buttons. For larger lists, choose **Two-stage scan** and set *Stage 1 max symbols* and *Deep Scan Top N*.
 5. Optionally open **סינון בסיסי** (basic filters: minimum market cap, volume, price) or the DCF assumptions section, and adjust them. Both are collapsed by default.
 6. Click the green **סרוק מניות** (scan stocks) button. Use **עצור סריקה** (stop scan) to stop before the next symbol. The connection tests, export and cache tools, and **נקה API Key שמור** (clear saved API key) are grouped below it.
-7. On the **תוצאות** (Results) screen, read the summary, filter the table tabs (All / Strong / Watchlist / Rejected) and open **פתח פירוט** (open details) on any row.
-8. Open the **תוצאות** (Results) tab to read the results, and click **ייצא CSV** (export CSV) there to export. Scans never switch screens on their own: a bar under the tabs shows progress and Stop, and a dot marks the Results tab when new results are ready.
+7. On the **תוצאות** (Results) screen, read the summary, filter the table tabs (All / Strong / Watchlist / Rejected) and click **פתח פירוט** (open details) on any row to see its full breakdown in a dialog.
+8. Open the **תוצאות** (Results) tab to read the results, and click **ייצא CSV**, **ייצא XLSX** or **ייצא PDF** (export CSV / XLSX / PDF) there to export. Scans never switch screens on their own: a bar under the tabs shows progress and Stop, and a dot marks the Results tab when new results are ready.
 
 The full walkthrough is in the [User Guide](docs/USER_GUIDE.md).
 
@@ -230,7 +231,8 @@ Full details: [docs/security.md](docs/security.md)
 | M7 UI polish and green visual identity | ✅ Done |
 | M8 App shell navigation plan ([ADR-0005](docs/decisions/ADR-0005-app-shell-navigation-plan.md)) | ✅ Accepted |
 | M9 App shell: Setup + Results screens, global scan bar | ✅ Done |
-| M10–M12 Methodology, Results UX, Settings & tools screens | 🗓 Planned |
+| M10 Results details dialog + XLSX/PDF exports | ✅ Done |
+| M11–M13 Methodology, Results UX, Settings & tools screens | 🗓 Planned |
 | Automatic universe discovery, TASE, global, tests/CI, optional backend | 🗓 Planned / Future |
 
 Full roadmap: [docs/roadmap.md](docs/roadmap.md)

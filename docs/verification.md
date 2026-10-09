@@ -36,7 +36,7 @@ Expected output: `all js files ok` and `script order ok`. The app has no inline 
 git diff --check
 ```
 
-Expected: no output.
+Expected: no output. The vendored bundles in `vendor/` are exempt (`.gitattributes`), because they are committed byte-for-byte from upstream.
 
 ### 1.3 API key / secret scan
 
@@ -44,7 +44,7 @@ Expected: no output.
 grep -RInE "sk-|AIza|secret|token|api[_-]?key|apikey|BEGIN PRIVATE KEY|password" --exclude-dir=.git .
 ```
 
-Hits on labels and variable names (`apiKey`, "API Key", `type="password"`, documentation text) are expected. **Any real key value fails the check.** As an extra check, look for long key-like strings:
+Hits on labels and variable names (`apiKey`, "API Key", `type="password"`, documentation text) are expected. Inside `vendor/` (third-party code), the library identifiers `password` (jsPDF form fields), `token` (ExcelJS tokenizer) and `secret` (elliptic-curve crypto code bundled inside ExcelJS) are expected too. **Any real key value fails the check.** As an extra check, look for long key-like strings:
 
 ```bash
 grep -Eon "[A-Za-z0-9]{32,}" index.html styles.css js/*.js
@@ -57,6 +57,8 @@ The only expected hits are long FMP field names such as `netCashProvidedByOperat
 ```bash
 ls package.json node_modules vite.config.* next.config.* server.* 2>/dev/null || echo "none"
 grep -nE "<script src=\"https?:|<link [^>]*href=\"https?:" index.html || echo "no external scripts/styles (only local styles.css and js/)"
+shasum -a 256 vendor/*/*.min.js   # must match the SHA-256 column in vendor/README.md (ADR-0006)
+grep -n "vendor/" index.html || echo "vendor libraries are not loaded at page start (on demand only)"
 ```
 
 ### 1.5 Docs-only PRs
@@ -167,9 +169,12 @@ Open <http://localhost:8000/> and confirm:
 | --- | --- |
 | Table headers | 36 columns, including Fair Value, Current Price, Upside, Discount, Margin of Safety, DCF Confidence, Data Confidence, Relative Basis |
 | Momentum-only results | DCF cells show "חסר נתון". DCF Confidence shows "Not enough data". |
-| Row details | Per-strategy ✅/❌/⚪ lists, relative basis, DCF inputs and reasons |
+| Row details | **פתח פירוט** (open details) opens `#detailsDialog`; table rows keep their normal height. The dialog shows the sections Summary, DCF, Data Confidence, Strategy checks (7 cards) and Sources/limitations. It scrolls internally. Escape, ✕, **סגור** (close) and a backdrop click close it, and focus returns to the opening button. It works from filtered tabs, and is full-screen on phones. Opening it does not shift the page sideways. |
 | Tabs | All / Strong / Watchlist / Rejected filter correctly |
 | **ייצא CSV** | Downloads `value_stock_finder_results.csv` with 44 columns, ending with `dataProvider, scanMode, scanStage, stage1Rank` |
+| **ייצא XLSX** | Downloads `value-stock-finder-results-YYYY-MM-DD.xlsx` (it starts with `PK`). It opens in Excel, Numbers or openpyxl. Sheets: Summary, Results, Notes. Results has 44 headers equal to the CSV header, and every cell equals the CSV value. The header is frozen and filtered, and number formats apply. Summary counts match the screen. |
+| **ייצא PDF** | Downloads `value-stock-finder-results-YYYY-MM-DD.pdf` (it starts with `%PDF-`). It opens in a PDF viewer. It has the title, run info, counts and disclaimer, and an 11-column table. Over about 23 rows it continues onto more pages, with the header repeated and a "Page N" footer. Decisions are in English, and no Hebrew mojibake appears. |
+| Export libraries | Load only on the first XLSX or PDF click (network or server log). No console errors. No CDN requests. |
 | CSV with no results | Status "אין תוצאות לייצוא" |
 | **נקה Cache** | Status "נמחקו N פריטי Cache". The next preview shows 0 cached. |
 | **נקה API Key שמור** | The field clears. It stays empty after reload. |

@@ -1,0 +1,4 @@
+# Third-party export libraries are committed verbatim (SHA-256 in vendor/README.md): no whitespace checks,
+# no text diffs of minified bundles, and excluded from GitHub language stats. vendor/README.md stays a normal text file.
+vendor/**/*.js -whitespace -diff linguist-vendored
+vendor/**/LICENSE* -whitespace linguist-vendored
