@@ -9,12 +9,24 @@ function cacheKey(path, symbol, extra = {}) {
   return FMP_CACHE_PREFIX + [path, symbol, stableStringify(extra)].join("|");
 }
 
+// Returns { timestamp, data } or null for malformed entries (bad JSON, no numeric timestamp, no data).
+function parseCacheEntry(raw) {
+  try {
+    const cached = JSON.parse(raw);
+    if (!cached || typeof cached.timestamp !== "number" || !("data" in cached) || cached.data === undefined) return null;
+    return cached;
+  } catch (_) {
+    return null;
+  }
+}
+
 function readCachedFmp(path, symbol, extra = {}) {
   try {
-    const raw = localStorage.getItem(cacheKey(path, symbol, extra));
+    const key = cacheKey(path, symbol, extra);
+    const raw = localStorage.getItem(key);
     if (!raw) return null;
-    const cached = JSON.parse(raw);
-    if (!cached || typeof cached.timestamp !== "number") return null;
+    const cached = parseCacheEntry(raw);
+    if (!cached) { localStorage.removeItem(key); return null; }
     if (Date.now() - cached.timestamp > cacheTtlForPath(path)) return null;
     return cached.data;
   } catch (_) {
@@ -29,14 +41,14 @@ function writeCachedFmp(path, symbol, extra = {}, data) {
 }
 
 function clearCache() {
-  let count = 0;
-  for (let i = localStorage.length - 1; i >= 0; i--) {
+  // Collect first, then remove: removing while iterating shifts localStorage indexes and skips entries.
+  const keys = [];
+  for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
-    if (key && (key.startsWith(FMP_CACHE_PREFIX) || key.startsWith(YAHOO_CACHE_PREFIX))) {
-      localStorage.removeItem(key);
-      count++;
-    }
+    if (key && (key.startsWith(FMP_CACHE_PREFIX) || key.startsWith(YAHOO_CACHE_PREFIX))) keys.push(key);
   }
+  keys.forEach(key => localStorage.removeItem(key));
+  const count = keys.length;
   updateRequestPreview();
   setStatus(`נמחקו ${count} פריטי Cache`, "good");
 }
@@ -49,10 +61,11 @@ function yahooCacheKey(symbol) {
 
 function readCachedYahoo(symbol) {
   try {
-    const raw = localStorage.getItem(yahooCacheKey(symbol));
+    const key = yahooCacheKey(symbol);
+    const raw = localStorage.getItem(key);
     if (!raw) return null;
-    const cached = JSON.parse(raw);
-    if (!cached || typeof cached.timestamp !== "number") return null;
+    const cached = parseCacheEntry(raw);
+    if (!cached) { localStorage.removeItem(key); return null; }
     if (Date.now() - cached.timestamp > QUOTE_CACHE_TTL_MS) return null;
     return cached.data;
   } catch (_) {

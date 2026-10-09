@@ -85,6 +85,20 @@ Open <http://localhost:8000/> and confirm:
 
 > Embedded preview panes that load the file as a `data:` or `file://` snapshot may restrict `localStorage`. The app should still load, because access is wrapped in `try/catch`.
 
+### Rate-limit detection checks (since the false-429 fix)
+
+Mock `window.fetch` in the console and call `safeCall(path, "AAPL", "k", {})`:
+
+| Mock response | Expected |
+| --- | --- |
+| HTTP 200, valid ratios JSON containing `4.444454298150962` or the text `429` | `ok: true`, `rateLimited: false` |
+| HTTP 429 (any body) | `ok: false`, `rateLimited: true` |
+| HTTP 200, `{"Error Message": "Rate limit reached"}` | `rateLimited: true` |
+| HTTP 200 or 403, `{"Error Message": "Restricted Endpoint: …"}` | `rateLimited: false`, ordinary endpoint error |
+| HTTP 500 | `rateLimited: false`, `HTTP 500` |
+
+Cache: with 40+ FMP and Yahoo entries, `clearCache()` leaves no `valueStockFinder…Cache:` key and keeps unrelated keys. A cache entry with bad JSON, a non-numeric `timestamp` or no `data` is ignored by `readCachedFmp`/`readCachedYahoo` and removed.
+
 ### App shell checks (since PR #11)
 
 | Check | Expected |
