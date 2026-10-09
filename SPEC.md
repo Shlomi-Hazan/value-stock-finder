@@ -207,7 +207,7 @@ The basis is chosen per stock: **industry peers** (≥ 3 in the scan), then **se
 | Missing FMP key | The status shows "חסר API Key". No requests are sent. |
 | Empty symbol list | The status shows "חסרה רשימת מניות". |
 | FMP restricted endpoint / HTTP error | Recorded in `endpointErrors`. That data is treated as missing and the scan continues. |
-| FMP rate limit (429 or limit text) | The scan stops, results collected so far are shown, and a warning appears. |
+| FMP rate limit (HTTP 429, or limit text in an explicit error field) | The scan stops, results collected so far are shown, and a warning appears. |
 | Quote missing for a symbol | The symbol is counted as checked but not evaluated. |
 | Yahoo selected + Deep Scan or Two-stage | Blocked before any request, with a warning. |
 | Two-stage rate limit / stop | See §9a: halts immediately and shows the partial Stage 2 rows, or the labeled preliminary Stage 1 rows. |

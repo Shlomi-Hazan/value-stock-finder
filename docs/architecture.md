@@ -104,7 +104,7 @@ These values are persisted in `localStorage`: the API key, the selected provider
 2. In deep mode, it loops over `DEEP_ENDPOINTS` (9 endpoints) with a 70 ms delay between calls.
 3. `safeCall` wraps `callFmp`, which checks the cache, builds the URL with `symbol`, `apikey` and the extra params, then calls `fetchJson`.
 4. `fetchJson` handles errors:
-   - **Rate limits** (HTTP 429 or limit text) throw `rateLimited`, which stops the scan.
+   - **Rate limits** (HTTP status 429, or limit text in an explicit error field; the body of a successful response is never scanned) throw `rateLimited`, which stops the scan.
    - **Restricted endpoints** throw an error that is recorded as missing data.
 
 ### Yahoo experimental flow

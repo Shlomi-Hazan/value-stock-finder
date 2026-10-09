@@ -23,8 +23,15 @@ function isRateLimitMessage(message) {
     text.includes("too many requests") ||
     text.includes("request limit") ||
     text.includes("daily limit") ||
-    text.includes("api limit") ||
-    text.includes("429");
+    text.includes("api limit");
+}
+
+// FMP reports errors in explicit fields. Only these are inspected: financial values such as
+// 4.4294... contain "429" and must never be mistaken for an HTTP 429 (see docs/verification.md).
+function explicitErrorMessage(data) {
+  if (!data || typeof data !== "object" || Array.isArray(data)) return "";
+  const msg = data["Error Message"] || data.error || data.message;
+  return typeof msg === "string" ? msg : "";
 }
 
 function rateLimitError(message, provider = "fmp") {
@@ -39,19 +46,21 @@ async function fetchJson(url) {
   const response = await fetch(url.toString());
   let data = null;
   try { data = await response.json(); } catch (_) {}
+  const explicit = explicitErrorMessage(data);
 
   if (!response.ok) {
-    const msg = data && (data["Error Message"] || data.error || data.message) ? (data["Error Message"] || data.error || data.message) : ("HTTP " + response.status);
-    if (response.status === 429 || isRateLimitMessage(msg)) throw rateLimitError(msg);
-    throw new Error(msg);
+    const msg = explicit || response.statusText || ("HTTP " + response.status);
+    if (response.status === 429 || isRateLimitMessage(msg)) throw rateLimitError(msg || "HTTP 429");
+    throw new Error(explicit || ("HTTP " + response.status));
   }
 
-  if (data && typeof data === "object") {
-    const text = JSON.stringify(data).toLowerCase();
-    if (isRateLimitMessage(text)) throw rateLimitError(text);
-    if (text.includes("restricted endpoint") || text.includes("not available under your current subscription")) {
+  // HTTP 200: only an explicit error field can signal a problem; the financial data itself is never scanned.
+  if (explicit) {
+    const lower = explicit.toLowerCase();
+    if (lower.includes("restricted endpoint") || lower.includes("not available under your current subscription")) {
       throw new Error("Restricted Endpoint");
     }
+    if (isRateLimitMessage(explicit)) throw rateLimitError(explicit);
   }
 
   return data;
