@@ -1,6 +1,6 @@
 # Roadmap
 
-Last updated: 2026-10-08
+Last updated: 2026-10-12 (after PR #18)
 
 Legend: ✅ **Done** · 🧪 **Experimental** · 🗓 **Planned** (intended next, scope still to be agreed) · 🔭 **Future** (direction only, not committed)
 
@@ -16,21 +16,20 @@ Nothing marked Planned or Future is implemented. Each needs owner approval befor
 | **M3** Provider abstraction / Yahoo experimental | ✅ Done · Yahoo 🧪 Experimental | Provider selector, FMP default, Yahoo quote-only browser test, Deep Scan blocked for Yahoo, selected-provider test, CSV `dataProvider`, safe storage init (PR #3) |
 | **M4** Documentation foundation | ✅ Done | README, SPEC, AGENTS, CLAUDE, architecture, product requirements, methodology, API integrations, security, verification, roadmap, ADRs, user guide, history (PR #4), MIT License (PR #5) |
 | **M5** Two-stage scan + larger universe controls | ✅ Done | Two-stage scan (quote-only Stage 1, Deep Scan of the top N), Stage 1 max / Top N settings, per-stage request preview, stage summary, CSV stage columns, expanded US presets: Large Cap 90, Value 95, Dividend 60 (PR #6) |
-| **M6** Maintainability: static file split | ✅ Done | Post-merge hardening (PR #7). `index.html` + `styles.css` + 12 classic scripts in `js/`, no build step (PR #8, [ADR-0004](decisions/ADR-0004-split-static-assets.md)) |
+| **M6** Maintainability: static file split | ✅ Done | Post-merge hardening (PR #7). `index.html` + `styles.css` + 12 classic scripts in `js/` at the time (13 since `shell.js`), no build step (PR #8, [ADR-0004](decisions/ADR-0004-split-static-assets.md)) |
 | **M7** UI polish and visual identity | ✅ Done | Grouped settings with collapsible advanced sections, button hierarchy, helper microcopy, segmented result tabs, green finance identity, product mark and favicon, icons and the margin-of-safety illustration (PR #9) |
 | **M8** App shell navigation plan | ✅ Accepted | [ADR-0005](decisions/ADR-0005-app-shell-navigation-plan.md): a static app shell with hash-routed screens. Docs only, no code change (PR #10). |
-| **M9** App shell: Setup + Results | ✅ Done | `js/shell.js`: hash router (`#/setup`, `#/results`, then `#/methodology` and `#/settings`, element-hash anchors), sticky segmented nav, global scan bar (mirrors `#status`, Stop proxy, results-ready cue, no auto-navigation), compact Results header, Export CSV on Results (PR #11) |
 
-## App shell rollout (planned, per ADR-0005)
+## App shell, exports and Results UX (PRs #11–#18)
 
-Each step is a separate PR that preserves all existing IDs, handlers, `localStorage` keys, scan, scoring, CSV (44 columns) and table (36 columns). There is no framework, build step or backend.
+The screens planned in [ADR-0005](decisions/ADR-0005-app-shell-navigation-plan.md) and the follow-up Results work. Each step was a separate PR that preserved all existing IDs, handlers, `localStorage` keys, scan, scoring, CSV (44 columns) and table (36 columns). There is no framework, build step or backend.
 
-| Milestone | Planned PR | Status | Scope |
+| Milestone | PR | Status | Scope |
 | --- | --- | --- | --- |
 | **M9** App shell: Setup + Results | #11 | ✅ Done | Delivered as planned. On phones the nav is a full-width sticky segmented control at the top rather than a bottom tab bar, so it never covers the table's horizontal scroll area or the action dock. |
 | **M10** Results details dialog + XLSX/PDF exports | #12 | ✅ Done | Inserted before the remaining shell stages at the owner's request: native `<dialog>` for row details; real XLSX and PDF from shared export rows; vendored on-demand libraries ([ADR-0006](decisions/ADR-0006-export-dependencies.md)). |
 | **M11** Methodology screen | #15 | ✅ Done | `#/methodology` and the **מתודולוגיה** tab: what the screener does and does not do, scan modes, Data Confidence, DCF and margin of safety, the seven strategies with condensed rules, the score and decision labels, data limitations and the educational disclaimer. Static content only; the full rule tables stay in [investment-methodology.md](investment-methodology.md). |
-| **M12** Results UX refinement | #17, #18, then TBD | ◐ Partly done | **Done (PR #17):** search by symbol or company and a sort select (rank, score, symbol, price, market cap, Data Confidence, DCF upside) on Results, display only. **Done (PR #18):** the "how to read the results" legend, clearer empty states, and notes for all-rejected and Preliminary results. **Still planned:** sticky summary or toolbar, display-limit note, column-group hints. |
+| **M12** Results UX refinement | #17, #18; rest TBD | ◐ Partly done | **Done:** search by symbol or company and a sort select (PR #17); the "how to read the results" legend, clearer empty states, and notes for all-rejected and Preliminary results (PR #18). All display only. **Still planned:** sticky summary or toolbar, display-limit note, column-group hints, and a mobile card layout if the wide table proves hard to use on phones. |
 | **M13** Settings & tools screen | #16 | ✅ Done | `#/settings` and the **הגדרות וכלים** tab. The provider, API key, Yahoo warning, connection tests (with `#endpointStatus`), Clear Cache and Clear API key controls **moved** from Setup with their IDs unchanged. Request preview and status text are mirrored there, and Setup shows a one-line provider and key summary linking to it. Export buttons stay on Results. |
 
 ## Planned and future work
@@ -41,7 +40,7 @@ Each step is a separate PR that preserves all existing IDs, handlers, `localStor
 | Value-aware Stage 1 ordering | 🗓 Planned | A cheaper Stage 1 signal that doesn't favor momentum (for example, a quote-level P/E if available) | Would be a scoring change, so it needs explicit approval |
 | Better provider abstraction | 🗓 Planned | Capability-based provider interface | Keep FMP behavior identical |
 | Tests / CI | 🗓 Planned | GitHub Actions running the syntax and secret checks; unit tests for pure scoring functions | Must not add runtime dependencies |
-| Better UI | 🗓 Planned | Screenshots in README; remaining items are covered by the app shell rollout above | Keep RTL |
+| Better UI | 🗓 Planned | Screenshots in README; the remaining Results items are listed under M12 above | Keep RTL |
 | Israel / TASE support | 🔭 Future | TASE symbols, ILS handling, TASE thresholds | Needs a provider with TASE coverage |
 | Global country support | 🔭 Future | Per-country presets, FX normalization, exchange detection | |
 | Optional backend / proxy | 🔭 Future | Hide the API key, enable CORS-restricted providers, server cache | Requires a new ADR superseding [ADR-0003](decisions/ADR-0003-no-backend-yet.md) |
@@ -52,5 +51,6 @@ Each step is a separate PR that preserves all existing IDs, handlers, `localStor
 - The DCF does not adjust for net debt or cash.
 - The Fisher "2 of 3 cheap" test treats missing multiples as not cheap.
 - Piotroski counts missing tests as 0.
+- The `#` column shows the position in the displayed view (after tab, search and sort), not the original rank.
 - The US-listing detection is a keyword heuristic.
-- CSV exports the top-N results, not the active tab filter.
+- CSV, XLSX and PDF export the stored top-N results, not the active tab, search or sort view (by design, and stated in the Results legend).

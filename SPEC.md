@@ -45,8 +45,8 @@ Course checklists (P/E ranges, Graham ratio, cash-flow quality, debt limits and 
 
 ```mermaid
 flowchart TD
-  A[Open index.html] --> B[Select provider - FMP default]
-  B --> C[Enter FMP API key]
+  A[Open index.html] --> B[Settings & Tools: select provider - FMP default]
+  B --> C[Settings & Tools: enter FMP API key]
   C --> D[Choose preset list or manual symbols]
   D --> E[Choose scan mode]
   E --> F[Review request preview]
@@ -54,18 +54,18 @@ flowchart TD
   G --> H{Rate limit / stop / error?}
   H -- no --> I[Results table + summary]
   H -- yes --> J[Partial results + status message]
-  I --> K[Filter tabs / open details]
-  K --> L[Export CSV]
+  I --> K[Filter tabs / search / sort / open details]
+  K --> L[Export CSV, XLSX or PDF]
 ```
 
-Secondary flows: **Test endpoints on AAPL** (FMP), **Test selected provider** (one AAPL quote), **Clear cache**, **Clear saved API key**.
+Secondary flows, all on Settings & Tools: **Test endpoints on AAPL** (FMP), **Test selected provider** (one AAPL quote), **Clear cache**, **Clear saved API key**.
 
 ## 7. Functional requirements (Current)
 
 | ID | Requirement |
 | --- | --- |
-| FR-1 | The user can choose a data provider: Financial Modeling Prep (default) or Yahoo Finance Experimental / Browser test only. The choice persists in `localStorage`. |
-| FR-2 | The user can enter an FMP API key. It is saved to `localStorage` when a scan or test runs, and can be cleared. |
+| FR-1 | The user can choose a data provider (on Settings & Tools since PR #16): Financial Modeling Prep (default) or Yahoo Finance Experimental / Browser test only. The choice persists in `localStorage`. |
+| FR-2 | The user can enter an FMP API key (on Settings & Tools since PR #16). It is saved to `localStorage` when a scan or test runs, and can be cleared. |
 | FR-3 | The user can load one of 4 preset US lists (30 symbols each), one of 3 curated expanded US lists (Large Cap 90, Value 95, Dividend 60), or keep a manual list. Symbols are split on whitespace, commas and semicolons, upper-cased and de-duplicated. |
 | FR-4 | The user can choose Deep Scan (default), Momentum / Market, or Two-stage scan. |
 | FR-5 | The user can set top-N (default 15), minimum market cap for US (default 2B) and non-US (default 1B), minimum volume (100,000) and minimum price (5). |
@@ -76,8 +76,6 @@ Secondary flows: **Test endpoints on AAPL** (FMP), **Test selected provider** (o
 | FR-10 | Each stock gets the Momentum score, the strategy categories, Piotroski, Dreman/Neff relative scores, DCF, Data Confidence, total score and a decision. |
 | FR-11 | Results are sorted by total score. The table shows the top N; the summary covers all evaluated stocks. |
 | FR-12 | Table tabs filter All / Strong / Watchlist / Rejected. |
-| FR-28 | Results notes (PR #18): a collapsed "how to read the results" legend; explicit empty-state messages (no scan, empty tab, no search match, no rows) with **הצג את הכול** and **נקה חיפוש** actions; and a note under the controls when every row failed the basic filter or only Preliminary Stage 1 rows exist. Display only; no export or scan change. |
-| FR-27 | Results search and sort (PR #17): a search box filters the displayed rows by symbol or company name (case-insensitive substring) on top of the active tab, and a sort select orders them by rank (default), total score, symbol (A–Z), price, market cap, Data Confidence or DCF upside (descending; missing values last). Display only: `lastResults` and `allResults` are never reordered, exports are unchanged, and the details button opens the row that is displayed. |
 | FR-13 | Each row has a details view (since PR #12, a modal dialog opened by **פתח פירוט**, not an inline expansion): per-test results, relative basis, DCF inputs and reasons, data confidence, missing fields, data source and endpoint errors. |
 | FR-14 | Exports of the displayed top-N results: CSV (44 columns, including `dataProvider`, `scanMode`, `scanStage`, `stage1Rank`); XLSX (sheets Summary, Results with the same 44 columns and values, Notes; frozen header, number formats, RTL view); PDF (A4 landscape summary: run info, counts, disclaimer, and an 11-column table of rank, symbol, company, decision, score, price, fair value, upside, margin of safety, data and DCF confidence, paginated with repeated headers). See §17. |
 | FR-15 | The FMP endpoint test checks the quote plus the 9 deep endpoints on AAPL. |
@@ -91,7 +89,9 @@ Secondary flows: **Test endpoints on AAPL** (FMP), **Test selected provider** (o
 | FR-23 | Two-stage scan is blocked with Yahoo: "Yahoo Experimental / Browser test only does not support Two-stage scan because Stage 2 requires FMP Deep Scan." |
 | FR-24 | App shell (PR #11, Methodology added in PR #15, Settings & Tools in PR #16): four screens, Setup (`#/setup`, default), Results (`#/results`), Methodology (`#/methodology`, static explanatory content) and Settings & Tools (`#/settings`, PR #16: provider, API key, connection tests, Cache and API-key clearing), switched by URL hash with Back/Forward support. An empty or unknown hash shows Setup. Element-ID hashes (for example `#sec-scan`) open the screen that contains the element and scroll to it. |
 | FR-25 | A global scan bar is visible on every screen while a scan runs. It mirrors `#status` and offers Stop (calling `requestStopScan()`). After the scan, it keeps the final status and a "view results" link until dismissed. The Results tab shows a dot for unseen results. The app never navigates to Results automatically. |
-| FR-26 | The export buttons (CSV, XLSX, PDF) are on the Results screen. All setup controls stay on Setup and keep feeding scans while hidden. |
+| FR-26 | The export buttons (CSV, XLSX, PDF) are on the Results screen. Scan settings stay on Setup and the provider, API key, connection tests and cache tools are on Settings & Tools (PR #16). A control keeps feeding scans while its screen is hidden, because every element stays in the DOM. |
+| FR-27 | Results search and sort (PR #17): a search box filters the displayed rows by symbol or company name (case-insensitive substring) on top of the active tab, and a sort select orders them by rank (default), total score, symbol (A–Z), price, market cap, Data Confidence or DCF upside (descending; missing values last). Display only: `lastResults` and `allResults` are never reordered, exports are unchanged, and the details button opens the row that is displayed. |
+| FR-28 | Results notes (PR #18): a collapsed "how to read the results" legend; explicit empty-state messages (no scan, empty tab, no search match, no rows) with **הצג את הכול** and **נקה חיפוש** actions; and a note under the controls when every row failed the basic filter or only Preliminary Stage 1 rows exist. Display only; no export or scan change. |
 
 ## 8. Non-functional requirements
 
@@ -266,6 +266,6 @@ All three formats are built from the same `buildExportRows()`. The XLSX and PDF 
 | Cleaner provider abstraction | Planned |
 | Optional backend / proxy to hide keys | Future (needs a new ADR) |
 | Automated checks / CI | Planned |
-| UI improvements | Planned |
+| Results UX: sticky summary or toolbar, display-limit note, column-group hints | Planned (search, sort, legend and empty states are done: PRs #17–#18) |
 
 See [docs/roadmap.md](docs/roadmap.md).

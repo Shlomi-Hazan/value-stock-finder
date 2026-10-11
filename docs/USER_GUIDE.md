@@ -1,6 +1,6 @@
 # User Guide
 
-Last updated: 2026-10-08
+Last updated: 2026-10-12 (after PR #18)
 
 > ⚠️ Value Stock Finder is an **educational tool, not investment advice**. It applies simplified checklists to third-party data that may be incomplete or wrong.
 
@@ -23,10 +23,10 @@ The app's interface is in Hebrew. This guide gives each Hebrew label with its En
 
 The app has four screens. You switch between them with the tabs under the header:
 
-- **הגדרת סריקה** (Setup) is where you prepare and start a scan: data source, stocks, scan mode, filters, DCF assumptions, and the Scan and Stop buttons.
-- **תוצאות** (Results) is where you read, filter and export results: the summary, the Two-stage summary, the result tabs, the table and **ייצא CSV** (export CSV).
-- **הגדרות וכלים** (Settings & Tools) is where the provider, the FMP API key, the connection tests and the cache tool live: **Data Provider**, **API Key (FMP)**, **נקה API Key שמור**, **בדוק endpoints על AAPL**, **בדוק ספק נבחר (AAPL)** and **נקה Cache**. It also shows a copy of the request estimate and the latest status message, and points to Results for CSV, XLSX and PDF export. Setup shows a one-line summary of the chosen provider and whether a key is entered, with a link here.
-- **מתודולוגיה** (Methodology) explains in plain language what the tool checks and how: scan modes, Data Confidence, the DCF estimate, the seven strategies, how the score and labels are produced, the data limits, and why none of it is investment advice. It uses the same rules as the code, in short form, and shows no scan data. Its table of contents links jump to each section.
+- **הגדרת סריקה** (Setup) is where you prepare and start a scan: stocks, scan mode, filters, DCF assumptions, and the Scan and Stop buttons. A one-line summary shows the provider and whether an API key is entered, with a link to Settings & Tools.
+- **תוצאות** (Results) is where you read, filter and export results: the summary, the Two-stage summary, the **איך לקרוא את התוצאות?** legend, the result tabs, search and sort, the table, **פתח פירוט** (details) and the export buttons (CSV, XLSX, PDF).
+- **מתודולוגיה** (Methodology) explains in plain language what the tool checks and how: scan modes, Data Confidence, the DCF estimate, the seven strategies, how the score and labels are produced, the data limits, and why none of it is investment advice. It uses the same rules as the code, in short form, and shows no scan data. This guide does not repeat it.
+- **הגדרות וכלים** (Settings & Tools) is where the provider, the FMP API key and the tools live: **Data Provider**, **API Key (FMP)**, **נקה API Key שמור**, **בדוק endpoints על AAPL**, **בדוק ספק נבחר (AAPL)** and **נקה Cache**. It also shows a copy of the request estimate and the latest status message, and points to Results for exports.
 
 The address bar shows `#/setup`, `#/results`, `#/methodology` or `#/settings`, so the browser Back and Forward buttons work, and you can bookmark a screen. The numbered workflow links (1 מקור נתונים … 4 תוצאות) still jump to the right place.
 
@@ -197,7 +197,7 @@ The DCF is a **rough educational estimate**. Small changes in the assumptions mo
 
 ## 9. Export results
 
-On the **תוצאות** (Results) screen there are three export buttons. All of them export the **displayed top-N** results (the active tab filter is not applied):
+On the **תוצאות** (Results) screen there are three export buttons. All of them export **all stored results** of the last scan (the top-N "כמות להצגה"). The active tab, the search box and the sort do **not** change what is exported:
 
 | Button | File | What you get |
 | --- | --- | --- |

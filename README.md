@@ -66,8 +66,12 @@ Value Stock Finder automates that **first pass**. It does not decide what to buy
 | Local cache | ✅ Current | localStorage cache (quotes 10 minutes, fundamentals 7 days) to save API calls |
 | Request preview | ✅ Current | Estimates API and cache usage before you scan |
 | Stop scan & rate-limit safety | ✅ Current | Stop button; the scan halts cleanly when the provider rate-limits |
-| Endpoint test | ✅ Current | Checks which FMP endpoints your plan allows, using AAPL |
+| Endpoint test | ✅ Current | Checks which FMP endpoints your plan allows, using AAPL (on Settings & Tools) |
 | CSV / XLSX / PDF export | ✅ Current | CSV (unchanged 44 columns); a real `.xlsx` workbook (Summary, Results, Notes sheets via ExcelJS); a real `.pdf` summary report (jsPDF + AutoTable). All from the same export data. |
+| App shell (four screens) | ✅ Current | **Setup**, **Results**, **Methodology** and **Settings & Tools**, switched by hash (`#/setup`, `#/results`, `#/methodology`, `#/settings`), with a global scan bar and Stop on every screen |
+| Results search, sort and legend | ✅ Current | Search by symbol or company, a sort select, tabs that combine with both, a collapsed "how to read the results" legend and clear empty states. Display only; exports always contain all stored results. |
+| Methodology screen | ✅ Current | In-app, plain-language explanation of the scan modes, Data Confidence, DCF, the seven strategies, the score and its limits |
+| Settings & Tools screen | ✅ Current | Provider, FMP API key, connection tests and Cache tools (moved from Setup) |
 | Row details dialog | ✅ Current | **פתח פירוט** (open details) opens a readable dialog with summary, DCF, data confidence, strategy checks and data sources, instead of expanding inside the table |
 | Yahoo Finance provider | 🧪 Experimental | Browser connectivity test only; likely blocked by CORS |
 | Automatic universe discovery, TASE, global markets | 🗓 Planned / Future | See [roadmap](docs/roadmap.md) |
@@ -135,16 +139,16 @@ Then open <http://localhost:8000/>. A real `http://` origin behaves more predict
 
 ## 🧭 How to Use
 
-The scan setup is grouped in the order you use it: a one-line summary of the provider and key (set on **הגדרות וכלים**), **מניות לבדיקה** (stocks to check), **מצב סריקה** (scan mode), two collapsed advanced sections (**סינון בסיסי** basic filters, and DCF assumptions), then the actions.
+The Setup screen is grouped in the order you use it: a one-line summary of the provider and key (set on **הגדרות וכלים**), **מניות לבדיקה** (stocks to check), **מצב סריקה** (scan mode), two collapsed advanced sections (**סינון בסיסי** basic filters, and DCF assumptions), then the actions.
 
-1. Keep **Data Provider** on **Financial Modeling Prep**.
-2. Enter your FMP API key.
-3. Choose a preset list, or pick **ידני** (manual) and type symbols such as `AAPL, MSFT, KO`.
-4. Choose a scan mode (see below) and review the **request preview** under the buttons. For larger lists, choose **Two-stage scan** and set *Stage 1 max symbols* and *Deep Scan Top N*.
-5. Optionally open **סינון בסיסי** (basic filters: minimum market cap, volume, price) or the DCF assumptions section, and adjust them. Both are collapsed by default.
-6. Click the green **סרוק מניות** (scan stocks) button. Use **עצור סריקה** (stop scan) to stop before the next symbol. The connection tests, the cache tool and **נקה API Key שמור** (clear saved API key) are on the **הגדרות וכלים** tab, and the export buttons are on Results.
-7. On the **תוצאות** (Results) screen, read the summary, filter the table tabs (All / Strong / Watchlist / Rejected), search by symbol or company, sort the view and click **פתח פירוט** (open details) on any row to see its full breakdown in a dialog.
-8. Open the **תוצאות** (Results) tab to read the results, and click **ייצא CSV**, **ייצא XLSX** or **ייצא PDF** (export CSV / XLSX / PDF) there to export. Scans never switch screens on their own: a bar under the tabs shows progress and Stop, and a dot marks the Results tab when new results are ready.
+1. On **הגדרות וכלים** (Settings & Tools), keep **Data Provider** on **Financial Modeling Prep** and enter your FMP API key.
+2. On **הגדרת סריקה** (Setup), choose a preset list, or pick **ידני** (manual) and type symbols such as `AAPL, MSFT, KO`.
+3. Choose a scan mode (see below) and review the **request preview** under the buttons. For larger lists, choose **Two-stage scan** and set *Stage 1 max symbols* and *Deep Scan Top N*.
+4. Optionally open **סינון בסיסי** (basic filters: minimum market cap, volume, price) or the DCF assumptions section, and adjust them. Both are collapsed by default.
+5. Click the green **סרוק מניות** (scan stocks) button. Use **עצור סריקה** (stop scan) to stop before the next symbol. Scans never switch screens on their own: a bar under the tabs shows progress and Stop on every screen, and a dot marks the Results tab when new results are ready.
+6. On **תוצאות** (Results), read the summary, use the tabs (All / Strong / Watchlist / Rejected), the search box and the sort select, and open **איך לקרוא את התוצאות?** for a short legend. Click **פתח פירוט** (open details) on any row for its full breakdown in a dialog.
+7. Click **ייצא CSV**, **ייצא XLSX** or **ייצא PDF** (export CSV / XLSX / PDF) on Results. Exports contain all stored results of the last scan, not only the searched or sorted view.
+8. Use **הגדרות וכלים** for the connection tests, **נקה Cache** and **נקה API Key שמור**, and **מתודולוגיה** to read how the checks and scores work.
 
 The full walkthrough is in the [User Guide](docs/USER_GUIDE.md).
 
