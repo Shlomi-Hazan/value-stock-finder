@@ -83,7 +83,7 @@ flowchart LR
 ```
 
 - **Static files:** `index.html` (markup), `styles.css`, and 13 classic scripts in `js/` loaded in a fixed order with `defer`. No bundler, no modules, no build step.
-- **App shell:** two screens, **Setup** (`#/setup`) and **Results** (`#/results`), switched by hash navigation, with a global scan bar that shows progress and Stop on both ([ADR-0005](docs/decisions/ADR-0005-app-shell-navigation-plan.md)).
+- **App shell:** three screens, **Setup** (`#/setup`), **Results** (`#/results`) and **Methodology** (`#/methodology`, an in-app explanation of the rules, confidence, DCF and limits), switched by hash navigation, with a global scan bar that shows progress and Stop on every screen ([ADR-0005](docs/decisions/ADR-0005-app-shell-navigation-plan.md)).
 - **Browser-only runtime:** every API call goes directly from your browser to the data provider.
 - **State:** in memory during a scan, plus `localStorage` for the API key, the selected provider and the response cache.
 
@@ -232,7 +232,8 @@ Full details: [docs/security.md](docs/security.md)
 | M8 App shell navigation plan ([ADR-0005](docs/decisions/ADR-0005-app-shell-navigation-plan.md)) | ✅ Accepted |
 | M9 App shell: Setup + Results screens, global scan bar | ✅ Done |
 | M10 Results details dialog + XLSX/PDF exports | ✅ Done |
-| M11–M13 Methodology, Results UX, Settings & tools screens | 🗓 Planned |
+| M11 Methodology screen | ✅ Done |
+| M12–M13 Results UX, Settings & tools screens | 🗓 Planned |
 | Automatic universe discovery, TASE, global, tests/CI, optional backend | 🗓 Planned / Future |
 
 Full roadmap: [docs/roadmap.md](docs/roadmap.md)

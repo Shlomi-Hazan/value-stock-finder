@@ -91,6 +91,9 @@
       <span class="shell-dot" id="shell-results-dot" hidden></span>
       <span class="visually-hidden" id="shell-results-dot-label" hidden>(יש תוצאות חדשות)</span>
     </a>
+    <a class="shell-tab" id="shell-tab-methodology" href="#/methodology" data-route="methodology">
+      <svg class="icon" aria-hidden="true"><use href="#i-scale" /></svg>מתודולוגיה
+    </a>
   </nav>
   <div class="shell-scanbar" id="shell-scanbar" hidden>
     <span class="shell-spinner" id="shell-spinner" aria-hidden="true"></span>
@@ -383,6 +386,210 @@
           <tr><td colspan="36">עדיין לא בוצעה סריקה</td></tr>
         </tbody>
       </table>
+    </div>
+  </section>
+  </div>
+
+  <div class="screen" id="shell-screen-methodology" data-screen="methodology" data-title="מתודולוגיה" hidden>
+  <section class="meth" aria-labelledby="methodologyTitle">
+    <h2 id="methodologyTitle" class="settings-title">איך הכלי מעריך מניות</h2>
+    <p class="meth-lead">Value Stock Finder הוא רשימת בדיקה שקופה ללימוד וסינון ראשוני. כל כלל כאן הוא כלל מכני שרץ על הנתונים שנאספו, והסף של כל אחד מהם נמצא בקוד ובמסמך <a href="https://github.com/Shlomi-Hazan/value-stock-finder/blob/main/docs/investment-methodology.md" target="_blank" rel="noopener">investment-methodology</a>.</p>
+    <nav class="meth-toc" aria-label="תוכן העניינים של המתודולוגיה">
+      <a href="#methodology-overview">מה הכלי עושה</a>
+      <a href="#methodology-scans">מצבי סריקה</a>
+      <a href="#methodology-confidence">Data Confidence</a>
+      <a href="#methodology-dcf">DCF ושווי הוגן</a>
+      <a href="#methodology-strategies">האסטרטגיות</a>
+      <a href="#methodology-score">ציון והחלטה</a>
+      <a href="#methodology-limitations">מגבלות</a>
+    </nav>
+
+    <div class="group" id="methodology-overview">
+      <h3 class="group-title"><span class="section-icon" aria-hidden="true"><svg class="icon"><use href="#i-search" /></svg></span>מה הכלי עושה, ומה לא</h3>
+      <div class="meth-grid meth-grid-2">
+        <article class="panel panel-accent meth-card">
+          <h4>עושה</h4>
+          <ul>
+            <li>אוסף נתוני שוק וכספים מהספק שנבחר (Financial Modeling Prep כברירת מחדל).</li>
+            <li>מריץ בדיקות עובר / נכשל בהשראת שבע גישות השקעה, ומציג את אחוז הבדיקות שעברו בכל אחת.</li>
+            <li>מחשב הערכת שווי הוגן פשוטה (DCF) ואת מרווח הביטחון ממנה.</li>
+            <li>מציג כמה מהנתונים הנדרשים באמת הגיעו (Data Confidence).</li>
+          </ul>
+        </article>
+        <article class="panel meth-card">
+          <h4>לא עושה</h4>
+          <ul>
+            <li>לא נותן המלצת קנייה או מכירה, ולא מנבא מחירים.</li>
+            <li>לא מעריך הנהלה, יתרון תחרותי, מוצרים או ענף. אלה שיקולים איכותיים שאי אפשר למדוד כאן.</li>
+            <li>לא משחזר במדויק אף שיטה של משקיע מוכר או קורס. הכללים הם קירוב.</li>
+            <li>לא מחליף בדיקה עצמאית של דוחות החברה.</li>
+          </ul>
+        </article>
+      </div>
+    </div>
+
+    <div class="group" id="methodology-scans">
+      <h3 class="group-title"><span class="section-icon" aria-hidden="true"><svg class="icon"><use href="#i-sliders" /></svg></span>מצבי סריקה</h3>
+      <div class="meth-grid meth-grid-2">
+        <article class="panel meth-card">
+          <h4>Momentum / Market <span class="meth-tag">מהיר</span></h4>
+          <p>בקשה אחת לכל מניה (נתוני שוק בלבד). הציון (0–100) משקף גודל, נזילות ומיקום המחיר ביחס לממוצעים נעים ולטווח 52 השבועות. <strong>זו תמונת מצב של שוק, לא אסטרטגיית ערך.</strong></p>
+        </article>
+        <article class="panel meth-card">
+          <h4>Deep Scan <span class="meth-tag">מלא</span></h4>
+          <p>כ-10 בקשות למניה: דוחות, יחסים ותזרים. רק כאן אפשר להעריך את שבע האסטרטגיות ואת ה-DCF. מתאים לרשימה קצרה.</p>
+        </article>
+        <article class="panel meth-card">
+          <h4>Two-stage — Quick then Deep</h4>
+          <p>שלב 1 סורק מהר רשימה גדולה (עד 200 מניות) ומדרג מועמדות. שלב 2 מריץ Deep Scan רק על ה-Top N. הדירוג בשלב 1 הוא סדר עדיפויות מעשי ולא מתודולוגיה, והוא נוטה להעדיף מניות גדולות ובמגמת עלייה. שורות של שלב 1 בלבד מסומנות "Preliminary".</p>
+        </article>
+        <article class="panel meth-card">
+          <h4>Yahoo Finance Experimental</h4>
+          <p>נתוני שוק בלבד, לבדיקה בדפדפן. לרוב חסום על ידי CORS ואינו תחליף אמין ל-FMP. אין Deep Scan ואין Two-stage עם Yahoo.</p>
+        </article>
+      </div>
+    </div>
+
+    <div class="group" id="methodology-confidence">
+      <h3 class="group-title"><span class="section-icon" aria-hidden="true"><svg class="icon"><use href="#i-database" /></svg></span>Data Confidence: למה נתונים חסרים מורידים ביטחון</h3>
+      <div class="panel panel-accent meth-card">
+        <p>Data Confidence הוא אחוז השדות שהתקבלו מתוך 19 השדות שהכלי משתמש בהם: מחיר, שווי שוק ונפח (שדות ליבה), יחסי הערכה ורווחיות, ורכיבי דוחות כספיים.</p>
+        <ul>
+          <li>בדיקה שחסר לה נתון <strong>לא נספרת ככישלון</strong>; היא מוסרת מהחישוב וקטגוריה ללא בדיקות מוצגת "חסר".</li>
+          <li>לכן קטגוריה עם בדיקה אחת בלבד יכולה להראות 0% או 100%. זו הסיבה שיש להסתכל גם על רמת הביטחון.</li>
+          <li>רק מניה עם לפחות 70% מהשדות <strong>וללא שדה ליבה חסר</strong> יכולה לקבל את התווית "מועמדת חזקה".</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="group" id="methodology-dcf">
+      <h3 class="group-title"><span class="section-icon" aria-hidden="true"><svg class="icon"><use href="#i-scale" /></svg></span>DCF, Estimated Fair Value ו-Margin of Safety</h3>
+      <div class="panel meth-card">
+        <p>הערכת שווי פשוטה על בסיס תזרים מזומנים חופשי (FCF). היא <strong>מידע בלבד ואינה נכנסת לציון הכולל</strong>.</p>
+        <ul>
+          <li><strong>בסיס:</strong> ממוצע של עד 5 שנות FCF, אחרת ה-FCF האחרון.</li>
+          <li><strong>צמיחה:</strong> מהיסטוריית FCF, מצמיחת FCF או מצמיחת הכנסות, וחסומה בין 0% ל-8%.</li>
+          <li><strong>הנחות ברירת מחדל:</strong> שיעור היוון 10%, צמיחה סופית 2.5%, 5 שנות תחזית, מרווח ביטחון נדרש 25%. כולן ניתנות לשינוי בהגדרות.</li>
+          <li><strong>Margin of Safety:</strong> ההנחה של המחיר מהשווי ההוגן, (שווי הוגן − מחיר) ÷ שווי הוגן. הבדיקה עוברת כשההנחה גדולה מהנדרש.</li>
+          <li><strong>לא מחושב</strong> כשחסר FCF חיובי או מספר מניות, או כששיעור ההיוון אינו גדול מהצמיחה הסופית.</li>
+        </ul>
+        <p class="meth-note">אין התאמה לחוב נטו או למזומן, וצמיחה אחת חלה על כל השנים. התוצאה רגישה מאוד לשיעור ההיוון ולצמיחה הסופית, ולכן יש להתייחס אליה כהערכה גסה.</p>
+      </div>
+    </div>
+
+    <div class="group" id="methodology-strategies">
+      <h3 class="group-title"><span class="section-icon" aria-hidden="true"><svg class="icon"><use href="#i-list" /></svg></span>שבע האסטרטגיות</h3>
+      <p class="group-footer meth-intro">כל אסטרטגיה היא רשימת בדיקות עובר / נכשל. התוצאה היא אחוז הבדיקות שעברו מתוך אלה שהיה אפשר להעריך. הרשימות כאן מקוצרות; הטבלה המלאה בקוד ובמסמך.</p>
+      <div class="meth-grid meth-grid-2">
+        <article class="panel meth-card">
+          <h4>Graham <span class="meth-tag">בהשראת</span></h4>
+          <p>גישת המשקיע הזהיר: גודל, מאזן חזק, מחיר סביר.</p>
+          <ul>
+            <li>הכנסות שנתיות מעל 350 מיליון דולר</li>
+            <li>Current Ratio מעל 2; הון חוזר גדול מחוב ארוך טווח</li>
+            <li>P/E בין 5 ל-15 (עד 25 בטכנולוגיה / פארמה); P/E × P/B מתחת ל-22</li>
+            <li>צמיחה מצטברת ברווח למניה מעל 30%</li>
+          </ul>
+        </article>
+        <article class="panel meth-card">
+          <h4>Fisher <span class="meth-tag">בהשראת</span></h4>
+          <p>איכות וצמיחה. הגישה המקורית ברובה איכותית, כאן רק החלק שנמדד.</p>
+          <ul>
+            <li>זולה לפי 2 מתוך 3: P/E, P/E × P/B, P/S מתחת ל-1.5</li>
+            <li>שולי רווח נקי מעל 8% (15% בטכנולוגיה / פארמה)</li>
+            <li>צמיחה שנתית (CAGR) ברווח למניה מעל 15%</li>
+            <li>Debt/Equity מתחת ל-0.4; FCF למניה חיובי</li>
+          </ul>
+        </article>
+        <article class="panel meth-card">
+          <h4>Cash Flow <span class="meth-tag">איכות רווחים</span></h4>
+          <p>האם הרווחים נתמכים במזומן.</p>
+          <ul>
+            <li>תזרים תפעולי חיובי; תזרים השקעות שלילי; תזרים מימון שלילי</li>
+            <li>תזרים תפעולי לפחות כרווח הנקי</li>
+            <li>FCF חיובי</li>
+            <li>יחס Sloan בין −10% ל-+10%</li>
+          </ul>
+        </article>
+        <article class="panel meth-card">
+          <h4>Buffett <span class="meth-tag">בהשראת</span></h4>
+          <p>אותות איכות שניתנים למדידה בלבד, לא יתרון תחרותי.</p>
+          <ul>
+            <li>CAGR ברווח למניה חיובי</li>
+            <li>ROE מעל 15%; ROA מעל 12%</li>
+            <li>FCF חיובי</li>
+            <li>רווח נקי מצטבר של עד 5 שנים גדול מהחוב ארוך הטווח</li>
+          </ul>
+        </article>
+        <article class="panel meth-card">
+          <h4>Piotroski F-score <span class="meth-tag">קירוב</span></h4>
+          <p>תשע בדיקות של שיפור בין השנה האחרונה לקודמת, מוצג כ-x/9 (7 ומעלה ירוק).</p>
+          <ul>
+            <li>רווחיות: ROA חיובי ומשתפר; תזרים תפעולי חיובי ולפחות כרווח הנקי</li>
+            <li>מינוף ונזילות: חוב ביחס לנכסים ירד; Current Ratio השתפר; אין דילול מניות</li>
+            <li>יעילות: שולי רווח גולמי ומחזור נכסים השתפרו</li>
+          </ul>
+          <p class="meth-note">כאן בדיקה שחסר לה נתון נספרת כ-0, בניגוד לשאר הקטגוריות. נדרשות שנתיים של דוחות.</p>
+        </article>
+        <article class="panel meth-card">
+          <h4>Dreman <span class="meth-tag">יחסית</span></h4>
+          <p>גישה קונטרריאנית של מכפילים נמוכים, <strong>ביחס למניות שנסרקו ברשימה</strong>.</p>
+          <ul>
+            <li>לפחות 2 מכפילים (P/E, P/B, P/OCF) ב-80% או פחות מהממוצע, או תשואת דיבידנד לפחות כממוצע</li>
+            <li>שווי שוק מעל הסף; Current Ratio מעל 2</li>
+            <li>ROE מעל 10%; Debt/Equity מתחת ל-0.5; CAGR חיובי</li>
+          </ul>
+        </article>
+        <article class="panel meth-card">
+          <h4>Neff <span class="meth-tag">יחסית</span></h4>
+          <p>P/E נמוך, צמיחה מתונה ותשואה כוללת, גם כן ביחס לרשימה הנסרקת.</p>
+          <ul>
+            <li>P/E ב-60% או פחות מהממוצע</li>
+            <li>צמיחה (CAGR) בין 7% ל-22%, ותמיכה בצמיחת הכנסות</li>
+            <li>FCF חיובי; תשואה כוללת ביחס ל-P/E; דיבידנד מעל 4%</li>
+          </ul>
+        </article>
+      </div>
+      <p class="group-footer"><strong>על ההשוואה היחסית:</strong> Dreman ו-Neff משווים את המניה לעמיתים <em>בסריקה הנוכחית בלבד</em> (ענף, אחרת סקטור, אחרת כל הרשימה; לפחות 3 עמיתים). זה לא ממוצע ענף או שוק אמיתי, ולכן סריקה של 10 מניות טכנולוגיה משווה כל אחת ל-9 האחרות.</p>
+    </div>
+
+    <div class="group" id="methodology-score">
+      <h3 class="group-title"><span class="section-icon" aria-hidden="true"><svg class="icon"><use href="#i-chart" /></svg></span>הציון והתווית: סינון ולא המלצה</h3>
+      <div class="panel panel-accent meth-card">
+        <p><strong>ציון כולל</strong> = 15% Momentum / Market + 85% ממוצע האסטרטגיות הזמינות. הוא מסדר מניות לבדיקה נוספת ואינו קובע אם מניה "טובה" או "זולה".</p>
+        <div class="meth-table-wrap">
+          <table class="meth-table">
+            <thead><tr><th>תווית</th><th>תנאי</th></tr></thead>
+            <tbody>
+              <tr><td><strong>מועמדת חזקה</strong></td><td>עברה את הסינון הבסיסי, Data Confidence חזק, ציון 75 ומעלה, ו-Cash Flow לפחות 60% (או חסר)</td></tr>
+              <tr><td><strong>Watchlist</strong></td><td>עברה סינון בסיסי וציון 55 ומעלה</td></tr>
+              <tr><td><strong>בדיקה ידנית</strong></td><td>עברה סינון בסיסי, ציון מתחת ל-55</td></tr>
+              <tr><td><strong>נפסלה</strong></td><td>לא עברה את הסינון הבסיסי (מחיר, נפח ושווי שוק מינימליים)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="group" id="methodology-limitations">
+      <h3 class="group-title"><span class="section-icon" aria-hidden="true"><svg class="icon"><use href="#i-funnel" /></svg></span>מגבלות, מקורות נתונים ואזהרה</h3>
+      <div class="meth-grid meth-grid-2">
+        <article class="panel meth-card">
+          <h4>מגבלות נתונים</h4>
+          <ul>
+            <li>עד 5 שנות דוחות שנתיים, לא עשורים.</li>
+            <li>שמות ופורמטים של שדות משתנים בין נקודות קצה ותוכניות FMP; נקודות קצה מוגבלות משאירות קטגוריות ריקות.</li>
+            <li>יחסי TTM ודוחות שנתיים יכולים להגיע מתקופות שונות.</li>
+            <li>אין המרת מטבע לחברות לא אמריקאיות.</li>
+            <li>נתונים במטמון יכולים להיות בני עד 7 ימים (מחירים: 10 דקות).</li>
+            <li>זיהוי "אמריקאית" וטכנולוגיה / פארמה מבוסס מילות מפתח.</li>
+          </ul>
+        </article>
+        <article class="panel meth-card meth-warning">
+          <h4>לימוד בלבד, לא ייעוץ השקעות</h4>
+          <p>הכלי נועד ללמידה וסינון ראשוני. אין בו ייעוץ השקעות, המלצה או הצעה לקנות או למכור נייר ערך, וציון גבוה אינו אומר שמניה טובה, זולה או בטוחה. יש לבדוק כל מניה בדוחות החברה ולהתייעץ עם איש מקצוע מוסמך לפני החלטה.</p>
+        </article>
+      </div>
     </div>
   </section>
   </div>

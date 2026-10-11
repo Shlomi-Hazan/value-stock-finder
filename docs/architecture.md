@@ -224,9 +224,11 @@ flowchart TD
 
 There is no routing. Every control is always in the DOM and always visible, apart from the collapsed `<details>` sections.
 
+**Methodology screen (PR #15):** a third `<div class="screen" data-screen="methodology">` (`#shell-screen-methodology`) holds static, hand-written Hebrew content: overview, scan modes, Data Confidence, DCF, the seven strategies, score and decision, limitations. Its only code change is one entry in `SHELL_ROUTES` in `js/shell.js`. Section anchors `#methodology-overview`, `-scans`, `-confidence`, `-dcf`, `-strategies`, `-score` and `-limitations` open the screen like any element hash. The content condenses [investment-methodology.md](investment-methodology.md), so a rule change updates both. It reads no scan data and adds no scripts, handlers or storage.
+
 **Implemented in PR #11 (stage 1 of [ADR-0005](decisions/ADR-0005-app-shell-navigation-plan.md)):**
 
-- **Sticky shell bar** under the header, with a segmented nav: **הגדרת סריקה** `#/setup` and **תוצאות** `#/results`.
+- **Sticky shell bar** under the header, with a segmented nav: **הגדרת סריקה** `#/setup` and **תוצאות** `#/results`, plus **מתודולוגיה** `#/methodology` (PR #15).
 - **Two screens,** `#shell-screen-setup` (hero, workflow strip, all settings, action dock) and `#shell-screen-results` (summary, Two-stage summary, tabs, table, Export CSV). They are `<div class="screen" data-screen>` wrappers toggled with `hidden`. Every original element and ID sits inside, unchanged.
 - **Routing:** an empty or unknown hash shows Setup. Element hashes such as `#sec-scan` open the screen that contains them, then scroll and focus. `hashchange` drives Back/Forward.
 - **Global scan bar:**
@@ -246,7 +248,7 @@ There is no routing. Every control is always in the DOM and always visible, apar
 - **A global scan bar** mirrors `#status` and offers Stop through the existing `requestStopScan()`, so scan feedback is never hidden.
 - **One new classic script,** `js/shell.js`, loaded after `app.js`. The existing 12 scripts, all IDs, the inline handlers and the `localStorage` keys stay unchanged.
 - **The architecture stays the same:** static files, no build, no dependencies, no framework, no backend.
-- **Staged rollout:** PR #11 (shell + Setup/Results, done), then Methodology, Results UX and Settings & tools as future PRs (numbers not assigned; see [roadmap.md](roadmap.md)).
+- **Staged rollout:** PR #11 (shell + Setup/Results, done), then Methodology (done in PR #15), and Results UX and Settings & tools as future PRs (numbers not assigned; see [roadmap.md](roadmap.md)).
 
 ## 7. Future architecture options (not implemented)
 

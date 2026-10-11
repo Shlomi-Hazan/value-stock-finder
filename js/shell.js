@@ -1,11 +1,11 @@
-// Value Stock Finder: App shell (ADR-0005, stage 1): hash navigation between the Setup and Results screens,
+// Value Stock Finder: App shell (ADR-0005): hash navigation between the Setup, Results and Methodology screens,
 // and a global scan bar that mirrors #status and offers Stop on every screen.
 // Classic script, loaded after app.js and self-initializing (a documented exception to ADR-0004's
 // "only app.js runs code at load time" rule, so no existing script has to change).
 // It only observes existing elements and calls the existing global requestStopScan(); it never
 // touches scanning, scoring, providers, caching, rendering or localStorage.
 
-const SHELL_ROUTES = { "#/setup": "setup", "#/results": "results" };
+const SHELL_ROUTES = { "#/setup": "setup", "#/results": "results", "#/methodology": "methodology" };
 const SHELL_DEFAULT_SCREEN = "setup";
 const SHELL_BASE_TITLE = document.title;
 const shellScrollMemory = {};
