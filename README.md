@@ -83,7 +83,7 @@ flowchart LR
 ```
 
 - **Static files:** `index.html` (markup), `styles.css`, and 13 classic scripts in `js/` loaded in a fixed order with `defer`. No bundler, no modules, no build step.
-- **App shell:** three screens, **Setup** (`#/setup`), **Results** (`#/results`) and **Methodology** (`#/methodology`, an in-app explanation of the rules, confidence, DCF and limits), switched by hash navigation, with a global scan bar that shows progress and Stop on every screen ([ADR-0005](docs/decisions/ADR-0005-app-shell-navigation-plan.md)).
+- **App shell:** four screens, **Setup** (`#/setup`), **Results** (`#/results`), **Methodology** (`#/methodology`, an in-app explanation of the rules, confidence, DCF and limits) and **Settings & Tools** (`#/settings`: provider, API key, connection tests, Cache), switched by hash navigation, with a global scan bar that shows progress and Stop on every screen ([ADR-0005](docs/decisions/ADR-0005-app-shell-navigation-plan.md)).
 - **Browser-only runtime:** every API call goes directly from your browser to the data provider.
 - **State:** in memory during a scan, plus `localStorage` for the API key, the selected provider and the response cache.
 
@@ -101,8 +101,8 @@ See [docs/api-integrations.md](docs/api-integrations.md) and [ADR-0002](docs/dec
 ## 🔑 FMP Setup
 
 1. Create an account at Financial Modeling Prep and copy your API key.
-2. Open the app and paste the key into **API Key (FMP)**.
-3. Click **בדוק endpoints על AAPL** ("test endpoints on AAPL") to see which endpoints your plan allows.
+2. Open the app, go to the **הגדרות וכלים** (Settings & Tools) tab and paste the key into **API Key (FMP)**.
+3. In the same tab, click **בדוק endpoints על AAPL** ("test endpoints on AAPL") to see which endpoints your plan allows.
 4. The key is saved to your browser's `localStorage` the first time you run a scan or a test. Use **נקה API Key שמור** ("clear saved API key") to remove it.
 
 > The key is sent as a URL query parameter on every FMP request, and it is visible in browser dev tools. Read [Security & Privacy](#-security--privacy) before using a key you care about.
@@ -135,14 +135,14 @@ Then open <http://localhost:8000/>. A real `http://` origin behaves more predict
 
 ## 🧭 How to Use
 
-The settings page is grouped in the order you use it: **מקור נתונים** (data source), **מניות לבדיקה** (stocks to check), **מצב סריקה** (scan mode), two collapsed advanced sections (**סינון בסיסי** basic filters, and DCF assumptions), then the actions.
+The scan setup is grouped in the order you use it: a one-line summary of the provider and key (set on **הגדרות וכלים**), **מניות לבדיקה** (stocks to check), **מצב סריקה** (scan mode), two collapsed advanced sections (**סינון בסיסי** basic filters, and DCF assumptions), then the actions.
 
 1. Keep **Data Provider** on **Financial Modeling Prep**.
 2. Enter your FMP API key.
 3. Choose a preset list, or pick **ידני** (manual) and type symbols such as `AAPL, MSFT, KO`.
 4. Choose a scan mode (see below) and review the **request preview** under the buttons. For larger lists, choose **Two-stage scan** and set *Stage 1 max symbols* and *Deep Scan Top N*.
 5. Optionally open **סינון בסיסי** (basic filters: minimum market cap, volume, price) or the DCF assumptions section, and adjust them. Both are collapsed by default.
-6. Click the green **סרוק מניות** (scan stocks) button. Use **עצור סריקה** (stop scan) to stop before the next symbol. The connection tests, export and cache tools, and **נקה API Key שמור** (clear saved API key) are grouped below it.
+6. Click the green **סרוק מניות** (scan stocks) button. Use **עצור סריקה** (stop scan) to stop before the next symbol. The connection tests, the cache tool and **נקה API Key שמור** (clear saved API key) are on the **הגדרות וכלים** tab, and the export buttons are on Results.
 7. On the **תוצאות** (Results) screen, read the summary, filter the table tabs (All / Strong / Watchlist / Rejected) and click **פתח פירוט** (open details) on any row to see its full breakdown in a dialog.
 8. Open the **תוצאות** (Results) tab to read the results, and click **ייצא CSV**, **ייצא XLSX** or **ייצא PDF** (export CSV / XLSX / PDF) there to export. Scans never switch screens on their own: a bar under the tabs shows progress and Stop, and a dot marks the Results tab when new results are ready.
 
@@ -233,7 +233,8 @@ Full details: [docs/security.md](docs/security.md)
 | M9 App shell: Setup + Results screens, global scan bar | ✅ Done |
 | M10 Results details dialog + XLSX/PDF exports | ✅ Done |
 | M11 Methodology screen | ✅ Done |
-| M12–M13 Results UX, Settings & tools screens | 🗓 Planned |
+| M12 Results UX refinement | 🗓 Planned |
+| M13 Settings & Tools screen (provider, API key, tests, Cache moved from Setup) | ✅ Done |
 | Automatic universe discovery, TASE, global, tests/CI, optional backend | 🗓 Planned / Future |
 
 Full roadmap: [docs/roadmap.md](docs/roadmap.md)

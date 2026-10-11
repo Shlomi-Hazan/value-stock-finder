@@ -94,6 +94,9 @@
     <a class="shell-tab" id="shell-tab-methodology" href="#/methodology" data-route="methodology">
       <svg class="icon" aria-hidden="true"><use href="#i-scale" /></svg>מתודולוגיה
     </a>
+    <a class="shell-tab" id="shell-tab-settings" href="#/settings" data-route="settings">
+      <svg class="icon" aria-hidden="true"><use href="#i-sliders" /></svg>הגדרות וכלים
+    </a>
   </nav>
   <div class="shell-scanbar" id="shell-scanbar" hidden>
     <span class="shell-spinner" id="shell-spinner" aria-hidden="true"></span>
@@ -110,35 +113,12 @@
   <section class="settings" aria-labelledby="settingsTitle">
     <h2 id="settingsTitle" class="settings-title">הגדרות סריקה</h2>
 
-    <!-- A. Data source -->
-    <div class="group" id="sec-source">
-      <h3 class="group-title"><span class="section-icon" aria-hidden="true"><svg class="icon"><use href="#i-database" /></svg></span>מקור נתונים</h3>
-      <div class="panel panel-accent">
-        <div class="fields fields-2">
-          <label class="field">
-            <span class="field-label">Data Provider</span>
-            <select id="dataProvider" onchange="onProviderChange()">
-              <option value="fmp">Financial Modeling Prep</option>
-              <option value="yahoo">Yahoo Finance Experimental / Browser test only</option>
-            </select>
-          </label>
-
-          <label class="field">
-            <span class="field-label">API Key (FMP)</span>
-            <input type="password" id="apiKey" placeholder="הדבק כאן את ה־API Key שלך" />
-            <span class="hint">נשמר רק בדפדפן שלך (Local Storage). אל תעלה מפתח אמיתי לריפו או לאתר ציבורי.</span>
-          </label>
-        </div>
-
-        <div id="providerWarning" class="notice warning" style="display:none; margin-top:14px;">
-          ⚠️ <b dir="ltr">Yahoo Finance Experimental / Browser test only: Yahoo requests are likely to be blocked by browser/CORS in this static HTML app. This provider is included only as an experimental connectivity test. Use FMP for real scans, Deep Scan, fundamentals, and DCF.</b><br />
-          <span dir="ltr">Quote-level data only. Not an official unlimited API.</span><br />
-          ספק ניסיוני לבדיקת חיבור בלבד — סביר שייחסם בדפדפן ואינו תחליף ל־FMP. גם אם יעבוד: מחיר, שינוי יומי, Volume, טווח שנתי וממוצעים נעים בלבד. אין Market Cap, דוחות כספיים או DCF, ולכן רוב המניות לא יעברו סינון בסיסי. לא נדרש API Key.
-        </div>
+    <!-- A. Data source: the controls live on the Settings & Tools screen (#settings-provider) -->
+    <div class="group" id="shell-source-note">
+      <div class="panel panel-accent source-note">
+        <p class="source-note-text"><span class="source-note-item"><span class="source-note-label">Data Provider</span> <strong id="shell-source-provider">-</strong></span><span class="source-note-item"><span class="source-note-label">API Key</span> <strong id="shell-source-key">-</strong></span></p>
+        <a class="btn btn-quiet source-note-link" href="#settings-provider">שינוי ספק ומפתח API בהגדרות וכלים</a>
       </div>
-      <p class="group-footer">
-        האתר מנסה להביא גם נתוני עומק פיננסיים. אם המנוי שלך ב־FMP חוסם endpoint מסוים, האתר לא יקרוס — הוא יסמן את הנתון כחסר וימשיך לפי מה שכן זמין.
-      </p>
     </div>
 
     <!-- B. Stock universe -->
@@ -275,29 +255,6 @@
         <div class="scan-console" aria-live="polite">
           <div id="requestPreview" class="small" style="white-space: pre-line;"></div>
           <div id="status" class="status"></div>
-          <div id="endpointStatus" class="small"></div>
-        </div>
-
-        <div class="action-groups">
-          <div class="action-group" role="group" aria-label="בדיקות חיבור">
-            <span class="action-group-label">בדיקות חיבור</span>
-            <div class="actions">
-              <button class="btn btn-quiet" onclick="testEndpoints()">בדוק endpoints על AAPL</button>
-              <button class="btn btn-quiet" onclick="testSelectedProvider()">בדוק ספק נבחר (AAPL)</button>
-            </div>
-          </div>
-          <div class="action-group" role="group" aria-label="Cache">
-            <span class="action-group-label">Cache</span>
-            <div class="actions">
-              <button class="btn btn-quiet" onclick="clearCache()">נקה Cache</button>
-            </div>
-          </div>
-          <div class="action-group" role="group" aria-label="מפתח API">
-            <span class="action-group-label">מפתח API</span>
-            <div class="actions">
-              <button class="btn btn-danger" onclick="clearApiKey()">נקה API Key שמור</button>
-            </div>
-          </div>
         </div>
       </div>
       <p class="group-footer">
@@ -590,6 +547,106 @@
           <p>הכלי נועד ללמידה וסינון ראשוני. אין בו ייעוץ השקעות, המלצה או הצעה לקנות או למכור נייר ערך, וציון גבוה אינו אומר שמניה טובה, זולה או בטוחה. יש לבדוק כל מניה בדוחות החברה ולהתייעץ עם איש מקצוע מוסמך לפני החלטה.</p>
         </article>
       </div>
+    </div>
+  </section>
+  </div>
+
+  <!-- Screen: Settings & Tools (#/settings) -->
+  <div class="screen" id="shell-screen-settings" data-screen="settings" data-title="הגדרות וכלים" hidden>
+  <section class="settings" aria-labelledby="settingsToolsTitle">
+    <h2 id="settingsToolsTitle" class="settings-title">הגדרות וכלים</h2>
+    <p class="meth-lead">כאן נמצאים ספק הנתונים, מפתח ה־API, בדיקות החיבור וכלי ה־Cache. הם נשמרים בדפדפן ומשותפים לכל הסריקות. את הסריקה עצמה מגדירים ומפעילים במסך <a href="#/setup">הגדרת סריקה</a>.</p>
+    <nav class="meth-toc" aria-label="תוכן העניינים של הגדרות וכלים">
+      <a href="#settings-provider">ספק ומפתח API</a>
+      <a href="#settings-checks">בדיקות חיבור</a>
+      <a href="#settings-cache">Cache</a>
+      <a href="#settings-preview">הערכת בקשות</a>
+      <a href="#settings-data">ייצוא נתונים</a>
+    </nav>
+    <div class="scan-console settings-feedback" aria-live="off">
+      <div id="shell-settings-status" class="status" role="status" aria-live="polite"></div>
+    </div>
+
+    <!-- A. Data source -->
+    <div class="group" id="sec-source">
+    <div id="settings-provider" class="settings-anchor">
+      <h3 class="group-title"><span class="section-icon" aria-hidden="true"><svg class="icon"><use href="#i-database" /></svg></span>מקור נתונים ומפתח API</h3>
+      <div class="panel panel-accent">
+        <div class="fields fields-2">
+          <label class="field">
+            <span class="field-label">Data Provider</span>
+            <select id="dataProvider" onchange="onProviderChange()">
+              <option value="fmp">Financial Modeling Prep</option>
+              <option value="yahoo">Yahoo Finance Experimental / Browser test only</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span class="field-label">API Key (FMP)</span>
+            <input type="password" id="apiKey" placeholder="הדבק כאן את ה־API Key שלך" />
+            <span class="hint">נשמר רק בדפדפן שלך (Local Storage). אל תעלה מפתח אמיתי לריפו או לאתר ציבורי.</span>
+          </label>
+        </div>
+
+        <div id="providerWarning" class="notice warning" style="display:none; margin-top:14px;">
+          ⚠️ <b dir="ltr">Yahoo Finance Experimental / Browser test only: Yahoo requests are likely to be blocked by browser/CORS in this static HTML app. This provider is included only as an experimental connectivity test. Use FMP for real scans, Deep Scan, fundamentals, and DCF.</b><br />
+          <span dir="ltr">Quote-level data only. Not an official unlimited API.</span><br />
+          ספק ניסיוני לבדיקת חיבור בלבד — סביר שייחסם בדפדפן ואינו תחליף ל־FMP. גם אם יעבוד: מחיר, שינוי יומי, Volume, טווח שנתי וממוצעים נעים בלבד. אין Market Cap, דוחות כספיים או DCF, ולכן רוב המניות לא יעברו סינון בסיסי. לא נדרש API Key.
+        </div>
+        <div class="action-group settings-key-actions" role="group" aria-label="מפתח API">
+          <span class="action-group-label">מפתח API שמור</span>
+          <div class="actions">
+            <button class="btn btn-danger" onclick="clearApiKey()">נקה API Key שמור</button>
+          </div>
+        </div>
+      </div>
+      <p class="group-footer">
+        Financial Modeling Prep (FMP) הוא הספק הראשי; Yahoo Finance Experimental הוא ניסיוני, לבדיקת דפדפן בלבד. המפתח נשמר ב־localStorage של דפדפן זה בלבד, ו"נקה API Key שמור" מוסר אותו משם ומהשדה.<br />
+        האתר מנסה להביא גם נתוני עומק פיננסיים. אם המנוי שלך ב־FMP חוסם endpoint מסוים, האתר לא יקרוס — הוא יסמן את הנתון כחסר וימשיך לפי מה שכן זמין.
+      </p>
+    </div>
+    </div>
+
+    <div class="group" id="settings-checks">
+      <h3 class="group-title"><span class="section-icon" aria-hidden="true"><svg class="icon"><use href="#i-funnel" /></svg></span>בדיקות חיבור</h3>
+      <div class="panel">
+        <div class="action-group" role="group" aria-label="בדיקות חיבור">
+          <div class="actions">
+            <button class="btn btn-quiet" onclick="testEndpoints()">בדוק endpoints על AAPL</button>
+            <button class="btn btn-quiet" onclick="testSelectedProvider()">בדוק ספק נבחר (AAPL)</button>
+          </div>
+        </div>
+        <div id="endpointStatus" class="small"></div>
+      </div>
+      <p class="group-footer">הבדיקה שולחת בקשה אחת לכל endpoint (או בקשת Quote אחת לספק הנבחר) עבור AAPL, ומראה אילו נתונים זמינים במנוי שלך. כל בקשה נספרת מול מגבלת ה־API, ותוצאה שנשמרה ב־Cache לא נשלחת שוב. הבדיקות דורשות מפתח FMP, והבדיקה של Yahoo Experimental עשויה להיחסם בדפדפן.</p>
+    </div>
+
+    <div class="group" id="settings-cache">
+      <h3 class="group-title"><span class="section-icon" aria-hidden="true"><svg class="icon"><use href="#i-database" /></svg></span>Cache</h3>
+      <div class="panel">
+        <div class="action-group" role="group" aria-label="Cache">
+          <div class="actions">
+            <button class="btn btn-quiet" onclick="clearCache()">נקה Cache</button>
+          </div>
+        </div>
+      </div>
+      <p class="group-footer">תגובות הספק נשמרות ב־localStorage כדי לחסוך קריאות API: מחירי Quote ל־10 דקות, נתוני יסוד (דוחות ויחסים) ל־7 ימים. "נקה Cache" מוחק את כל הערכים של FMP ו־Yahoo ומכריח קריאות חדשות בסריקה הבאה, ולכן יעלה בבקשות API.</p>
+    </div>
+
+    <div class="group" id="settings-preview">
+      <h3 class="group-title"><span class="section-icon" aria-hidden="true"><svg class="icon"><use href="#i-list" /></svg></span>הערכת בקשות API</h3>
+      <div class="panel">
+        <div id="shell-settings-preview" class="small" style="white-space: pre-line;"></div>
+      </div>
+      <p class="group-footer">עותק של הערכת הבקשות מהמסך הראשי, לפי המניות, מצב הסריקה והספק שנבחרו. Deep Scan שולח כ־10 בקשות לכל מניה (Quote ועוד 9 נתוני יסוד), ו־Two-stage מוסיף Quote לכל מניה בשלב 1 ואז Deep רק למועמדות המובילות. הערכים הם מקסימום לפני Cache.</p>
+    </div>
+
+    <div class="group" id="settings-data">
+      <h3 class="group-title"><span class="section-icon" aria-hidden="true"><svg class="icon"><use href="#i-export" /></svg></span>ייצוא נתונים</h3>
+      <div class="panel">
+        <p class="settings-note">כפתורי הייצוא נמצאים במסך <a href="#/results">תוצאות</a>: <strong>CSV</strong>, <strong>XLSX</strong> ו־<strong>PDF</strong>. הם מייצאים את תוצאות הסריקה האחרונה, ואין בהם הגדרות.</p>
+      </div>
+      <p class="group-footer">מפתח ה־API נשמר ב־localStorage של הדפדפן הזה בלבד ואינו נכלל בקבצי הייצוא.</p>
     </div>
   </section>
   </div>

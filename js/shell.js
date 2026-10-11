@@ -1,11 +1,11 @@
-// Value Stock Finder: App shell (ADR-0005): hash navigation between the Setup, Results and Methodology screens,
+// Value Stock Finder: App shell (ADR-0005): hash navigation between the Setup, Results, Methodology and Settings & Tools screens,
 // and a global scan bar that mirrors #status and offers Stop on every screen.
 // Classic script, loaded after app.js and self-initializing (a documented exception to ADR-0004's
 // "only app.js runs code at load time" rule, so no existing script has to change).
 // It only observes existing elements and calls the existing global requestStopScan(); it never
 // touches scanning, scoring, providers, caching, rendering or localStorage.
 
-const SHELL_ROUTES = { "#/setup": "setup", "#/results": "results", "#/methodology": "methodology" };
+const SHELL_ROUTES = { "#/setup": "setup", "#/results": "results", "#/methodology": "methodology", "#/settings": "settings" };
 const SHELL_DEFAULT_SCREEN = "setup";
 const SHELL_BASE_TITLE = document.title;
 const shellScrollMemory = {};
@@ -141,6 +141,29 @@ function shellOnScanButtonChange() {
   shellUpdateScanBar();
 }
 
+/* ---------- Settings & Tools mirrors ---------- */
+
+// The provider, API key and tool controls live on the Settings screen, while #status and
+// #requestPreview stay in the Setup scan console. These shell-owned copies keep their text visible
+// on Settings, and a one-line summary on Setup shows which provider and key a scan will use.
+function shellUpdateSettingsMirrors() {
+  const status = document.getElementById("status");
+  const mirror = document.getElementById("shell-settings-status");
+  mirror.className = status.className;
+  mirror.textContent = status.textContent;
+  document.getElementById("shell-settings-preview").textContent = document.getElementById("requestPreview").textContent;
+}
+
+function shellUpdateSourceNote() {
+  const provider = document.getElementById("dataProvider");
+  const key = document.getElementById("apiKey");
+  const needsKey = PROVIDERS[getSelectedProvider()].needsApiKey;
+  document.getElementById("shell-source-provider").textContent = provider.options[provider.selectedIndex].text;
+  const keyEl = document.getElementById("shell-source-key");
+  keyEl.textContent = !needsKey ? "לא נדרש" : key.value.trim() ? "הוזן" : "חסר";
+  keyEl.classList.toggle("source-note-missing", needsKey && !key.value.trim());
+}
+
 function initShell() {
   const statusEl = document.getElementById("status");
   const scanButton = document.getElementById("scanButton");
@@ -149,6 +172,14 @@ function initShell() {
   new MutationObserver(shellUpdateScanBar).observe(statusEl, { childList: true, characterData: true, subtree: true });
   new MutationObserver(shellOnScanButtonChange).observe(scanButton, { attributes: true, attributeFilter: ["disabled"] });
   new MutationObserver(shellUpdateResultsEmptyHint).observe(tbody, { childList: true });
+  new MutationObserver(shellUpdateSettingsMirrors).observe(statusEl, { childList: true, characterData: true, subtree: true, attributes: true, attributeFilter: ["class"] });
+  new MutationObserver(shellUpdateSettingsMirrors).observe(document.getElementById("requestPreview"), { childList: true, characterData: true, subtree: true });
+  document.getElementById("dataProvider").addEventListener("change", shellUpdateSourceNote);
+  document.getElementById("apiKey").addEventListener("input", shellUpdateSourceNote);
+  // clearApiKey() empties the field from code, which fires no input event; its status message does mutate #status.
+  new MutationObserver(shellUpdateSourceNote).observe(statusEl, { childList: true, characterData: true, subtree: true });
+  shellUpdateSettingsMirrors();
+  shellUpdateSourceNote();
 
   document.getElementById("shell-stop").addEventListener("click", () => requestStopScan());
   document.getElementById("shell-dismiss").addEventListener("click", () => {

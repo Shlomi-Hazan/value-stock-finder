@@ -60,11 +60,11 @@ grep -n 'src="js/' index.html                            # script load order
 | `js/scan.js` | `estimateRequestPlan`, `estimateTwoStagePlan`, `readTwoStageSettings`, `scanStocks`, `requestStopScan`, `runTwoStageScan`, `rankStageOneCandidates`, `showTwoStageResults`, `testEndpoints`, `testSelectedProvider` |
 | `js/export.js` | `EXPORT_HEADERS`, `buildExportRows` (shared by all formats), `exportCSV`, `exportXLSX`, `exportPDF`, `setExportStatus`, on-demand `loadVendorBundle` for `vendor/` |
 | `js/app.js` | `initializePage`, `onProviderChange`, `loadPresetList`, `clearApiKey`, and the load-time call `initializePage()` |
-| `js/shell.js` | App shell (ADR-0005): hash router for `#/setup`, `#/results` and `#/methodology`, element-hash anchors, focus/title, the global scan bar (mirrors `#status`, Stop proxy calling `requestStopScan()`), the results-ready cue. Self-initializing, loaded last. It only observes the DOM; it never touches scan, scoring, cache or rendering. |
+| `js/shell.js` | App shell (ADR-0005): hash router for `#/setup`, `#/results`, `#/methodology` and `#/settings`, element-hash anchors, focus/title, the global scan bar (mirrors `#status`, Stop proxy calling `requestStopScan()`), the results-ready cue, the Settings status/preview mirrors and the Setup provider/key summary. Self-initializing, loaded last. It only observes the DOM; it never touches scan, scoring, cache or rendering. |
 
 Functions called from inline HTML handlers: `onProviderChange`, `loadPresetList`, `updateRequestPreview`, `scanStocks`, `requestStopScan`, `testEndpoints`, `testSelectedProvider`, `exportCSV`, `exportXLSX`, `exportPDF`, `clearCache`, `clearApiKey`, `setTableFilter`, `openRowDetails`, `closeRowDetails`, `onRowDetailsClosed`, `onRowDetailsBackdropClick`. Keep these names global. Do not name app globals `Table`, `Row`, `Column`, `Cell`, `autoTable` or `ExcelJS`: the export libraries define them.
 
-Screens: `index.html` wraps the setup flow in `#shell-screen-setup` and the summary and table in `#shell-screen-results` (`data-screen`, toggled with `hidden`). Shell-owned elements use the `shell-` ID prefix. When moving markup between screens, keep every ID and handler exactly once.
+Screens: `index.html` wraps the setup flow in `#shell-screen-setup`, the summary and table in `#shell-screen-results`, the explanation in `#shell-screen-methodology` and the provider, key, test and cache controls in `#shell-screen-settings` (`data-screen`, toggled with `hidden`). Shell-owned elements use the `shell-` ID prefix. When moving markup between screens, keep every ID and handler exactly once.
 
 ## 4. Preserving existing behavior
 
@@ -128,5 +128,6 @@ Follow [AGENTS.md §9](AGENTS.md#9-expected-final-response-format). Keep it fact
 | PR #13 `91332b7` | Fix false FMP rate-limit detection: only HTTP 429 or an explicit error field counts (never the data body); `clearCache()` collects keys before removing; malformed cache entries are ignored and removed. |
 | Fix: percent formatting | `formatPercentValue(v, true)` always scales a decimal by 100 (−1.01 → −101%); `false` shows an already-percent value as is. Display only. |
 | PR #15 | Methodology screen: `#/methodology`, the **מתודולוגיה** tab and static explanatory content (`#shell-screen-methodology`), plus one route entry in `js/shell.js`. No scoring, DCF, provider, scan, cache, export or vendor changes. |
+| PR #16 | Settings & Tools screen: `#/settings`, the **הגדרות וכלים** tab. Provider, API key, connection tests, Clear Cache and Clear API key moved from Setup with unchanged IDs and handlers; `shell.js` mirrors `#status` and `#requestPreview` there. No scoring, DCF, provider, scan, cache logic, export or vendor changes. |
 
 Details are in [docs/HISTORY.md](docs/HISTORY.md).
