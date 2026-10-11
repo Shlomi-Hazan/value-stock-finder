@@ -293,18 +293,57 @@ function onRowDetailsBackdropClick(event) {
   if (event.target === event.currentTarget) closeRowDetails();
 }
 
+// Results view (search + sort): display only. lastResults and allResults are never reordered or
+// filtered here, so exports and the summary keep using the stored result set.
+const RESULTS_SORT_VALUES = {
+  score: row => row.totalScore,
+  symbol: row => row.m.symbol,
+  price: row => row.m.price,
+  marketCap: row => row.m.marketCap,
+  confidence: row => row.dataConfidence?.pct,
+  upside: row => row.dcf?.upsidePct
+};
+
+function resultsSearchTerm() {
+  return (document.getElementById("resultsSearch")?.value || "").trim().toLowerCase();
+}
+
+// Returns a new array in display order: tab filter, then search, then sort. Missing values sort last.
+function resultsViewRows(term = resultsSearchTerm()) {
+  const sortKey = document.getElementById("resultsSort")?.value || "rank";
+  const tabRows = lastResults.filter(row => currentFilter === "all" || row.decision === currentFilter);
+  const rows = term
+    ? tabRows.filter(row => `${row.m.symbol || ""} ${row.m.name || ""}`.toLowerCase().includes(term))
+    : tabRows.slice();
+  const valueOf = RESULTS_SORT_VALUES[sortKey];
+  if (valueOf) {
+    rows.sort((a, b) => {
+      const x = valueOf(a), y = valueOf(b);
+      const xMissing = x === null || x === undefined || x === "";
+      const yMissing = y === null || y === undefined || y === "";
+      if (xMissing || yMissing) return xMissing === yMissing ? 0 : xMissing ? 1 : -1;
+      return sortKey === "symbol" ? String(x).localeCompare(String(y), "en") : y - x;
+    });
+  }
+  return { rows, tabCount: tabRows.length };
+}
+
+function onResultsSearchInput() { renderTable(); }
+function onResultsSortChange() { renderTable(); }
+
 function renderTable() {
   const tbody = document.getElementById("stocksTable");
-  const rows = lastResults.filter(row => {
-    if (currentFilter === "all") return true;
-    if (currentFilter === "strong") return row.decision === "strong";
-    if (currentFilter === "watch") return row.decision === "watch";
-    if (currentFilter === "reject") return row.decision === "reject";
-    return true;
-  });
+  const term = resultsSearchTerm();
+  const { rows, tabCount } = resultsViewRows(term);
+  const note = document.getElementById("resultsViewNote");
+  if (note) {
+    note.textContent = term && lastResults.length
+      ? `מציג ${rows.length} מתוך ${tabCount} תוצאות. הייצוא כולל את כל התוצאות השמורות, לא רק את התצוגה המסוננת.`
+      : "";
+  }
 
   if (!rows.length) {
-    tbody.innerHTML = `<tr><td colspan="36">אין תוצאות למסנן הזה</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="36">${term && tabCount ? "אין תוצאות התואמות לחיפוש" : "אין תוצאות למסנן הזה"}</td></tr>`;
     return;
   }
 

@@ -136,6 +136,12 @@ Click **סרוק מניות** (scan stocks). Click **עצור סריקה** (stop
 - **Watchlist**
 - **נפסלו** (rejected)
 
+**Search and sort** (under the tabs):
+
+- **חיפוש לפי סימול או שם חברה** (search by symbol or company) filters the rows as you type, inside the active tab. For example, on **Watchlist**, typing `ko` shows only the Watchlist rows whose symbol or company contains "ko". Clear the box to see the tab's rows again. While you search, a line shows "N of M" results.
+- **מיון** (sort) changes only the display order: default (rank), total score, symbol (A–Z), price, market cap, Data Confidence or DCF Upside. Numbers sort high to low, and rows with a missing value go last. The **#** column is the position in what you see.
+- Search and sort never change the results or the scan. **Exports** (CSV, XLSX, PDF) still contain all stored results, not just the searched or sorted view. **פתח פירוט** opens the row you clicked, even after searching or sorting.
+
 **Key columns:**
 
 | Column | Meaning |

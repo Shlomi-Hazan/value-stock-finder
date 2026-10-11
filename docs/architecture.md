@@ -150,7 +150,7 @@ For Two-stage rows, `renderDetails` and the source column show `scanMeta`, and `
 
 ### Rendering layer
 
-- `renderTable` builds the 36-column table for the active tab.
+- `renderTable` builds the 36-column table for the active tab. Since PR #17 it renders `resultsViewRows()`: the tab filter, then the search term (`#resultsSearch`), then an optional sort (`#resultsSort`), on a **copy** of `lastResults`. The stored arrays are never mutated, exports still read `lastResults`, and `detailsRows` is the displayed array, so `openRowDetails(index)` opens the row on screen. The `#` column is the position in the displayed view.
 - `renderDetails` builds the expandable per-row explanation.
 - `updateSummary` fills the 5 summary boxes from `allResults`.
 - All dynamic strings pass through `escapeHtml`.
@@ -250,7 +250,7 @@ There is no routing. Every control is always in the DOM and always visible, apar
 - **A global scan bar** mirrors `#status` and offers Stop through the existing `requestStopScan()`, so scan feedback is never hidden.
 - **One new classic script,** `js/shell.js`, loaded after `app.js`. The existing 12 scripts, all IDs, the inline handlers and the `localStorage` keys stay unchanged.
 - **The architecture stays the same:** static files, no build, no dependencies, no framework, no backend.
-- **Staged rollout:** PR #11 (shell + Setup/Results, done), then Methodology (PR #15) and Settings & Tools (PR #16), both done. Results UX is a future PR (number not assigned; see [roadmap.md](roadmap.md)).
+- **Staged rollout:** PR #11 (shell + Setup/Results, done), then Methodology (PR #15) and Settings & Tools (PR #16), both done. Results UX is partly done (search and sort in PR #17); the rest is a future PR (number not assigned; see [roadmap.md](roadmap.md)).
 
 ## 7. Future architecture options (not implemented)
 

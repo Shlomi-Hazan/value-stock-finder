@@ -143,7 +143,7 @@ The scan setup is grouped in the order you use it: a one-line summary of the pro
 4. Choose a scan mode (see below) and review the **request preview** under the buttons. For larger lists, choose **Two-stage scan** and set *Stage 1 max symbols* and *Deep Scan Top N*.
 5. Optionally open **סינון בסיסי** (basic filters: minimum market cap, volume, price) or the DCF assumptions section, and adjust them. Both are collapsed by default.
 6. Click the green **סרוק מניות** (scan stocks) button. Use **עצור סריקה** (stop scan) to stop before the next symbol. The connection tests, the cache tool and **נקה API Key שמור** (clear saved API key) are on the **הגדרות וכלים** tab, and the export buttons are on Results.
-7. On the **תוצאות** (Results) screen, read the summary, filter the table tabs (All / Strong / Watchlist / Rejected) and click **פתח פירוט** (open details) on any row to see its full breakdown in a dialog.
+7. On the **תוצאות** (Results) screen, read the summary, filter the table tabs (All / Strong / Watchlist / Rejected), search by symbol or company, sort the view and click **פתח פירוט** (open details) on any row to see its full breakdown in a dialog.
 8. Open the **תוצאות** (Results) tab to read the results, and click **ייצא CSV**, **ייצא XLSX** or **ייצא PDF** (export CSV / XLSX / PDF) there to export. Scans never switch screens on their own: a bar under the tabs shows progress and Stop, and a dot marks the Results tab when new results are ready.
 
 The full walkthrough is in the [User Guide](docs/USER_GUIDE.md).
@@ -233,7 +233,7 @@ Full details: [docs/security.md](docs/security.md)
 | M9 App shell: Setup + Results screens, global scan bar | ✅ Done |
 | M10 Results details dialog + XLSX/PDF exports | ✅ Done |
 | M11 Methodology screen | ✅ Done |
-| M12 Results UX refinement | 🗓 Planned |
+| M12 Results UX refinement (search and sort done in PR #17; sticky toolbar, notes and hints still planned) | ◐ Partly done |
 | M13 Settings & Tools screen (provider, API key, tests, Cache moved from Setup) | ✅ Done |
 | Automatic universe discovery, TASE, global, tests/CI, optional backend | 🗓 Planned / Future |
 
