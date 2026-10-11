@@ -313,7 +313,7 @@ function resultsViewRows(term = resultsSearchTerm()) {
   const sortKey = document.getElementById("resultsSort")?.value || "rank";
   const tabRows = lastResults.filter(row => currentFilter === "all" || row.decision === currentFilter);
   const rows = term
-    ? tabRows.filter(row => `${row.m.symbol || ""} ${row.m.name || ""}`.toLowerCase().includes(term))
+    ? tabRows.filter(row => resultsMatchesTerm(row, term))
     : tabRows.slice();
   const valueOf = RESULTS_SORT_VALUES[sortKey];
   if (valueOf) {
@@ -331,6 +331,49 @@ function resultsViewRows(term = resultsSearchTerm()) {
 function onResultsSearchInput() { renderTable(); }
 function onResultsSortChange() { renderTable(); }
 
+function clearResultsSearch() {
+  const input = document.getElementById("resultsSearch");
+  if (input) { input.value = ""; input.focus(); }
+  renderTable();
+}
+
+const RESULTS_TAB_LABELS = { all: "הכול", strong: "מועמדות חזקות", watch: "Watchlist", reject: "נפסלו" };
+
+function resultsMatchesTerm(row, term) {
+  return `${row.m.symbol || ""} ${row.m.name || ""}`.toLowerCase().includes(term);
+}
+
+// Message for the single-cell row shown when the table has nothing to list. Scan errors that leave
+// no rows at all are written by js/scan.js, which this file does not change.
+function resultsEmptyCell(term, tabCount) {
+  const tab = escapeHtml(RESULTS_TAB_LABELS[currentFilter] || "");
+  const clearBtn = `<button type="button" class="btn btn-quiet" onclick="clearResultsSearch()">נקה חיפוש</button>`;
+  const allBtn = `<button type="button" class="btn btn-quiet" onclick="setTableFilter('all')">הצג את הכול</button>`;
+  if (!lastResults.length) {
+    return `<div class="empty-note"><strong>אין תוצאות להצגה.</strong> הסריקה האחרונה לא החזירה שורות. בדוק את הסטטוס למעלה, או הגדר סריקה אחרת במסך <a href="#/setup">הגדרת סריקה</a>.</div>`;
+  }
+  if (term && tabCount) {
+    const others = currentFilter === "all" ? 0 : lastResults.filter(row => resultsMatchesTerm(row, term)).length;
+    const hint = others
+      ? ` יש ${others} התאמות בלשוניות אחרות.`
+      : " החיפוש בודק סימול ושם חברה בלבד.";
+    return `<div class="empty-note"><strong>לא נמצאו תוצאות עבור "${escapeHtml(term)}" בלשונית "${tab}".</strong>${hint}<div class="empty-actions">${clearBtn}${others ? allBtn : ""}</div></div>`;
+  }
+  const searchPart = term ? ` (גם בלי החיפוש "${escapeHtml(term)}")` : "";
+  return `<div class="empty-note"><strong>אין שורות בלשונית "${tab}"${searchPart}.</strong> השורות הקיימות נמצאות בלשוניות אחרות.<div class="empty-actions">${allBtn}${term ? clearBtn : ""}</div></div>`;
+}
+
+// One calm line under the controls when the whole result set needs context.
+function resultsStateNoteHtml() {
+  if (lastResults.length && !lastResults.some(row => row.passBasic)) {
+    return `אף מניה לא עברה את הסינון הבסיסי (מחיר, נפח ושווי שוק מינימליים), ולכן כל השורות נפסלו. אפשר לשנות את הספים בסעיף "סינון בסיסי" במסך <a href="#/setup">הגדרת סריקה</a>.`;
+  }
+  if (lastScanStats.twoStage?.preliminaryOnly) {
+    return "השורות בטבלה הן Preliminary: Stage 1 (quote) בלבד, ללא Deep Scan סופי.";
+  }
+  return "";
+}
+
 function renderTable() {
   const tbody = document.getElementById("stocksTable");
   const term = resultsSearchTerm();
@@ -342,8 +385,11 @@ function renderTable() {
       : "";
   }
 
+  const stateNote = document.getElementById("resultsStateNote");
+  if (stateNote) stateNote.innerHTML = resultsStateNoteHtml();
+
   if (!rows.length) {
-    tbody.innerHTML = `<tr><td colspan="36">${term && tabCount ? "אין תוצאות התואמות לחיפוש" : "אין תוצאות למסנן הזה"}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="36">${resultsEmptyCell(term, tabCount)}</td></tr>`;
     return;
   }
 

@@ -290,6 +290,19 @@
       </div>
     </div>
     <p class="export-status" id="exportStatus" role="status" aria-live="polite"></p>
+    <details class="results-guide" id="resultsGuide">
+      <summary>איך לקרוא את התוצאות?</summary>
+      <ul>
+        <li><strong>לשוניות וחיפוש</strong> מסננים רק את מה שמוצג בטבלה, והם פועלים יחד. <strong>מיון</strong> משנה רק את הסדר.</li>
+        <li><strong>#</strong> הוא המיקום בתצוגה הנוכחית (אחרי לשונית, חיפוש ומיון), לא הדירוג המקורי.</li>
+        <li><strong>ייצוא</strong> CSV, XLSX ו־PDF כולל את כל התוצאות השמורות של הסריקה האחרונה (עד "כמות להצגה"), לא רק את התצוגה המסוננת או הממוינת.</li>
+        <li><strong>Data Confidence</strong> הוא אחוז הנתונים שהתקבלו. ערך נמוך אומר שהציון מבוסס על פחות בדיקות.</li>
+        <li><strong>DCF חסר</strong> כשאין FCF חיובי, מספר מניות או הנחות מספיקות, ואז אין שווי הוגן למניה.</li>
+        <li><strong>Preliminary</strong> היא שורה של Stage 1 (quote) בלבד, ללא Deep Scan סופי.</li>
+        <li><strong>מועמדת חזקה</strong> עברה את כל התנאים. <strong>Watchlist</strong> כוללת גם שורות "בדיקה ידנית" (ציון נמוך מ־55 אחרי סינון בסיסי). <strong>נפסלו</strong> לא עברו את הסינון הבסיסי.</li>
+      </ul>
+      <p class="results-guide-foot">הציון הוא כלי סינון, לא המלצה. פירוט מלא במסך <a href="#/methodology">מתודולוגיה</a>.</p>
+    </details>
     <div class="tabs" role="group" aria-label="סינון תוצאות">
       <button class="tab active" id="tabAll" onclick="setTableFilter('all')">הכול</button>
       <button class="tab" id="tabStrong" onclick="setTableFilter('strong')">מועמדות חזקות</button>
@@ -315,6 +328,7 @@
       </label>
     </div>
     <p class="results-view-note" id="resultsViewNote" role="status" aria-live="polite"></p>
+    <p class="results-state-note" id="resultsStateNote"></p>
 
     <div class="table-wrap">
       <table>
@@ -359,7 +373,7 @@
           </tr>
         </thead>
         <tbody id="stocksTable">
-          <tr><td colspan="36">עדיין לא בוצעה סריקה</td></tr>
+          <tr><td colspan="36"><div class="empty-note"><strong>עדיין לא בוצעה סריקה.</strong> הגדר סריקה במסך <a href="#/setup">הגדרת סריקה</a> ולחץ על "סרוק מניות". התוצאות יופיעו כאן.</div></td></tr>
         </tbody>
       </table>
     </div>
