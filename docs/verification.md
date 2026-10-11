@@ -112,6 +112,19 @@ In the console, `formatPercentValue(v, assumeDecimal)` returns HTML; strip tags 
 | `(12, false)` / `(-25, false)` | `+12.00%` / `-25.00%` |
 | `(null)`, `(undefined)`, `("abc")` | `-` |
 
+### Settings & Tools checks (since PR #16)
+
+| Check | Expected |
+| --- | --- |
+| `#/settings`, `#settings-provider`, `-checks`, `-cache`, `-preview`, `-data` | Only Settings is visible; the **הגדרות וכלים** tab is current; the title starts with "הגדרות וכלים ·"; an anchor focuses its heading below the sticky bar. `#sec-source` also opens Settings. |
+| IDs | `dataProvider`, `apiKey`, `endpointStatus` are inside `#shell-screen-settings`; `requestPreview`, `status`, `scanButton`, `stopButton` are inside Setup; no duplicate IDs |
+| Setup summary | Shows the provider and "הוזן" / "חסר" for the key, and updates when the provider or the key changes (and after **נקה API Key שמור**). The link opens `#settings-provider`. |
+| Tests on Settings | **בדוק endpoints** and **בדוק ספק נבחר** fill `#endpointStatus` and the status mirror; with no key the mirror shows "חסר API Key" |
+| Cache and key tools on Settings | **נקה Cache** removes every cache key; **נקה API Key שמור** empties the field and the saved key |
+| Mirrors | `#shell-settings-preview` equals `#requestPreview`; `#shell-settings-status` equals `#status`, including its colour class |
+| Scan bar | Starting a scan, then opening Settings, shows the scan bar with Stop |
+| 375 / 752 px | No page overflow on any of the four screens; the four tabs fit on one row (≥ 44 px high) |
+
 ### App shell checks (since PR #11)
 
 | Check | Expected |
@@ -133,10 +146,10 @@ In the console, `formatPercentValue(v, assumeDecimal)` returns HTML; strip tags 
 
 ### UI layout checks (since PR #9)
 
-- [ ] The settings appear as grouped sections: מקור נתונים, מניות לבדיקה, מצב סריקה, סינון בסיסי (collapsed), DCF assumptions (collapsed), then actions.
+- [ ] The Setup screen shows the provider summary line, then grouped sections: מניות לבדיקה, מצב סריקה, סינון בסיסי (collapsed), DCF assumptions (collapsed), then actions.
 - [ ] Clicking a collapsed section title opens and closes it, and its inputs keep their values. Collapsed inputs still feed the scan (for example, change *מחיר מינימלי* while it is collapsed, then check the basic-filter results).
 - [ ] The hero shows the badge, the title, the subtitle and the 4 feature chips. The workflow strip has 4 numbered links that scroll to `#sec-source`, `#sec-universe`, `#sec-scan` and `#sec-results`. The product mark sits beside the title. The feature chips and the main section titles show their small icons, and every `<use>` resolves to a symbol in the inline sprite. The margin-of-safety illustration shows on wide screens (over 900 px), with its 3 labels inside it, and is hidden on narrow screens. The results empty state shows its small magnifier-over-chart illustration.
-- [ ] **סרוק מניות** is the only green filled button. (Since PR #11, **ייצא CSV** lives on the Results screen, and the Setup tools are בדיקות חיבור, Cache and מפתח API.) Stop is quiet until a scan runs. **נקה API Key שמור** is red. The connection tests and data tools sit in labeled groups.
+- [ ] **סרוק מניות** is the only green filled button. (Since PR #11, **ייצא CSV** lives on the Results screen. Since PR #16, the connection tests, Cache and the API key tools live on the Settings & Tools screen.) Stop is quiet until a scan runs. **נקה API Key שמור** is red. On Settings & Tools, the connection tests and cache tool sit in labeled groups.
 - [ ] Helper texts appear under the API key, the preset list, the symbols field and *כמות להצגה*, and as footers under the data-source, scan-mode, basic-filter, DCF and action sections.
 - [ ] Before any scan, the empty table message ("עדיין לא בוצעה סריקה") is visible without scrolling the table. A soft shadow on the table's edge shows when more columns are off-screen.
 - [ ] Color contrast: body, muted, button, pill and status text all meet WCAG AA (4.5:1) against their backgrounds.

@@ -2,7 +2,7 @@
 
 ## Status
 
-**Accepted.** Planned in PR #10 (2026-10-09). **Stage 1 (Setup + Results, global scan bar) implemented in PR #11.** Methodology, Results UX and Settings & tools are still planned. Since PR #12 was used for the row details dialog and XLSX/PDF exports ([ADR-0006](ADR-0006-export-dependencies.md)), and PR #13 became a rate-limit bugfix, those stages move to future PRs with numbers not yet assigned (see [roadmap.md](../roadmap.md)). The PR numbers in the plan below are the original ones.
+**Accepted.** Planned in PR #10 (2026-10-09). **Stage 1 (Setup + Results, global scan bar) implemented in PR #11, Methodology in PR #15 and Settings & tools in PR #16.** Results UX is still planned, as a future PR with a number not yet assigned (see [roadmap.md](../roadmap.md)). One deviation from the plan below: PR #16 moved the provider select and the API key **entry** to Settings & tools too (the plan kept them in Setup), with their IDs unchanged, and Setup shows a provider and key summary that links there. The PR numbers in the plan below are the original ones.
 
 ## Context
 

@@ -224,12 +224,14 @@ flowchart TD
 
 There is no routing. Every control is always in the DOM and always visible, apart from the collapsed `<details>` sections.
 
+**Settings & Tools screen (PR #16):** a fourth screen, `#shell-screen-settings`. The provider select (`#dataProvider`), the API key field (`#apiKey`), the Yahoo warning, the two connection-test buttons with `#endpointStatus`, Clear Cache and Clear API key were **moved** from Setup with their IDs and handlers unchanged, so `app.js`, `scan.js` and `cache.js` run as before (they find elements by ID). `#status`, `#requestPreview`, `#scanButton` and `#stopButton` stay in the Setup scan console. `js/shell.js` keeps shell-owned copies in sync: `#shell-settings-status` and `#shell-settings-preview` mirror them on Settings, and `#shell-source-provider` / `#shell-source-key` give Setup a one-line summary with a link to `#settings-provider`. Export buttons stay on Results. Anchors: `#settings-provider` (also holds `#sec-source`, so the workflow strip step 1 opens Settings), `-checks`, `-cache`, `-preview`, `-data`.
+
 **Methodology screen (PR #15):** a third `<div class="screen" data-screen="methodology">` (`#shell-screen-methodology`) holds static, hand-written Hebrew content: overview, scan modes, Data Confidence, DCF, the seven strategies, score and decision, limitations. Its only code change is one entry in `SHELL_ROUTES` in `js/shell.js`. Section anchors `#methodology-overview`, `-scans`, `-confidence`, `-dcf`, `-strategies`, `-score` and `-limitations` open the screen like any element hash. The content condenses [investment-methodology.md](investment-methodology.md), so a rule change updates both. It reads no scan data and adds no scripts, handlers or storage.
 
 **Implemented in PR #11 (stage 1 of [ADR-0005](decisions/ADR-0005-app-shell-navigation-plan.md)):**
 
-- **Sticky shell bar** under the header, with a segmented nav: **הגדרת סריקה** `#/setup` and **תוצאות** `#/results`, plus **מתודולוגיה** `#/methodology` (PR #15).
-- **Two screens,** `#shell-screen-setup` (hero, workflow strip, all settings, action dock) and `#shell-screen-results` (summary, Two-stage summary, tabs, table, Export CSV). They are `<div class="screen" data-screen>` wrappers toggled with `hidden`. Every original element and ID sits inside, unchanged.
+- **Sticky shell bar** under the header, with a segmented nav: **הגדרת סריקה** `#/setup` and **תוצאות** `#/results`, **מתודולוגיה** `#/methodology` (PR #15) and **הגדרות וכלים** `#/settings` (PR #16).
+- **Two screens (PR #11; provider, key and tool controls moved to Settings in PR #16),** `#shell-screen-setup` (hero, workflow strip, scan settings, action dock) and `#shell-screen-results` (summary, Two-stage summary, tabs, table, Export CSV). They are `<div class="screen" data-screen>` wrappers toggled with `hidden`. Every original element and ID sits inside, unchanged.
 - **Routing:** an empty or unknown hash shows Setup. Element hashes such as `#sec-scan` open the screen that contains them, then scroll and focus. `hashchange` drives Back/Forward.
 - **Global scan bar:**
   - shows a spinner while `#scanButton` is disabled (that is, while `scanStocks()` runs)
@@ -248,7 +250,7 @@ There is no routing. Every control is always in the DOM and always visible, apar
 - **A global scan bar** mirrors `#status` and offers Stop through the existing `requestStopScan()`, so scan feedback is never hidden.
 - **One new classic script,** `js/shell.js`, loaded after `app.js`. The existing 12 scripts, all IDs, the inline handlers and the `localStorage` keys stay unchanged.
 - **The architecture stays the same:** static files, no build, no dependencies, no framework, no backend.
-- **Staged rollout:** PR #11 (shell + Setup/Results, done), then Methodology (done in PR #15), and Results UX and Settings & tools as future PRs (numbers not assigned; see [roadmap.md](roadmap.md)).
+- **Staged rollout:** PR #11 (shell + Setup/Results, done), then Methodology (PR #15) and Settings & Tools (PR #16), both done. Results UX is a future PR (number not assigned; see [roadmap.md](roadmap.md)).
 
 ## 7. Future architecture options (not implemented)
 
