@@ -19,14 +19,15 @@ The app's interface is in Hebrew. This guide gives each Hebrew label with its En
 
   Then open <http://localhost:8000/>.
 
-### Screens: Setup and Results
+### Screens: Setup, Results and Methodology
 
-The app has two screens. You switch between them with the tabs under the header:
+The app has three screens. You switch between them with the tabs under the header:
 
 - **הגדרת סריקה** (Setup) is where you prepare and start a scan: data source, stocks, scan mode, filters, DCF assumptions, and the Scan and Stop buttons.
 - **תוצאות** (Results) is where you read, filter and export results: the summary, the Two-stage summary, the result tabs, the table and **ייצא CSV** (export CSV).
+- **מתודולוגיה** (Methodology) explains in plain language what the tool checks and how: scan modes, Data Confidence, the DCF estimate, the seven strategies, how the score and labels are produced, the data limits, and why none of it is investment advice. It uses the same rules as the code, in short form, and shows no scan data. Its table of contents links jump to each section.
 
-The address bar shows `#/setup` or `#/results`, so the browser Back and Forward buttons work, and you can bookmark a screen. The numbered workflow links (1 מקור נתונים … 4 תוצאות) still jump to the right place.
+The address bar shows `#/setup`, `#/results` or `#/methodology`, so the browser Back and Forward buttons work, and you can bookmark a screen. The numbered workflow links (1 מקור נתונים … 4 תוצאות) still jump to the right place.
 
 **While a scan runs**, a bar under the tabs shows the live progress (the same text as the status line on Setup) and an **עצור סריקה** (stop scan) button. You can switch to Results during the scan and still watch it or stop it. **The app does not jump to Results by itself when the scan finishes.** Instead:
 

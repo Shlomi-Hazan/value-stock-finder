@@ -19,7 +19,7 @@ Nothing marked Planned or Future is implemented. Each needs owner approval befor
 | **M6** Maintainability: static file split | ✅ Done | Post-merge hardening (PR #7). `index.html` + `styles.css` + 12 classic scripts in `js/`, no build step (PR #8, [ADR-0004](decisions/ADR-0004-split-static-assets.md)) |
 | **M7** UI polish and visual identity | ✅ Done | Grouped settings with collapsible advanced sections, button hierarchy, helper microcopy, segmented result tabs, green finance identity, product mark and favicon, icons and the margin-of-safety illustration (PR #9) |
 | **M8** App shell navigation plan | ✅ Accepted | [ADR-0005](decisions/ADR-0005-app-shell-navigation-plan.md): a static app shell with hash-routed screens. Docs only, no code change (PR #10). |
-| **M9** App shell: Setup + Results | ✅ Done | `js/shell.js`: hash router (`#/setup`, `#/results`, element-hash anchors), sticky segmented nav, global scan bar (mirrors `#status`, Stop proxy, results-ready cue, no auto-navigation), compact Results header, Export CSV on Results (PR #11) |
+| **M9** App shell: Setup + Results | ✅ Done | `js/shell.js`: hash router (`#/setup`, `#/results` (and `#/methodology` since PR #15), element-hash anchors), sticky segmented nav, global scan bar (mirrors `#status`, Stop proxy, results-ready cue, no auto-navigation), compact Results header, Export CSV on Results (PR #11) |
 
 ## App shell rollout (planned, per ADR-0005)
 
@@ -29,7 +29,7 @@ Each step is a separate PR that preserves all existing IDs, handlers, `localStor
 | --- | --- | --- | --- |
 | **M9** App shell: Setup + Results | #11 | ✅ Done | Delivered as planned. On phones the nav is a full-width sticky segmented control at the top rather than a bottom tab bar, so it never covers the table's horizontal scroll area or the action dock. |
 | **M10** Results details dialog + XLSX/PDF exports | #12 | ✅ Done | Inserted before the remaining shell stages at the owner's request: native `<dialog>` for row details; real XLSX and PDF from shared export rows; vendored on-demand libraries ([ADR-0006](decisions/ADR-0006-export-dependencies.md)). |
-| **M11** Methodology screen | TBD | 🗓 Planned | In-app plain-language explanation of the strategies, Data Confidence, DCF and margin of safety, and the Two-stage bias. Links to `docs/investment-methodology.md` (no thresholds duplicated). |
+| **M11** Methodology screen | #15 | ✅ Done | `#/methodology` and the **מתודולוגיה** tab: what the screener does and does not do, scan modes, Data Confidence, DCF and margin of safety, the seven strategies with condensed rules, the score and decision labels, data limitations and the educational disclaimer. Static content only; the full rule tables stay in [investment-methodology.md](investment-methodology.md). |
 | **M12** Results UX refinement | TBD | 🗓 Planned | Sticky summary or toolbar, display-limit note, better empty and preliminary states, column-group hints |
 | **M13** Settings & tools screen | TBD | 🗓 Planned | Endpoint tests, Clear Cache, Clear saved API key, storage explanation. API key **entry** stays in Setup. |
 

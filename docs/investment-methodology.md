@@ -4,6 +4,8 @@ Last updated: 2026-10-08 (after PR #6: Two-stage scan; scoring rules unchanged)
 
 > ⚠️ **Educational disclaimer.** This document describes the mechanical rules Value Stock Finder applies. The rules are **inspired by** well-known investors and by a value-investing course summary. They **do not exactly reproduce** any professional, published or proprietary strategy. Nothing here is investment advice, and no score implies that a stock is good, bad, cheap or expensive in any absolute sense.
 
+The in-app **Methodology** screen (`#/methodology`) condenses this document; change both together when a rule changes.
+
 All thresholds below are taken from the current code (mainly `js/scoring.js`, `js/metrics.js`, `js/dcf.js` and `js/constants.js`). If code and document ever disagree, the code is what runs, and the document must be fixed in the same PR as any rule change (see [AGENTS.md](../AGENTS.md)).
 
 ---
@@ -241,7 +243,7 @@ The share of these 19 fields that are present: Price\*, Market Cap\*, Volume\*, 
 - Field names and definitions vary between FMP endpoints and plans. The app tries several aliases per field.
 - TTM ratios and annual statements can come from different periods.
 - Some endpoints are restricted on lower FMP plans, which leaves whole categories empty.
-- Ratios may be decimals (0.15) or percentages (15). The display assumes values with |x| ≤ 1 are decimals.
+- Ratios may be decimals (0.15) or percentages (15). Since the percent-format fix, the display scales values by 100 only where the code knows they are decimals (ratios, DCF percentages) and shows already-percent values such as the daily change as is.
 - Non-US companies may report in other currencies. The app does no FX conversion.
 - Cached fundamentals can be up to 7 days old, and cached quotes up to 10 minutes old.
 

@@ -118,6 +118,7 @@ In the console, `formatPercentValue(v, assumeDecimal)` returns HTML; strip tags 
 | --- | --- |
 | No hash, `#/setup`, unknown hash (`#/nope`, `#does-not-exist`) | Setup is the only visible screen. The **הגדרת סריקה** tab has `aria-current="page"`, and the title starts with "הגדרת סריקה ·". |
 | `#/results` | Only Results is visible; the tab and title update |
+| `#/methodology`, `#methodology-dcf`, `#methodology-limitations` | Only Methodology is visible; the **מתודולוגיה** tab is current, the title starts with "מתודולוגיה ·", and a section anchor focuses its heading below the sticky bar. No page overflow at 375 px, and the three tabs fit on one row. Its rules still match [investment-methodology.md](investment-methodology.md). |
 | `#sec-source`, `#sec-universe`, `#sec-scan` | Setup opens and the section scrolls into view **below** the sticky bar, with focus on its title |
 | `#sec-results` | Results opens, scrolled to the summary |
 | Back / Forward | Moves between the previous screens |
