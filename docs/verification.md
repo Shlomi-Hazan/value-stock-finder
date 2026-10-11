@@ -101,6 +101,17 @@ Mock `window.fetch` in the console and call `safeCall(path, "AAPL", "k", {})`:
 
 Cache: with 40+ FMP and Yahoo entries, `clearCache()` leaves no `valueStockFinder…Cache:` key and keeps unrelated keys. A cache entry with bad JSON, a non-numeric `timestamp` or no `data` is ignored by `readCachedFmp`/`readCachedYahoo` and removed.
 
+### Percent formatter checks
+
+In the console, `formatPercentValue(v, assumeDecimal)` returns HTML; strip tags to compare:
+
+| Call | Expected text |
+| --- | --- |
+| `(0.12, true)` / `(-0.25, true)` | `+12.00%` / `-25.00%` |
+| `(1.01, true)` / `(-1.01, true)` | `+101.00%` / `-101.00%` |
+| `(12, false)` / `(-25, false)` | `+12.00%` / `-25.00%` |
+| `(null)`, `(undefined)`, `("abc")` | `-` |
+
 ### App shell checks (since PR #11)
 
 | Check | Expected |
