@@ -1,6 +1,6 @@
 # Product Requirements
 
-Last updated: 2026-10-08
+Last updated: 2026-10-12 (after PR #18)
 
 > Value Stock Finder is an educational, personal research tool. It is not investment advice.
 
@@ -44,7 +44,7 @@ Give an individual value investor a **transparent, one-file screener** that appl
 
 ## 5. Current scope
 
-Everything listed as **Current** in [SPEC.md](../SPEC.md): FMP deep and quick scans, **Two-stage scan**, strategy scoring, DCF, data confidence, cache, preview, stop, rate-limit handling, endpoint tests, CSV, 4 US presets plus 3 expanded US presets, the manual list and Yahoo as an experimental quote-only provider.
+Everything listed as **Current** in [SPEC.md](../SPEC.md): FMP deep and quick scans, **Two-stage scan**, strategy scoring, DCF, data confidence, cache, preview, stop, rate-limit handling, endpoint tests, CSV, XLSX and PDF export, the row details dialog, results search and sort, the four-screen app shell (Setup, Results, Methodology, Settings & Tools), 4 US presets plus 3 expanded US presets, the manual list and Yahoo as an experimental quote-only provider.
 
 ## 6. Future scope (Planned / Future, not implemented)
 
@@ -58,7 +58,7 @@ Everything listed as **Current** in [SPEC.md](../SPEC.md): FMP deep and quick sc
 | Better provider abstraction | Planned | A provider interface with capabilities |
 | Optional backend / proxy | Future | Only with explicit approval and an ADR |
 | Tests / CI | Planned | Syntax + secret checks in CI; scoring unit tests |
-| UI polish | Planned | Column grouping, explanations, screenshots |
+| Results UX (remaining) | Planned | Sticky summary or toolbar, display-limit note, column-group hints, screenshots. Search, sort, the legend and empty states are Current (PRs #17–#18). |
 
 ## 7. UX principles
 

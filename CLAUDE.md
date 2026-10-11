@@ -37,7 +37,7 @@ Then:
 
 ## 3. Navigating the code
 
-The app is `index.html` (markup and IDs only), `styles.css`, and 12 classic scripts in `js/`, loaded with `defer` in the order below ([ADR-0004](docs/decisions/ADR-0004-split-static-assets.md)). All top-level functions and constants are global, so any file can call any other at runtime.
+The app is `index.html` (markup and IDs only), `styles.css`, and 13 classic scripts in `js/` (12 plus the app shell `shell.js`), loaded with `defer` in the order below ([ADR-0004](docs/decisions/ADR-0004-split-static-assets.md)). All top-level functions and constants are global, so any file can call any other at runtime.
 
 ```bash
 grep -nE "^(async )?function [A-Za-z]+" js/*.js        # function map, by file
@@ -124,12 +124,12 @@ Follow [AGENTS.md §9](AGENTS.md#9-expected-final-response-format). Keep it fact
 | PR #9 `ccb5e3d` | UI polish, green finance identity, product mark, icons and illustrations (UI-only) |
 | PR #10 `638d9dd` | App shell plan (ADR-0005), docs only |
 | PR #11 `7b2b7e2` | App shell stage 1: Setup and Results screens, hash navigation, global scan bar (`js/shell.js`). No scan, scoring, DCF, provider, CSV or table changes. |
-| PR #12 | Row details dialog (native `<dialog>`), real XLSX (ExcelJS) and PDF (jsPDF + AutoTable) exports from shared export rows; vendored on-demand libraries (ADR-0006). CSV byte-identical. No scoring, DCF, provider, scan or cache changes. |
+| PR #12 `73ccf42` | Row details dialog (native `<dialog>`), real XLSX (ExcelJS) and PDF (jsPDF + AutoTable) exports from shared export rows; vendored on-demand libraries (ADR-0006). CSV byte-identical. No scoring, DCF, provider, scan or cache changes. |
 | PR #13 `91332b7` | Fix false FMP rate-limit detection: only HTTP 429 or an explicit error field counts (never the data body); `clearCache()` collects keys before removing; malformed cache entries are ignored and removed. |
-| Fix: percent formatting | `formatPercentValue(v, true)` always scales a decimal by 100 (−1.01 → −101%); `false` shows an already-percent value as is. Display only. |
-| PR #15 | Methodology screen: `#/methodology`, the **מתודולוגיה** tab and static explanatory content (`#shell-screen-methodology`), plus one route entry in `js/shell.js`. No scoring, DCF, provider, scan, cache, export or vendor changes. |
-| PR #16 | Settings & Tools screen: `#/settings`, the **הגדרות וכלים** tab. Provider, API key, connection tests, Clear Cache and Clear API key moved from Setup with unchanged IDs and handlers; `shell.js` mirrors `#status` and `#requestPreview` there. No scoring, DCF, provider, scan, cache logic, export or vendor changes. |
-| PR #17 | Results search (symbol or company) and sort select, display only. `renderTable` works on a copy of `lastResults`; exports, scoring, DCF, providers, scan and cache unchanged. |
-| PR #18 | Results legend (`#resultsGuide`), clearer empty states and notes (`resultsEmptyCell`, `resultsStateNoteHtml`, `clearResultsSearch`). Display only. |
+| PR #14 `4da3549` | Percent formatting: `formatPercentValue(v, true)` always scales a decimal by 100 (−1.01 → −101%); `false` shows an already-percent value as is. Display only. |
+| PR #15 `724e28d` | Methodology screen: `#/methodology`, the **מתודולוגיה** tab and static explanatory content (`#shell-screen-methodology`), plus one route entry in `js/shell.js`. No scoring, DCF, provider, scan, cache, export or vendor changes. |
+| PR #16 `466fe67` | Settings & Tools screen: `#/settings`, the **הגדרות וכלים** tab. Provider, API key, connection tests, Clear Cache and Clear API key moved from Setup with unchanged IDs and handlers; `shell.js` mirrors `#status` and `#requestPreview` there. No scoring, DCF, provider, scan, cache logic, export or vendor changes. |
+| PR #17 `002a65a` | Results search (symbol or company) and sort select, display only. `renderTable` works on a copy of `lastResults`; exports, scoring, DCF, providers, scan and cache unchanged. |
+| PR #18 `9271e50` | Results legend (`#resultsGuide`), clearer empty states and notes (`resultsEmptyCell`, `resultsStateNoteHtml`, `clearResultsSearch`). Display only. |
 
 Details are in [docs/HISTORY.md](docs/HISTORY.md).

@@ -1,6 +1,6 @@
 # Verification
 
-Last updated: 2026-10-08
+Last updated: 2026-10-12 (after PR #18)
 
 Run this before every PR. **Documentation-only PRs** need sections 1–3 and must confirm the app files (`index.html`, `styles.css`, `js/`) are unchanged. **Code PRs** need everything.
 
@@ -112,6 +112,39 @@ In the console, `formatPercentValue(v, assumeDecimal)` returns HTML; strip tags 
 | `(12, false)` / `(-25, false)` | `+12.00%` / `-25.00%` |
 | `(null)`, `(undefined)`, `("abc")` | `-` |
 
+### App shell checks (since PR #11)
+
+| Check | Expected |
+| --- | --- |
+| No hash, `#/setup`, unknown hash (`#/nope`, `#does-not-exist`) | Setup is the only visible screen. The **הגדרת סריקה** tab has `aria-current="page"`, and the title starts with "הגדרת סריקה ·". |
+| `#/results` | Only Results is visible; the tab and title update |
+| `#/methodology`, `#methodology-dcf`, `#methodology-limitations` | Only Methodology is visible; the **מתודולוגיה** tab is current, the title starts with "מתודולוגיה ·", and a section anchor focuses its heading below the sticky bar. No page overflow at 375 px, and the three tabs fit on one row. Its rules still match [investment-methodology.md](investment-methodology.md). |
+| `#sec-universe`, `#sec-scan` | Setup opens and the section scrolls into view **below** the sticky bar, with focus on its title |
+| `#sec-source` | Opens **Settings & Tools** (since PR #16 the data source controls live there), scrolled to the provider section |
+| `#sec-results` | Results opens, scrolled to the summary |
+| Back / Forward | Moves between the previous screens |
+| Keyboard | Tab reaches all four nav tabs. Enter switches screens. Focus moves to the new screen's heading. |
+| Scan from Setup, then switch to Results | The global scan bar shows a spinner, mirrors `#status` exactly, and has **עצור סריקה** (stop scan) |
+| Global Stop | Halts the scan exactly like `#stopButton` (stops before the next symbol) |
+| Scan finishes while on Setup | **No auto-navigation.** The bar keeps the final status, with "צפה בתוצאות" (view results) and a ✕ to dismiss. A green dot appears on the **תוצאות** tab. |
+| Visiting Results | Clears the dot. The "no results yet" hint shows only before any result rows exist. |
+| Export CSV | The button is on the Results screen and downloads the same 44-column CSV |
+| `localStorage` | Same keys before and after navigating and scanning. The shell adds none. |
+| 1280 / 424 / 375 px | No page overflow. The nav tabs are ≥ 40 px tall (44 px on phones). The sticky bar never hides a scrolled-to section. The table scrolls only inside its wrapper. |
+
+### Settings & Tools checks (since PR #16)
+
+| Check | Expected |
+| --- | --- |
+| `#/settings`, `#settings-provider`, `-checks`, `-cache`, `-preview`, `-data` | Only Settings is visible; the **הגדרות וכלים** tab is current; the title starts with "הגדרות וכלים ·"; an anchor focuses its heading below the sticky bar. `#sec-source` also opens Settings. |
+| IDs | `dataProvider`, `apiKey`, `endpointStatus` are inside `#shell-screen-settings`; `requestPreview`, `status`, `scanButton`, `stopButton` are inside Setup; no duplicate IDs |
+| Setup summary | Shows the provider and "הוזן" / "חסר" for the key, and updates when the provider or the key changes (and after **נקה API Key שמור**). The link opens `#settings-provider`. |
+| Tests on Settings | **בדוק endpoints** and **בדוק ספק נבחר** fill `#endpointStatus` and the status mirror; with no key the mirror shows "חסר API Key" |
+| Cache and key tools on Settings | **נקה Cache** removes every cache key; **נקה API Key שמור** empties the field and the saved key |
+| Mirrors | `#shell-settings-preview` equals `#requestPreview`; `#shell-settings-status` equals `#status`, including its colour class |
+| Scan bar | Starting a scan, then opening Settings, shows the scan bar with Stop |
+| 375 / 752 px | No page overflow on any of the four screens; the four tabs fit on one row (≥ 44 px high) |
+
 ### Results search and sort checks (since PR #17)
 
 Run a Deep Scan on three symbols (mocked data is fine), then on Results:
@@ -142,45 +175,13 @@ Run a Deep Scan on three symbols (mocked data is fine), then on Results:
 
 Messages written by `js/scan.js` for scans that return nothing (rate limit before any row, Yahoo blocked, an error) are unchanged.
 
-### Settings & Tools checks (since PR #16)
-
-| Check | Expected |
-| --- | --- |
-| `#/settings`, `#settings-provider`, `-checks`, `-cache`, `-preview`, `-data` | Only Settings is visible; the **הגדרות וכלים** tab is current; the title starts with "הגדרות וכלים ·"; an anchor focuses its heading below the sticky bar. `#sec-source` also opens Settings. |
-| IDs | `dataProvider`, `apiKey`, `endpointStatus` are inside `#shell-screen-settings`; `requestPreview`, `status`, `scanButton`, `stopButton` are inside Setup; no duplicate IDs |
-| Setup summary | Shows the provider and "הוזן" / "חסר" for the key, and updates when the provider or the key changes (and after **נקה API Key שמור**). The link opens `#settings-provider`. |
-| Tests on Settings | **בדוק endpoints** and **בדוק ספק נבחר** fill `#endpointStatus` and the status mirror; with no key the mirror shows "חסר API Key" |
-| Cache and key tools on Settings | **נקה Cache** removes every cache key; **נקה API Key שמור** empties the field and the saved key |
-| Mirrors | `#shell-settings-preview` equals `#requestPreview`; `#shell-settings-status` equals `#status`, including its colour class |
-| Scan bar | Starting a scan, then opening Settings, shows the scan bar with Stop |
-| 375 / 752 px | No page overflow on any of the four screens; the four tabs fit on one row (≥ 44 px high) |
-
-### App shell checks (since PR #11)
-
-| Check | Expected |
-| --- | --- |
-| No hash, `#/setup`, unknown hash (`#/nope`, `#does-not-exist`) | Setup is the only visible screen. The **הגדרת סריקה** tab has `aria-current="page"`, and the title starts with "הגדרת סריקה ·". |
-| `#/results` | Only Results is visible; the tab and title update |
-| `#/methodology`, `#methodology-dcf`, `#methodology-limitations` | Only Methodology is visible; the **מתודולוגיה** tab is current, the title starts with "מתודולוגיה ·", and a section anchor focuses its heading below the sticky bar. No page overflow at 375 px, and the three tabs fit on one row. Its rules still match [investment-methodology.md](investment-methodology.md). |
-| `#sec-source`, `#sec-universe`, `#sec-scan` | Setup opens and the section scrolls into view **below** the sticky bar, with focus on its title |
-| `#sec-results` | Results opens, scrolled to the summary |
-| Back / Forward | Moves between the previous screens |
-| Keyboard | Tab reaches both nav tabs. Enter switches screens. Focus moves to the new screen's heading. |
-| Scan from Setup, then switch to Results | The global scan bar shows a spinner, mirrors `#status` exactly, and has **עצור סריקה** (stop scan) |
-| Global Stop | Halts the scan exactly like `#stopButton` (stops before the next symbol) |
-| Scan finishes while on Setup | **No auto-navigation.** The bar keeps the final status, with "צפה בתוצאות" (view results) and a ✕ to dismiss. A green dot appears on the **תוצאות** tab. |
-| Visiting Results | Clears the dot. The "no results yet" hint shows only before any result rows exist. |
-| Export CSV | The button is on the Results screen and downloads the same 44-column CSV |
-| `localStorage` | Same keys before and after navigating and scanning. The shell adds none. |
-| 1280 / 424 / 375 px | No page overflow. The nav tabs are ≥ 40 px tall (44 px on phones). The sticky bar never hides a scrolled-to section. The table scrolls only inside its wrapper. |
-
 ### UI layout checks (since PR #9)
 
 - [ ] The Setup screen shows the provider summary line, then grouped sections: מניות לבדיקה, מצב סריקה, סינון בסיסי (collapsed), DCF assumptions (collapsed), then actions.
 - [ ] Clicking a collapsed section title opens and closes it, and its inputs keep their values. Collapsed inputs still feed the scan (for example, change *מחיר מינימלי* while it is collapsed, then check the basic-filter results).
-- [ ] The hero shows the badge, the title, the subtitle and the 4 feature chips. The workflow strip has 4 numbered links that scroll to `#sec-source`, `#sec-universe`, `#sec-scan` and `#sec-results`. The product mark sits beside the title. The feature chips and the main section titles show their small icons, and every `<use>` resolves to a symbol in the inline sprite. The margin-of-safety illustration shows on wide screens (over 900 px), with its 3 labels inside it, and is hidden on narrow screens. The results empty state shows its small magnifier-over-chart illustration.
+- [ ] The hero shows the badge, the title, the subtitle and the 4 feature chips. The workflow strip has 4 numbered links to `#sec-source` (which opens Settings & Tools), `#sec-universe`, `#sec-scan` and `#sec-results`. The product mark sits beside the title. The feature chips and the main section titles show their small icons, and every `<use>` resolves to a symbol in the inline sprite. The margin-of-safety illustration shows on wide screens (over 900 px), with its 3 labels inside it, and is hidden on narrow screens. The results empty state shows its small magnifier-over-chart illustration.
 - [ ] **סרוק מניות** is the only green filled button. (Since PR #11, **ייצא CSV** lives on the Results screen. Since PR #16, the connection tests, Cache and the API key tools live on the Settings & Tools screen.) Stop is quiet until a scan runs. **נקה API Key שמור** is red. On Settings & Tools, the connection tests and cache tool sit in labeled groups.
-- [ ] Helper texts appear under the API key, the preset list, the symbols field and *כמות להצגה*, and as footers under the data-source, scan-mode, basic-filter, DCF and action sections.
+- [ ] Helper texts appear under the API key, the preset list, the symbols field and *כמות להצגה*, and as footers under the data-source (on Settings & Tools), scan-mode, basic-filter, DCF and action sections.
 - [ ] Before any scan, the empty table message ("עדיין לא בוצעה סריקה") is visible without scrolling the table. A soft shadow on the table's edge shows when more columns are off-screen.
 - [ ] Color contrast: body, muted, button, pill and status text all meet WCAG AA (4.5:1) against their backgrounds.
 - [ ] At 1280, 424 and 375 px: no horizontal page overflow; sections stack; buttons wrap; no clipped labels; the table scrolls only inside its wrapper.
@@ -192,8 +193,8 @@ Messages written by `js/scan.js` for scans that return nothing (rate limit befor
 
 | Check | Expected |
 | --- | --- |
-| Scan with an empty API key | Status "חסר API Key". No network requests. |
-| Endpoint test (**בדוק endpoints על AAPL**) with a valid key | A pill per endpoint: "עובד" / source, or "חסום/שגיאה" for restricted endpoints |
+| Scan with an empty API key | Status "חסר API Key". No network requests. The Setup summary shows "חסר". |
+| Endpoint test (**בדוק endpoints על AAPL**, on Settings & Tools) with a valid key | A pill per endpoint: "עובד" / source, or "חסום/שגיאה" for restricted endpoints |
 | Endpoint test with no key | "חסר API Key" |
 | Deep Scan with more than 10 symbols | A confirmation dialog shows the request estimate. Cancel means no requests. |
 | Small Deep Scan (e.g. `AAPL, MSFT, KO`) | Table rows appear with strategy, DCF and confidence columns filled where the data exists |
@@ -239,14 +240,14 @@ Messages written by `js/scan.js` for scans that return nothing (rate limit befor
 | Table headers | 36 columns, including Fair Value, Current Price, Upside, Discount, Margin of Safety, DCF Confidence, Data Confidence, Relative Basis |
 | Momentum-only results | DCF cells show "חסר נתון". DCF Confidence shows "Not enough data". |
 | Row details | **פתח פירוט** (open details) opens `#detailsDialog`; table rows keep their normal height. The dialog shows the sections Summary, DCF, Data Confidence, Strategy checks (7 cards) and Sources/limitations. It scrolls internally. Escape, ✕, **סגור** (close) and a backdrop click close it, and focus returns to the opening button. It works from filtered tabs, and is full-screen on phones. Opening it does not shift the page sideways. |
-| Tabs | All / Strong / Watchlist / Rejected filter correctly |
+| Tabs, search and sort | All / Strong / Watchlist / Rejected filter correctly (Watchlist includes "בדיקה ידנית" rows); search and sort apply on top of the tab and never change the exports (see the search and sort checks) |
 | **ייצא CSV** | Downloads `value_stock_finder_results.csv` with 44 columns, ending with `dataProvider, scanMode, scanStage, stage1Rank` |
 | **ייצא XLSX** | Downloads `value-stock-finder-results-YYYY-MM-DD.xlsx` (it starts with `PK`). It opens in Excel, Numbers or openpyxl. Sheets: Summary, Results, Notes. Results has 44 headers equal to the CSV header, and every cell equals the CSV value. The header is frozen and filtered, and number formats apply. Summary counts match the screen. |
 | **ייצא PDF** | Downloads `value-stock-finder-results-YYYY-MM-DD.pdf` (it starts with `%PDF-`). It opens in a PDF viewer. It has the title, run info, counts and disclaimer, and an 11-column table. Over about 23 rows it continues onto more pages, with the header repeated and a "Page N" footer. Decisions are in English, and no Hebrew mojibake appears. |
 | Export libraries | Load only on the first XLSX or PDF click (network or server log). No console errors. No CDN requests. |
 | CSV with no results | Status "אין תוצאות לייצוא" |
-| **נקה Cache** | Status "נמחקו N פריטי Cache". The next preview shows 0 cached. |
-| **נקה API Key שמור** | The field clears. It stays empty after reload. |
+| **נקה Cache** (Settings & Tools) | Status "נמחקו N פריטי Cache" (mirrored on Settings). The next preview shows 0 cached. |
+| **נקה API Key שמור** (Settings & Tools) | The field clears. It stays empty after reload. |
 
 ## 4. Regression checklist before every PR
 
@@ -258,7 +259,11 @@ Messages written by `js/scan.js` for scans that return nothing (rate limit befor
 - [ ] DCF settings and the 6 DCF-related columns are present
 - [ ] Relative Basis column and Dreman/Neff scores are present
 - [ ] Data Confidence column is present. Strong Candidate still requires ≥ 70% confidence.
-- [ ] CSV export still works. Column order is unchanged, or the change is documented.
+- [ ] CSV export still works. Column order is unchanged, or the change is documented. XLSX and PDF still generate.
+- [ ] All four routes work (`#/setup`, `#/results`, `#/methodology`, `#/settings`) with the right tab, title and Back/Forward, and unknown hashes show Setup
+- [ ] Settings & Tools: provider, API key, both connection tests, Clear Cache and Clear API key work, and `#status` / `#requestPreview` are mirrored
+- [ ] Results: search, sort and tabs combine; the details dialog opens the row on screen; the legend and the empty-state messages are present; exports still contain all stored results
+- [ ] No page overflow at 375 and 752 px on any screen
 - [ ] Endpoint test and selected-provider test still work
 - [ ] Preset lists and manual symbols still work
 - [ ] Yahoo stays labeled experimental, and Deep Scan and Two-stage stay blocked for it

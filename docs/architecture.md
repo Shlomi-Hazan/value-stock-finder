@@ -1,6 +1,6 @@
 # Architecture
 
-Last updated: 2026-10-09 (PR #12: row details dialog and XLSX/PDF exports)
+Last updated: 2026-10-12 (after PR #18: four app-shell screens, Results search/sort, legend and empty states)
 
 ## 1. Current architecture: static files, no build
 
@@ -8,7 +8,7 @@ The app is a static frontend ([ADR-0004](decisions/ADR-0004-split-static-assets.
 
 | File | Contents |
 | --- | --- |
-| `index.html` | Markup only: header, settings card, DCF inputs, symbol textarea, action buttons, summary, results table (36 columns). Inline `onclick` / `onchange` / `oninput` handlers call global functions. |
+| `index.html` | Markup only: header, the shell nav, and the four screens (Setup, Results, Methodology, Settings & Tools) with their forms, summary, results table (36 columns) and the details dialog. Inline `onclick` / `onchange` / `oninput` handlers call global functions. |
 | `styles.css` | CSS variables, card/grid layout, table, pills, responsive breakpoints |
 | `js/constants.js` | Presets, FMP endpoints, providers, cache TTLs, scoring/DCF limits, Two-stage settings |
 | `js/state.js` | Shared state: `lastResults`, `allResults`, `currentFilter`, `stopRequested`, `lastScanStats` |
@@ -18,7 +18,7 @@ The app is a static frontend ([ADR-0004](decisions/ADR-0004-split-static-assets.
 | `js/metrics.js` | `buildMetrics`, derived metrics, Data Confidence |
 | `js/dcf.js` | DCF estimate |
 | `js/scoring.js` | Strategy scores, Piotroski, Dreman/Neff relative, total score and decision, `evaluateStock` |
-| `js/render.js` | Status, request preview, pills, table, details, tabs, summary |
+| `js/render.js` | Status, request preview, pills, results table view (tabs, search, sort, empty states and notes), details dialog, summary |
 | `js/scan.js` | Request planning, `scanStocks`, Two-stage scan, stop, endpoint tests |
 | `js/export.js` | Shared export rows plus `exportCSV`, `exportXLSX` and `exportPDF`; loads the `vendor/` libraries on demand |
 | `vendor/` | Pinned third-party export libraries (ExcelJS 4.4.0, jsPDF 4.2.1, jsPDF-AutoTable 5.0.8), never loaded at page start. See [vendor/README.md](../vendor/README.md) and [ADR-0006](decisions/ADR-0006-export-dependencies.md). |
@@ -68,10 +68,10 @@ flowchart TB
 
 ### UI layer
 
-- **Settings:** provider, API key (FMP), preset list, scan mode, top-N, market-cap thresholds (US / non-US), minimum volume, minimum price, Two-stage settings (Stage 1 max symbols, Deep Scan Top N), DCF assumptions, and the symbol textarea.
-- **Layout (PR #9):** the settings are grouped sections, each with a title, a white panel and a short helper footer. In order: data source, stocks to check, scan mode, basic filters and DCF assumptions (both native `<details>`, collapsed by default), then actions. Only the markup and CSS are grouped; all element IDs and inline handlers are unchanged, so the JS is unaware of the layout.
-- **Actions:** scan (the primary button) and stop, then three groups: connection tests (FMP endpoint test, selected-provider test), Cache (clear cache), and API key (clear the saved key). Since PR #11, CSV export is on the Results screen.
-- **Feedback:** `#requestPreview`, `#status` (via `setStatus`), `#endpointStatus`, and `#providerWarning`, which is visible only for Yahoo.
+- **Settings:** provider and API key (FMP, on Settings & Tools since PR #16), preset list, scan mode, top-N, market-cap thresholds (US / non-US), minimum volume, minimum price, Two-stage settings (Stage 1 max symbols, Deep Scan Top N), DCF assumptions, and the symbol textarea.
+- **Layout (PR #9):** the settings are grouped sections, each with a title, a white panel and a short helper footer. In order: data source, stocks to check, scan mode, basic filters and DCF assumptions (both native `<details>`, collapsed by default), then actions (since PR #16 the data source group lives on Settings & Tools). Only the markup and CSS are grouped; all element IDs and inline handlers are unchanged, so the JS is unaware of the layout.
+- **Actions:** scan (the primary button) and stop, on Setup. The connection tests (FMP endpoint test, selected-provider test), Clear Cache and Clear API key are on Settings & Tools (PR #16), and the export buttons are on Results (PR #11, PR #12).
+- **Feedback:** `#requestPreview` and `#status` (via `setStatus`) on Setup, mirrored on Settings & Tools; `#endpointStatus` and `#providerWarning` (visible only for Yahoo) on Settings & Tools.
 - **RTL:** the page is `lang="he" dir="rtl"`. Symbol input and numbers are LTR.
 
 ### State layer
@@ -82,7 +82,7 @@ These module-level variables live only in memory:
 | --- | --- |
 | `allResults` | All evaluated rows from the last scan, sorted by total score |
 | `lastResults` | Top-N slice that is displayed and exported |
-| `currentFilter` | Active table tab |
+| `currentFilter` | Active table tab. The search term and the sort option live in the `#resultsSearch` and `#resultsSort` controls and never change the arrays above. |
 | `stopRequested` | Set by the stop button |
 | `lastScanStats` | `{ checked, apiCalls, cacheHits, stopped, mode, twoStage? }`. `twoStage` holds the Stage 1 / Stage 2 counters for the summary line. |
 
@@ -151,7 +151,7 @@ For Two-stage rows, `renderDetails` and the source column show `scanMeta`, and `
 ### Rendering layer
 
 - `renderTable` builds the 36-column table for the active tab. Since PR #17 it renders `resultsViewRows()`: the tab filter, then the search term (`#resultsSearch`), then an optional sort (`#resultsSort`), on a **copy** of `lastResults`. The stored arrays are never mutated, exports still read `lastResults`, and `detailsRows` is the displayed array, so `openRowDetails(index)` opens the row on screen. The `#` column is the position in the displayed view. Empty views render `resultsEmptyCell()` (no scan, empty tab, no match, no rows), and `resultsStateNoteHtml()` fills `#resultsStateNote` (all rejected, Preliminary only). Rows written by `js/scan.js` for failed scans are unchanged.
-- `renderDetails` builds the expandable per-row explanation.
+- `renderDetails` renders the **פתח פירוט** button for each row. `openRowDetails` fills the details dialog (`detailsDialogBodyHtml`) from the displayed row.
 - `updateSummary` fills the 5 summary boxes from `allResults`.
 - All dynamic strings pass through `escapeHtml`.
 
@@ -214,49 +214,40 @@ flowchart TD
 - A backend adds hosting, cost, deployment and maintenance.
 - The cost of this choice is that **API keys cannot be hidden**. That is accepted for local personal use and documented in [ADR-0003](decisions/ADR-0003-no-backend-yet.md) and [security.md](security.md).
 
-## 6. Navigation: current state and planned app shell
+## 6. Navigation: the app shell
 
-**Current (after PR #9):** a single static page. From top to bottom:
+The app is one static page with **four screens**, shown one at a time and chosen by the URL hash ([ADR-0005](decisions/ADR-0005-app-shell-navigation-plan.md)). Each screen is a `<div class="screen" data-screen>` wrapper toggled with `hidden`, so every element stays in the DOM and every original ID and inline handler is unchanged.
 
-1. the hero and workflow strip (in-page anchors `#sec-source`, `#sec-universe`, `#sec-scan`, `#sec-results`)
-2. the settings groups and the action dock
-3. the summary and the results table
+| Screen | Hash | Added | Contains |
+| --- | --- | --- | --- |
+| Setup (**הגדרת סריקה**) | `#/setup` (default) | PR #11 | Hero and workflow strip, a provider and key summary line, stocks, scan mode, basic filters, DCF assumptions, Scan / Stop, `#requestPreview` and `#status` |
+| Results (**תוצאות**) | `#/results` | PR #11 | Summary, Two-stage summary, export buttons, the "how to read" legend, tabs, search and sort, the 36-column table |
+| Methodology (**מתודולוגיה**) | `#/methodology` | PR #15 | Static Hebrew explanation of the scan modes, Data Confidence, DCF, the seven strategies, score and limits. Condenses [investment-methodology.md](investment-methodology.md); no scan data, scripts or storage. |
+| Settings & Tools (**הגדרות וכלים**) | `#/settings` | PR #16 | Provider select, API key, Yahoo warning, connection tests with `#endpointStatus`, Clear Cache, Clear API key, a mirrored request preview and status, and a note that exports are on Results |
 
-There is no routing. Every control is always in the DOM and always visible, apart from the collapsed `<details>` sections.
+**What `js/shell.js` owns** (loaded last, self-initializing; it only observes the DOM and calls `requestStopScan()`):
 
-**Settings & Tools screen (PR #16):** a fourth screen, `#shell-screen-settings`. The provider select (`#dataProvider`), the API key field (`#apiKey`), the Yahoo warning, the two connection-test buttons with `#endpointStatus`, Clear Cache and Clear API key were **moved** from Setup with their IDs and handlers unchanged, so `app.js`, `scan.js` and `cache.js` run as before (they find elements by ID). `#status`, `#requestPreview`, `#scanButton` and `#stopButton` stay in the Setup scan console. `js/shell.js` keeps shell-owned copies in sync: `#shell-settings-status` and `#shell-settings-preview` mirror them on Settings, and `#shell-source-provider` / `#shell-source-key` give Setup a one-line summary with a link to `#settings-provider`. Export buttons stay on Results. Anchors: `#settings-provider` (also holds `#sec-source`, so the workflow strip step 1 opens Settings), `-checks`, `-cache`, `-preview`, `-data`.
+- **Routing:** `SHELL_ROUTES` maps `#/setup`, `#/results`, `#/methodology` and `#/settings`. An empty or unknown hash shows Setup. Element hashes (`#sec-scan`, `#methodology-dcf`, `#settings-cache` …) open the screen that contains them, then scroll and focus. `hashchange` drives Back/Forward. The document title and the focused heading follow the screen, and each screen's scroll position is kept in memory.
+- **Global scan bar:** a spinner while `#scanButton` is disabled, a mirror of `#status`, a Stop proxy, the final status with a "results ready" link, and a dot on the Results tab. It never navigates automatically.
+- **Settings mirrors:** `#shell-settings-status` and `#shell-settings-preview` copy `#status` and `#requestPreview`, and `#shell-source-provider` / `#shell-source-key` give Setup a one-line summary that links to `#settings-provider`.
+- **Layout offset:** `--shell-offset` follows the sticky bar's height, so anchors land below it. A compact header is used on every screen except Setup.
 
-**Methodology screen (PR #15):** a third `<div class="screen" data-screen="methodology">` (`#shell-screen-methodology`) holds static, hand-written Hebrew content: overview, scan modes, Data Confidence, DCF, the seven strategies, score and decision, limitations. Its only code change is one entry in `SHELL_ROUTES` in `js/shell.js`. Section anchors `#methodology-overview`, `-scans`, `-confidence`, `-dcf`, `-strategies`, `-score` and `-limitations` open the screen like any element hash. The content condenses [investment-methodology.md](investment-methodology.md), so a rule change updates both. It reads no scan data and adds no scripts, handlers or storage.
+**Where the controls moved (PR #16):** the provider select (`#dataProvider`), the API key field (`#apiKey`), the Yahoo warning, the connection tests, Clear Cache and Clear API key moved from Setup to Settings & Tools. Their IDs and handlers did not change, so `app.js`, `scan.js` and `cache.js` run as before. `#sec-source` now sits on the Settings provider section, so workflow step 1 opens Settings. This differs from ADR-0005's plan, which kept API key entry in Setup.
 
-**Implemented in PR #11 (stage 1 of [ADR-0005](decisions/ADR-0005-app-shell-navigation-plan.md)):**
+**What `js/render.js` owns for Results:**
 
-- **Sticky shell bar** under the header, with a segmented nav: **הגדרת סריקה** `#/setup` and **תוצאות** `#/results`, **מתודולוגיה** `#/methodology` (PR #15) and **הגדרות וכלים** `#/settings` (PR #16).
-- **Two screens (PR #11; provider, key and tool controls moved to Settings in PR #16),** `#shell-screen-setup` (hero, workflow strip, scan settings, action dock) and `#shell-screen-results` (summary, Two-stage summary, tabs, table, Export CSV). They are `<div class="screen" data-screen>` wrappers toggled with `hidden`. Every original element and ID sits inside, unchanged.
-- **Routing:** an empty or unknown hash shows Setup. Element hashes such as `#sec-scan` open the screen that contains them, then scroll and focus. `hashchange` drives Back/Forward.
-- **Global scan bar:**
-  - shows a spinner while `#scanButton` is disabled (that is, while `scanStocks()` runs)
-  - mirrors `#status` through a `MutationObserver`
-  - has a Stop proxy that calls `requestStopScan()`
-  - after the scan, keeps the final status with a "results ready" link, plus a dot on the Results tab
-  - never navigates automatically
-- **Compact header on Results:** the hero collapses to the product mark and title.
-- **Scroll memory:** each screen's scroll position is kept in memory. `--shell-offset` follows the sticky bar's height, so anchors land below it.
-- **No `localStorage`, no new dependencies, no changes to the 12 existing scripts.**
+- **View:** `renderTable` shows `resultsViewRows()`: the tab filter, then the search term (`#resultsSearch`, symbol or company), then an optional sort (`#resultsSort`), on a **copy** of `lastResults`. The stored arrays are never mutated. Exports read `lastResults`, so they contain all stored results. `detailsRows` is the displayed array, so `openRowDetails(index)` opens the row on screen. The `#` column is the position in the displayed view.
+- **Empty states and notes (PR #18):** `resultsEmptyCell()` writes the message for no rows (no scan, empty tab, no search match, no results), with **הצג את הכול** and **נקה חיפוש** actions, and `resultsStateNoteHtml()` fills `#resultsStateNote` (every row rejected, Preliminary only). Messages for scans that fail before any row exist are written by `scan.js`.
+- **Details dialog:** `openRowDetails`, `closeRowDetails` and `detailsDialogBodyHtml` fill the native `<dialog id="detailsDialog">`, which sits outside the screens.
 
-**Still planned (ADR-0005):** the full plan for the remaining stages:
+The architecture is unchanged: static files, classic scripts, no build step, no backend, no framework. Third-party code is limited to the vendored export libraries loaded on demand ([ADR-0006](decisions/ADR-0006-export-dependencies.md)). The shell and the Methodology and Settings screens use no `localStorage` of their own.
 
-- **Screens:** **Setup**, **Results**, **Methodology** and **Settings & tools**. They are plain `<section>` elements; one is visible at a time, chosen by the URL hash (`#/setup`, `#/results` …).
-- **Element-ID hashes** such as `#sec-scan` resolve to the screen that owns them.
-- **A global scan bar** mirrors `#status` and offers Stop through the existing `requestStopScan()`, so scan feedback is never hidden.
-- **One new classic script,** `js/shell.js`, loaded after `app.js`. The existing 12 scripts, all IDs, the inline handlers and the `localStorage` keys stay unchanged.
-- **The architecture stays the same:** static files, no build, no dependencies, no framework, no backend.
-- **Staged rollout:** PR #11 (shell + Setup/Results, done), then Methodology (PR #15) and Settings & Tools (PR #16), both done. Results UX is partly done (search, sort, legend and empty states in PRs #17–#18); the rest is a future PR (number not assigned; see [roadmap.md](roadmap.md)).
+**Still planned:** a sticky Results summary or toolbar, a display-limit note and column-group hints (see [roadmap.md](roadmap.md), M12).
 
 ## 7. Future architecture options (not implemented)
 
 | Option | What it would enable | Cost |
 | --- | --- | --- |
-| Static app shell with hash-routed screens | Separate setup and results, in-app methodology, global scan feedback | Planned in [ADR-0005](decisions/ADR-0005-app-shell-navigation-plan.md); one new script, no existing JS changes |
 | ES modules (`type="module"`) instead of classic scripts | Explicit imports and exports, no shared globals | Inline handlers must be replaced; `file://` stops working. Needs a new ADR. (The static-file split itself is done: [ADR-0004](decisions/ADR-0004-split-static-assets.md).) |
 | Small serverless proxy (e.g. Cloudflare Worker, Netlify Function) | Hide the FMP key, add CORS for other providers, server-side caching | Hosting, secrets management, abuse protection |
 | Background / batch scanner | Market-wide universes, scheduled screens (the browser-side Two-stage scan already exists) | Needs storage and a backend |

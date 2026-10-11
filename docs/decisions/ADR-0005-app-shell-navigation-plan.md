@@ -2,7 +2,7 @@
 
 ## Status
 
-**Accepted.** Planned in PR #10 (2026-10-09). **Stage 1 (Setup + Results, global scan bar) implemented in PR #11, Methodology in PR #15 and Settings & tools in PR #16.** Results UX is still planned, as a future PR with a number not yet assigned (see [roadmap.md](../roadmap.md)). One deviation from the plan below: PR #16 moved the provider select and the API key **entry** to Settings & tools too (the plan kept them in Setup), with their IDs unchanged, and Setup shows a provider and key summary that links there. The PR numbers in the plan below are the original ones.
+**Accepted.** Planned in PR #10 (2026-10-09). **Stage 1 (Setup + Results, global scan bar) implemented in PR #11, Methodology in PR #15 and Settings & tools in PR #16.** Results UX is partly done (search and sort in PR #17, the legend and empty states in PR #18); the rest is planned for a future PR with a number not yet assigned (see [roadmap.md](../roadmap.md)). One deviation from the plan below: PR #16 moved the provider select and the API key **entry** to Settings & tools too (the plan kept them in Setup), with their IDs unchanged, and Setup shows a provider and key summary that links there. The PR numbers in the plan below are the original ones. Mapping to what shipped: planned #11 → PR #11, #12 Methodology → PR #15, #13 Results UX → PRs #17–#18 (partly), #14 Settings & tools → PR #16. PR #12 became the details dialog and exports ([ADR-0006](ADR-0006-export-dependencies.md)), and PR #13 and #14 were bugfixes.
 
 ## Context
 

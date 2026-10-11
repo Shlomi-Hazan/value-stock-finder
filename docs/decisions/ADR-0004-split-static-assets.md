@@ -17,7 +17,7 @@ Split the app into plain static files, keeping the same runtime model:
 ```text
 index.html     markup only (same IDs, text, table and inline handlers)
 styles.css     the former inline <style>, unchanged
-js/            12 classic scripts, loaded with defer in this order:
+js/            12 classic scripts at the time (13 since PR #11 added shell.js), loaded with defer in this order:
   constants.js  state.js  utils.js  cache.js  providers.js  metrics.js
   dcf.js  scoring.js  render.js  scan.js  export.js  app.js
 ```
