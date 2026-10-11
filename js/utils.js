@@ -78,10 +78,13 @@ function formatRatio(value, digits = 2) {
   return n === null ? "-" : n.toFixed(digits);
 }
 
+// assumeDecimal = true: the value is a decimal ratio (0.12 = 12%, 1.01 = 101%, -1.01 = -101%), always scaled by 100.
+// assumeDecimal = false: the value is already a percentage (12 = 12%), shown as is.
+// A magnitude guess (|v| <= 1) cannot tell 1.01 (101%) from 1.01 (1.01%), so each caller states which it passes.
 function formatPercentValue(value, assumeDecimal = true) {
   const n = numberOrNull(value);
   if (n === null) return "-";
-  const pct = assumeDecimal && Math.abs(n) <= 1 ? n * 100 : n;
+  const pct = assumeDecimal ? n * 100 : n;
   const cls = pct > 0 ? "good-text" : pct < 0 ? "bad-text" : "muted";
   const sign = pct > 0 ? "+" : "";
   return `<span class="${cls}">${sign}${pct.toFixed(2)}%</span>`;

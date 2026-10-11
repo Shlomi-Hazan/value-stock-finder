@@ -54,4 +54,3 @@ Each step is a separate PR that preserves all existing IDs, handlers, `localStor
 - Piotroski counts missing tests as 0.
 - The US-listing detection is a keyword heuristic.
 - CSV exports the top-N results, not the active tab filter.
-- **Percent display for values below −100%:** `formatPercentValue(v, true)` treats any |v| > 1 as already a percentage, so a −101% discount shows as "−1.01%" in the table and the details dialog. The PDF and XLSX use the raw decimal and are correct.

@@ -126,5 +126,6 @@ Follow [AGENTS.md §9](AGENTS.md#9-expected-final-response-format). Keep it fact
 | PR #11 `7b2b7e2` | App shell stage 1: Setup and Results screens, hash navigation, global scan bar (`js/shell.js`). No scan, scoring, DCF, provider, CSV or table changes. |
 | PR #12 | Row details dialog (native `<dialog>`), real XLSX (ExcelJS) and PDF (jsPDF + AutoTable) exports from shared export rows; vendored on-demand libraries (ADR-0006). CSV byte-identical. No scoring, DCF, provider, scan or cache changes. |
 | PR #13 `91332b7` | Fix false FMP rate-limit detection: only HTTP 429 or an explicit error field counts (never the data body); `clearCache()` collects keys before removing; malformed cache entries are ignored and removed. |
+| Fix: percent formatting | `formatPercentValue(v, true)` always scales a decimal by 100 (−1.01 → −101%); `false` shows an already-percent value as is. Display only. |
 
 Details are in [docs/HISTORY.md](docs/HISTORY.md).
