@@ -296,6 +296,25 @@
       <button class="tab" id="tabWatch" onclick="setTableFilter('watch')">Watchlist</button>
       <button class="tab" id="tabReject" onclick="setTableFilter('reject')">נפסלו</button>
     </div>
+    <div class="results-view" role="group" aria-label="חיפוש ומיון תוצאות">
+      <label class="results-search">
+        <span class="visually-hidden">חיפוש לפי סימול או שם חברה</span>
+        <input type="search" id="resultsSearch" placeholder="חיפוש לפי סימול או שם חברה" autocomplete="off" oninput="onResultsSearchInput()" />
+      </label>
+      <label class="results-sort">
+        <span class="field-label">מיון</span>
+        <select id="resultsSort" onchange="onResultsSortChange()">
+          <option value="rank">ברירת מחדל (דירוג)</option>
+          <option value="score">ציון כולל (גבוה לנמוך)</option>
+          <option value="symbol">סימול (A–Z)</option>
+          <option value="price">מחיר (גבוה לנמוך)</option>
+          <option value="marketCap">שווי שוק (גבוה לנמוך)</option>
+          <option value="confidence">Data Confidence (גבוה לנמוך)</option>
+          <option value="upside">DCF Upside (גבוה לנמוך)</option>
+        </select>
+      </label>
+    </div>
+    <p class="results-view-note" id="resultsViewNote" role="status" aria-live="polite"></p>
 
     <div class="table-wrap">
       <table>

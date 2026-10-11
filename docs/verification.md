@@ -112,6 +112,21 @@ In the console, `formatPercentValue(v, assumeDecimal)` returns HTML; strip tags 
 | `(12, false)` / `(-25, false)` | `+12.00%` / `-25.00%` |
 | `(null)`, `(undefined)`, `("abc")` | `-` |
 
+### Results search and sort checks (since PR #17)
+
+Run a Deep Scan on three symbols (mocked data is fine), then on Results:
+
+| Check | Expected |
+| --- | --- |
+| Search by symbol (`#resultsSearch` = `msf`) and by company (`coca`) | Only matching rows; the note reads "מציג N מתוך M תוצאות"; a search with no match shows "אין תוצאות התואמות לחיפוש" |
+| Clear the search | The tab's normal rows return and the note disappears |
+| Search together with a tab | The search applies inside the active tab only |
+| Each sort option | Orders the displayed rows (numbers high to low, symbol A–Z, missing values last); "ברירת מחדל" returns the rank order |
+| `lastResults` order after searching and sorting | Unchanged (same array order as before) |
+| **פתח פירוט** after search and sort | Opens the row on screen |
+| CSV / XLSX / PDF after search and sort | Same rows as without a search (all stored results) |
+| 375 / 752 px | No page overflow; the search box and the sort select fit, and the select is full width on phones |
+
 ### Settings & Tools checks (since PR #16)
 
 | Check | Expected |
