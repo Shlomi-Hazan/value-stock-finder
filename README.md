@@ -233,7 +233,7 @@ Full details: [docs/security.md](docs/security.md)
 | M9 App shell: Setup + Results screens, global scan bar | ✅ Done |
 | M10 Results details dialog + XLSX/PDF exports | ✅ Done |
 | M11 Methodology screen | ✅ Done |
-| M12 Results UX refinement (search and sort done in PR #17; sticky toolbar, notes and hints still planned) | ◐ Partly done |
+| M12 Results UX refinement (search, sort, legend and empty states done in PRs #17–#18; sticky toolbar, display-limit note and column hints still planned) | ◐ Partly done |
 | M13 Settings & Tools screen (provider, API key, tests, Cache moved from Setup) | ✅ Done |
 | Automatic universe discovery, TASE, global, tests/CI, optional backend | 🗓 Planned / Future |
 

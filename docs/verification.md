@@ -127,6 +127,21 @@ Run a Deep Scan on three symbols (mocked data is fine), then on Results:
 | CSV / XLSX / PDF after search and sort | Same rows as without a search (all stored results) |
 | 375 / 752 px | No page overflow; the search box and the sort select fit, and the select is full width on phones |
 
+### Results empty states and notes (since PR #18)
+
+| Check | Expected |
+| --- | --- |
+| Results before any scan | The table row says "עדיין לא בוצעה סריקה" with a link to `#/setup` |
+| **איך לקרוא את התוצאות?** (`#resultsGuide`) | Collapsed by default; opens to 7 short points and a link to `#/methodology`; no overflow at 375 px |
+| Active tab with no rows | Message names the tab and offers **הצג את הכול** (sets the tab to All) |
+| Search with no match | Message quotes the (escaped) term and the tab, offers **נקה חיפוש**, and counts matches in other tabs when there are any |
+| Empty `lastResults` after `renderTable()` | "אין תוצאות להצגה" with a link to Setup |
+| All rows rejected (for example minimum price 1000) | `#resultsStateNote` explains the basic filter |
+| Stage 1-only rows (`lastScanStats.twoStage.preliminaryOnly`) | `#resultsStateNote` says the rows are Preliminary |
+| Search, sort, details, exports, routes | Unchanged from the PR #17 checks |
+
+Messages written by `js/scan.js` for scans that return nothing (rate limit before any row, Yahoo blocked, an error) are unchanged.
+
 ### Settings & Tools checks (since PR #16)
 
 | Check | Expected |
